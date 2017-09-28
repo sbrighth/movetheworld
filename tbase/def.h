@@ -36,7 +36,40 @@
 #define SYS_DIAG_PATH 			SYS_PATH "/diag"
 #define SYS_DEBUG_PATH 			SYS_PATH "/debug"
 
-#define KEY_MSGQ_IN		0x1000
-#define KEY_MSGQ_OUT	0x1001
+#define KEY_MSGQ_SEND_TO		0x1000
+#define KEY_MSGQ_RECV_FROM		0x1001
+
+#define KEY_DPS_LOCK			0x2000
+
+#define MSGBOX_SEND_TO			"in"
+#define MSGBOX_RECV_FROM		"out"
+
+#define ON		1
+#define	OFF		0
+
+typedef struct tMsgPackHdr
+{
+	uint16		version;	// Version of this structure.
+	uint16		cell;		// Cell from/to.
+	uint16		port;		// Port from/to.
+	uint16		msg_no;		// Msg.
+	uint16		packet;		// This is running counter (every packet will have unique id
+	uint16		flag;
+}__attribute__ ((packed)) MsgPackHdr;
+
+#define MSG_PACKET_SIZE			32
+#define MAX_MSG_STRING_LENGTH	(MSG_PACKET_SIZE - sizeof(MsgPackHdr))
+
+typedef struct tMsgPack
+{
+	MsgPackHdr	header;
+    char		string[MAX_MSG_STRING_LENGTH];
+}__attribute__ ((packed)) MsgPack;
+
+typedef struct tMsgPackQ
+{
+	long		type;
+	MsgPack		msg;
+}__attribute__ ((packed)) MsgPackQ;
 
 #endif /* DEF_H_ */

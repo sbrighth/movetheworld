@@ -13,24 +13,29 @@
 #include <signal.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include "../tbase/def.h"
 #include "msgctrl.h"
 
-#define PROG_NAME		"testdm"
-#define PROG_VERSION	"0.0.1"
+#define PROG_NAME		"tdm"
+#define PROG_VERSION	"0.0.2"
 
 int CheckProgRunning();
-void ProcSignalStop(int);
+void ProcSignalStop(int sig_no);
 int SetSignal();
+int CreateTestFolder(string path);
 
 int g_condTestDm = 1;
 int g_idMsgQIn = 0;
 int g_idMsgQOut = 0;
+int g_idTpc = 0;
+
+CMsgBox *pMsgBox;
 
 int main(int argc, char *argv[])
 {
 	//running check
-	int board_id = 10;
-
 	if(CheckProgRunning() != 1)
 	{
 		printf("%s is runinning\n", PROG_NAME);
@@ -44,29 +49,30 @@ int main(int argc, char *argv[])
 	if(SetSignal() < 0)
 		return -1;
 
-	pthread_t msg_in_t;
-	pthread_t msg_out_t;
-	int stat_msg_in_t;
-	int stat_msg_out_t;
+	//get tpc bd id;
+	g_idTpc = 1;
 
-	pthread_create(&msg_in_t, NULL, &MsgInFileThread, (void*)&board_id);
-	pthread_create(&msg_out_t, NULL, &MsgOutFileThread, (void*)&board_id);
-	//Thread
-	//	- MsgCont
-	//	- MsgProc
+	string strMsgSendTo, strMsgRecvFrom;
+	char path[128];
+
+	sprintf(path, "%s/rack_001/tester%03d/exe/", SYS_ATH_PATH, g_idTpc);
+	CreateTestFolder(path);
+
+	strMsgSendTo = path + string(MSGBOX_SEND_TO);
+	strMsgRecvFrom = path + string(MSGBOX_RECV_FROM);
+
+	pMsgBox = new CMsgBox(strMsgSendTo, strMsgSendTo);
+	pMsgBox->StartThread();
 
 	while( g_condTestDm )
 	{
+
 		sleep(1);
 	}
 
-	printf("%s while end!!\n", PROG_NAME);
+	printf("%s end!!\n", PROG_NAME);
 
-	pthread_join(msg_in_t, (void **)&stat_msg_in_t);
-	pthread_join(msg_out_t, (void **)&stat_msg_out_t);
-
-	printf("%s thread end!!\n", PROG_NAME);
-
+	delete pMsgBox;
 	return EXIT_SUCCESS;
 }
 
@@ -114,8 +120,33 @@ void ProcSignalStop(int sig_no)
 {
 	printf("testdm stop signal (%d)\n", sig_no);
 
-	StopMsgThread();
-	g_condTestDm = 0;
+	if(pMsgBox != NULL)
+		pMsgBox->StopThread();
 
-	//exit(0);
+	g_condTestDm = 0;
+}
+
+int CreateTestFolder(string path)
+{
+	string temp, subdir;
+	size_t current, previous = 0;
+	current = path.find_first_of('/');
+
+	while(current != string::npos)
+	{
+		temp = path.substr(previous, current - previous);
+		previous = current + 1;
+		current = path.find_first_of('/', previous);
+
+		if( temp.empty() )
+			continue;
+
+		subdir = path.substr(0, previous).c_str();
+		if(access(subdir.c_str(), F_OK) != 0)
+		{
+			mkdir(subdir.c_str(), 0755);
+		}
+	}
+
+	return 0;
 }
