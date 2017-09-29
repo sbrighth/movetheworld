@@ -36,13 +36,16 @@
 #define SYS_DIAG_PATH 			SYS_PATH "/diag"
 #define SYS_DEBUG_PATH 			SYS_PATH "/debug"
 
-#define KEY_MSGQ_SEND_TO		0x1000
-#define KEY_MSGQ_RECV_FROM		0x1001
+#define KEY_TEST_MSGQ			0x1000
+#define KEY_DEBUG_MSGQ			0x1001
 
 #define KEY_DPS_LOCK			0x2000
 
 #define MSGBOX_SEND_TO			"in"
 #define MSGBOX_RECV_FROM		"out"
+
+#define TYPE_MSGQ_SEND			1
+#define TYPE_MSGQ_RECV			2
 
 #define ON		1
 #define	OFF		0

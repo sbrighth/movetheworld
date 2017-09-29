@@ -314,7 +314,7 @@ void msleep(int time)
 	usleep(time * 1000);
 }
 
-int IsFileExist(char *filename)
+int IsFileExist(const char *filename)
 {
 	if(access(filename, F_OK) == 0)
 		return 1;
@@ -322,7 +322,7 @@ int IsFileExist(char *filename)
 		return 0;
 }
 
-long GetFileSize(char *filename)
+long GetFileSize(const char *filename)
 {
 	FILE *file = fopen(filename, "r");
 	if(file == NULL)
