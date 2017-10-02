@@ -16,22 +16,29 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "../tbase/def.h"
+#include "../tbase/tbase.h"
 #include "msgbox.h"
 
 #define PROG_NAME		"tdm"
-#define PROG_VERSION	"0.0.2"
+#define PROG_VERSION	"0.0.4"
 
 int CheckProgRunning();
 void ProcSignalStop(int sig_no);
 int SetSignal();
 int CreateWorkFolder(string path);
+int CreateTestFolder(string path);
+void* TestMsgqThread(void *arg);
 
 int g_condTestDm = 1;
-int g_idMsgQIn = 0;
-int g_idMsgQOut = 0;
+int g_condTestMsgq = 1;
+int g_idTestMsgq = 0;
+int g_idDebugMsgq = 0;
 int g_idTpc = 0;
 
-CMsgBox *pMsgBox;
+pthread_t idTestMsgqThread;
+
+CMsgBox *g_pTestMsgBox = NULL;
+CMsgBox *g_pDebugMsgBox = NULL;
 
 int main(int argc, char *argv[])
 {
@@ -68,18 +75,36 @@ int main(int argc, char *argv[])
 	cout << "strTestMsgSendTo : " << strTestMsgSendTo << endl;
 	cout << "strTestMsgRecvFrom : " << strTestMsgRecvFrom << endl;
 
-	pMsgBox = new CMsgBox(strTestMsgSendTo, strTestMsgSendTo);
-	pMsgBox->StartThread();
+	g_pTestMsgBox = new CMsgBox(strTestMsgSendTo, strTestMsgRecvFrom);
+	g_pTestMsgBox->StartThread();
+
+	//TestMsgqThread MsgBox <-> TestMsgq
+	MsgPackQ proc_msgq;
+	g_idTestMsgq = CreateMsgq(KEY_TEST_MSGQ);
+
+	pthread_create(&idTestMsgqThread, NULL, &TestMsgqThread, (void*)0);
 
 	while( g_condTestDm )
 	{
+		//send msg to MsgBox
+		if(CurNumMsgq(g_idTestMsgq) > 0)
+		{
+			memset(&proc_msgq, 0, sizeof(MsgPackQ));
+			proc_msgq.type = TYPE_MSGQ_RECV;
 
-		sleep(1);
+			if(RecvMsgq(g_idTestMsgq, &proc_msgq, sizeof(MsgPackQ)) == 0)
+			{
+				printf(">> incoming process msg!!!\n");
+//				/g_pTestMsgBox->SendMsg(temp_msgq.msg);
+			}
+		}
+
+		msleep(100);
 	}
 
 	printf("%s end!!\n", PROG_NAME);
 
-	delete pMsgBox;
+	delete g_pTestMsgBox;
 	return EXIT_SUCCESS;
 }
 
@@ -127,8 +152,14 @@ void ProcSignalStop(int sig_no)
 {
 	printf("testdm stop signal (%d)\n", sig_no);
 
-	if(pMsgBox != NULL)
-		pMsgBox->StopThread();
+	if(g_pTestMsgBox != NULL)
+		g_pTestMsgBox->StopThread();
+
+	if(idTestMsgqThread != 0)
+	{
+		g_condTestMsgq = 0;
+		pthread_join(idTestMsgqThread, NULL);
+	}
 
 	g_condTestDm = 0;
 }
@@ -156,4 +187,40 @@ int CreateWorkFolder(string path)
 	}
 
 	return 0;
+}
+
+void* TestMsgqThread(void *arg)
+{
+	int ret;
+	MsgPack read_msg;
+	MsgPackQ temp_msgq;
+
+	while(g_condTestMsgq)
+	{
+		//send msg to MsgBox
+		if(CurNumMsgq(g_idTestMsgq) > 0)
+		{
+			memset(&temp_msgq, 0, sizeof(MsgPackQ));
+			temp_msgq.type = TYPE_MSGQ_SEND;
+
+			ret = RecvMsgq(g_idTestMsgq, &temp_msgq, sizeof(MsgPackQ));
+			if(ret == 0)
+				g_pTestMsgBox->SendMsg(temp_msgq.msg);
+		}
+
+		//read msg from MsgBox
+		ret = g_pTestMsgBox->RecvMsg(read_msg);
+		if(ret == 0)
+		{
+			memset(&temp_msgq, 0, sizeof(MsgPackQ));
+			temp_msgq.type = TYPE_MSGQ_RECV;
+			temp_msgq.msg = read_msg;
+
+			SendMsgq(g_idTestMsgq, &temp_msgq, sizeof(MsgPackQ));
+		}
+
+		msleep(100);
+	}
+
+	pthread_exit( (void* )0 );
 }

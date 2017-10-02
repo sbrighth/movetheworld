@@ -44,8 +44,8 @@ int			TimeToString(struct tm *t, char* cData);
 void		msleep(int);
 
 //file
-int			IsFileExist(char *filename);
-long		GetFileSize(char *filename);
+int			IsFileExist(const char *filename);
+long		GetFileSize(const char *filename);
 
 #ifdef __cplusplus
 }

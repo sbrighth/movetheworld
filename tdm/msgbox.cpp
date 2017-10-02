@@ -71,6 +71,8 @@ int CMsgBox::RecvMsg(MsgPack &msg)
 		msg = qReadMsg.front();
 		qReadMsg.pop();
 	}
+	else
+		return -1;
 
 	return 0;
 }
@@ -184,28 +186,6 @@ int CMsgBox::ReadMsgFile()
 	return rsize;
 }
 
-int CMsgBox::IsFileExist(string filename)
-{
-	if(access(filename.c_str(), F_OK) == 0)
-		return 1;
-	else
-		return 0;
-}
-
-int CMsgBox::GetFileSize(string filename)
-{
-	int nSize = 0;
-	FILE* fp = fopen(filename.c_str(), "r");
-	if( fp )
-	{
-		fseek(fp,0,SEEK_END);
-		nSize = ftell(fp);
-		fclose(fp);
-	}
-
-	return nSize;
-}
-
 void* CMsgBox::MsgFileThread(void* arg)
 {
 	printf(">> %s start!!\n", __func__);
@@ -221,12 +201,12 @@ void CMsgBox::_MsgFileThread()
 {
 	while(condThread == 1)
 	{
-		if( IsFileExist(strWriteFileName) )
+		if( IsFileExist(strWriteFileName.c_str()) )
 			WriteMsgFile();
 		else
-			InitMsgFile(strWriteFileName);
+			InitMsgFile(strWriteFileName.c_str());
 
-		if( IsFileExist(strReadFileName) )
+		if( IsFileExist(strReadFileName.c_str()) )
 			ReadMsgFile();
 
 		usleep(100*1000);

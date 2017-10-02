@@ -35,8 +35,6 @@ private:
 	int				InitMsgFile(string filename);
 	int				WriteMsgFile();				//in
 	int				ReadMsgFile();				//out
-	int				IsFileExist(string filename);
-	int				GetFileSize(string filename);
 	static void*	MsgFileThread(void* arg);
 	void			_MsgFileThread();
 
@@ -46,23 +44,6 @@ private:
 	queue<MsgPack>	qReadMsg;
 	string			strWriteFileName;			//in
 	string			strReadFileName;			//out
-};
-
-class CMsgQBox
-{
-	CMsgQBox();
-	virtual ~CMsgQBox();
-
-public:
-	static void*	MsgQThread(void *arg);
-	void			_MsgQThread();
-	void			StartThread();
-	void			StopThread();
-
-	int				condThread;
-	pthread_t		idThread;
-	int				idMsgQIn;
-	int				idMsgQOut;
 };
 
 #endif /* MSGBOX_H_ */
