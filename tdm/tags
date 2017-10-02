@@ -1,0 +1,56 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+CC	Makefile	/^CC		 =	gcc$/;"	m
+CMsgBox	msgctrl.cpp	/^CMsgBox::CMsgBox(string strWriteTarget, string strReadTarget) : strWriteFileName(strWriteTarget), strReadFileName(strReadTarget)$/;"	f	class:CMsgBox
+CMsgBox	msgctrl.h	/^class CMsgBox$/;"	c
+CMsgQBox	msgctrl.cpp	/^CMsgQBox::CMsgQBox()$/;"	f	class:CMsgQBox
+CMsgQBox	msgctrl.h	/^class CMsgQBox$/;"	c
+CXX	Makefile	/^CXX		 =	g++$/;"	m
+CXXFLAGS	Makefile	/^CXXFLAGS =	-O2 -g -Wall -fmessage-length=0 $/;"	m
+CheckProgRunning	tdm.cpp	/^int CheckProgRunning()$/;"	f
+CreateTestFolder	tdm.cpp	/^int CreateTestFolder(string path)$/;"	f
+GetFileSize	msgctrl.cpp	/^int CMsgBox::GetFileSize(string filename)$/;"	f	class:CMsgBox
+InitMsg	msgctrl.cpp	/^int CMsgBox::InitMsg()$/;"	f	class:CMsgBox
+InitMsgFile	msgctrl.cpp	/^int CMsgBox::InitMsgFile()$/;"	f	class:CMsgBox
+InitMsgFile	msgctrl.cpp	/^int CMsgBox::InitMsgFile(string filename)$/;"	f	class:CMsgBox
+IsFileExist	msgctrl.cpp	/^int CMsgBox::IsFileExist(string filename)$/;"	f	class:CMsgBox
+LDFLAGS	Makefile	/^LDFLAGS  = 	-L..\/tbase -ltbase -lpthread $/;"	m
+MSGCTRL_H_	msgctrl.h	9;"	d
+MsgFileThread	msgctrl.cpp	/^void* CMsgBox::MsgFileThread(void* arg)$/;"	f	class:CMsgBox
+NewMsg	msgctrl.cpp	/^MsgPack CMsgBox::NewMsg(uint16 cell, uint16 port, uint16 msg_no, uint16 packet, uint16 flag, const char *data )$/;"	f	class:CMsgBox
+OBJS	Makefile	/^OBJS =		tdm.o msgctrl.o$/;"	m
+PROG_NAME	tdm.cpp	21;"	d	file:
+PROG_VERSION	tdm.cpp	22;"	d	file:
+PrintMsg	msgctrl.cpp	/^void CMsgBox::PrintMsg(MsgPack msg)$/;"	f	class:CMsgBox
+ProcSignalStop	tdm.cpp	/^void ProcSignalStop(int sig_no)$/;"	f
+ReadMsgFile	msgctrl.cpp	/^int CMsgBox::ReadMsgFile()$/;"	f	class:CMsgBox
+RecvMsg	msgctrl.cpp	/^int CMsgBox::RecvMsg(MsgPack &msg)$/;"	f	class:CMsgBox
+SendMsg	msgctrl.cpp	/^int CMsgBox::SendMsg(MsgPack msg)$/;"	f	class:CMsgBox
+SetSignal	tdm.cpp	/^int SetSignal()$/;"	f
+StartThread	msgctrl.cpp	/^void CMsgBox::StartThread()$/;"	f	class:CMsgBox
+StopThread	msgctrl.cpp	/^void CMsgBox::StopThread()$/;"	f	class:CMsgBox
+TARGET	Makefile	/^TARGET =	tdm$/;"	m
+WriteMsgFile	msgctrl.cpp	/^int CMsgBox::WriteMsgFile()$/;"	f	class:CMsgBox
+_MsgFileThread	msgctrl.cpp	/^void CMsgBox::_MsgFileThread()$/;"	f	class:CMsgBox
+condThread	msgctrl.h	/^	int				condThread;$/;"	m	class:CMsgBox
+condThread	msgctrl.h	/^	int				condThread;$/;"	m	class:CMsgQBox
+g_condTestDm	tdm.cpp	/^int g_condTestDm = 1;$/;"	v
+g_idMsgQIn	tdm.cpp	/^int g_idMsgQIn = 0;$/;"	v
+g_idMsgQOut	tdm.cpp	/^int g_idMsgQOut = 0;$/;"	v
+g_idTpc	tdm.cpp	/^int g_idTpc = 0;$/;"	v
+idMsgQIn	msgctrl.h	/^	int				idMsgQIn;$/;"	m	class:CMsgQBox
+idMsgQOut	msgctrl.h	/^	int				idMsgQOut;$/;"	m	class:CMsgQBox
+idThread	msgctrl.h	/^	pthread_t		idThread;$/;"	m	class:CMsgBox
+idThread	msgctrl.h	/^	pthread_t		idThread;$/;"	m	class:CMsgQBox
+main	tdm.cpp	/^int main(int argc, char *argv[])$/;"	f
+pMsgBox	tdm.cpp	/^CMsgBox *pMsgBox;$/;"	v
+qReadMsg	msgctrl.h	/^	queue<MsgPack>	qReadMsg;$/;"	m	class:CMsgBox
+qWriteMsg	msgctrl.h	/^	queue<MsgPack>	qWriteMsg;$/;"	m	class:CMsgBox
+strReadFileName	msgctrl.h	/^	string			strReadFileName;			\/\/out$/;"	m	class:CMsgBox
+strWriteFileName	msgctrl.h	/^	string			strWriteFileName;			\/\/in$/;"	m	class:CMsgBox
+~CMsgBox	msgctrl.cpp	/^CMsgBox::~CMsgBox()$/;"	f	class:CMsgBox
+~CMsgQBox	msgctrl.cpp	/^CMsgQBox::~CMsgQBox()$/;"	f	class:CMsgQBox

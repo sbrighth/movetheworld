@@ -1,12 +1,12 @@
 /*
- * msgctrl.h
+ * msgbox.h
  *
  *  Created on: Sep 12, 2017
  *      Author: shjeong
  */
 
-#ifndef MSGCTRL_H_
-#define MSGCTRL_H_
+#ifndef MSGBOX_H_
+#define MSGBOX_H_
 
 #include <iostream>
 #include <queue>
@@ -65,4 +65,4 @@ public:
 	int				idMsgQOut;
 };
 
-#endif /* MSGCTRL_H_ */
+#endif /* MSGBOX_H_ */

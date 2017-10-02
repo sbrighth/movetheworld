@@ -16,7 +16,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "../tbase/def.h"
-#include "msgctrl.h"
+#include "msgbox.h"
 
 #define PROG_NAME		"tdm"
 #define PROG_VERSION	"0.0.2"
@@ -24,7 +24,7 @@
 int CheckProgRunning();
 void ProcSignalStop(int sig_no);
 int SetSignal();
-int CreateTestFolder(string path);
+int CreateWorkFolder(string path);
 
 int g_condTestDm = 1;
 int g_idMsgQIn = 0;
@@ -36,7 +36,7 @@ CMsgBox *pMsgBox;
 int main(int argc, char *argv[])
 {
 	//running check
-	if(CheckProgRunning() != 1)
+	if(CheckProgRunning() > 0)
 	{
 		printf("%s is runinning\n", PROG_NAME);
 		return -1;
@@ -52,16 +52,23 @@ int main(int argc, char *argv[])
 	//get tpc bd id;
 	g_idTpc = 1;
 
-	string strMsgSendTo, strMsgRecvFrom;
-	char path[128];
+	//init test folder
+	string strTestMsgSendTo, strTestMsgRecvFrom;
+	string strTestPath;
+	char buf[64];
 
-	sprintf(path, "%s/rack_001/tester%03d/exe/", SYS_ATH_PATH, g_idTpc);
-	CreateTestFolder(path);
+	//sprintf(buf, "%s/rack_001/tester%03d/exe/", SYS_ATH_PATH, g_idTpc);
+	sprintf(buf, "/tmp/rack_001/tester%03d/exe/", g_idTpc);
+	strTestPath = buf;
+	CreateWorkFolder(strTestPath);
 
-	strMsgSendTo = path + string(MSGBOX_SEND_TO);
-	strMsgRecvFrom = path + string(MSGBOX_RECV_FROM);
+	strTestMsgSendTo = strTestPath + string(MSGBOX_SEND_TO);
+	strTestMsgRecvFrom = strTestPath + string(MSGBOX_RECV_FROM);
 
-	pMsgBox = new CMsgBox(strMsgSendTo, strMsgSendTo);
+	cout << "strTestMsgSendTo : " << strTestMsgSendTo << endl;
+	cout << "strTestMsgRecvFrom : " << strTestMsgRecvFrom << endl;
+
+	pMsgBox = new CMsgBox(strTestMsgSendTo, strTestMsgSendTo);
 	pMsgBox->StartThread();
 
 	while( g_condTestDm )
@@ -82,7 +89,7 @@ int CheckProgRunning()
 	char cmd[32] = {0,};
 	char buf[32] = {0,};
 
-	sprintf(cmd, "ps -ae | grep %s | wc -l", PROG_NAME);
+	sprintf(cmd, "ps -ae | grep ^%s$ | wc -l", PROG_NAME);
 	file = popen(cmd, "r");
 	if(file == NULL)
 		return -1;
@@ -126,7 +133,7 @@ void ProcSignalStop(int sig_no)
 	g_condTestDm = 0;
 }
 
-int CreateTestFolder(string path)
+int CreateWorkFolder(string path)
 {
 	string temp, subdir;
 	size_t current, previous = 0;

@@ -1,5 +1,5 @@
 /*
- * msgctrl.cpp
+ * msgbox.cpp
  *
  *  Created on: Sep 12, 2017
  *      Author: shjeong
@@ -8,38 +8,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "msgctrl.h"
+#include "msgbox.h"
 #include "../tbase/tbase.h"
-
-/*
-void InitMsgThread()
-{
-	g_condMsgInFileThread = 1;
-	g_condMsgOutFileThread = 1;
-
-	g_idMsgQIn = CreateMsgQ(KEY_MSGQ_IN);
-	g_idMsgQOut = CreateMsgQ(KEY_MSGQ_OUT);
-}
-
-void StopMsgThread()
-{
-	g_condMsgInFileThread = 0;
-	g_condMsgOutFileThread = 0;
-}
-*/
-
-CMsgQBox::CMsgQBox()
-{
-	condThread = 1;
-	idThread = 0;
-
-	idMsgQIn = CreateMsgq(KEY_MSGQ_SEND_TO);
-	idMsgQOut = CreateMsgq(KEY_MSGQ_RECV_FROM);
-}
-
-CMsgQBox::~CMsgQBox()
-{
-}
 
 CMsgBox::CMsgBox(string strWriteTarget, string strReadTarget) : strWriteFileName(strWriteTarget), strReadFileName(strReadTarget)
 {
