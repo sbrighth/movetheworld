@@ -6,6 +6,7 @@
 // Description : Hello World in C, Ansi-style
 //============================================================================
 
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -15,34 +16,25 @@
 #include <pthread.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include "../tbase/def.h"
-#include "../tbase/tbase.h"
-#include "../tnet/msgproc.h"
-#include "msgctrl.h"
+#include <sys/wait.h>
+#include "def.h"
+#include "base.h"
+#include "msgqthread.h"
+#include "msgsend.h"
+#include "tdm.h"
 
 #define PROG_NAME		"tdm"
 #define PROG_VERSION	"0.0.5"
 
-int CheckProgRunning();
-void ProcSignalStop(int sig_no);
-int SetSignal();
-int CreateWorkFolder(string path);
-int CreateTestFolder(string path);
-void* TestMsgqThread(void *arg);
+using namespace std;
 
 int g_condTestDm = 1;
-int g_condTestMsgq = 1;
-int g_idTestMsgq = 0;
-int g_idDebugMsgq = 0;
 int g_idTpc = 0;
-
 CMsgqThread *g_pTestMsgq = NULL;
-
-void sample(MsgPack msg);
 
 int main(int argc, char *argv[])
 {
-	printf(">> cplusplus version = %ld\n", __cplusplus);
+	printf(">> cplusplus version = %d\n", __cplusplus);
 	//running check
 	if(CheckProgRunning() > 0)
 	{
@@ -66,7 +58,7 @@ int main(int argc, char *argv[])
 	char buf[64];
 
 	//sprintf(buf, "%s/rack_001/tester%03d/exe/", SYS_ATH_PATH, g_idTpc);
-	sprintf(buf, "/tmp/rack_001/tester%03d/exe/", g_idTpc);
+	sprintf(buf, "/tmp/exicon/rack_001/tester%03d/exe/", g_idTpc);
 	strTestPath = buf;
 	CreateWorkFolder(strTestPath);
 
@@ -76,16 +68,21 @@ int main(int argc, char *argv[])
 	cout << "strTestMsgSendTo : " << strTestMsgSendTo << endl;
 	cout << "strTestMsgRecvFrom : " << strTestMsgRecvFrom << endl;
 
-	InitMsgProc(KEY_TEST_MSGQ);
 	g_pTestMsgq = new CMsgqThread(KEY_TEST_MSGQ, strTestMsgSendTo, strTestMsgRecvFrom);
-	g_pTestMsgq->StartThread(RecvMsgProc);
+	g_pTestMsgq->StartThread(&RecvMsgProc);
 
-	//init color
-	//msg empty
+	for(int idx=PORT_MIN; idx<=PORT_MAX; idx++)
+	{
+		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_INIT, 		PROG_VERSION);
+		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_INITCOLOR, 	"");
+		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_TEXT1, 		"EMPTY");
+		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_TEXT2, 		"");
+		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_TEXT3, 		PROG_VERSION);
+		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_TEXT4, 		"");
+	}
 
 	while( g_condTestDm )
 	{
-
 		msleep(100);
 	}
 
@@ -169,7 +166,107 @@ int CreateWorkFolder(string path)
 	return 0;
 }
 
-void sample(MsgPack msg)
+void RecvMsgProc(int idMsgq, MsgPack msg)
 {
-	printf("msg no = %d\n", msg.msg_no);
+	MsgPack msg_temp;
+	memset(&msg_temp, 0, sizeof(MsgPack));
+
+	msg_temp.cell = msg.cell;
+	msg_temp.port = msg.port-1;
+
+	if(msg.cell != g_idTpc)
+		return;
+
+	if(msg.port < PORT_MIN || msg.port > PORT_MAX)
+		return;
+
+	switch(msg.msg_no)
+	{
+	case MSG_TEST_START:
+		//compile
+		//run
+		msg_temp.msg_no = MSG_TEST;
+		SendMsgPack(idMsgq, msg_temp);
+		break;
+	case MSG_TEST_STOP:
+		msg_temp.msg_no = MSG_FAIL;
+		SendMsgPack(idMsgq, msg_temp);
+		break;
+	case MSG_INIT:
+		//init dut status
+		//init exe folder
+		msg_temp.msg_no = MSG_INITACK;
+		SendMsgPack(idMsgq, msg_temp);
+		break;
+	case MSG_INITACK:
+		break;
+	}
+}
+
+
+int test_compile_script()
+{
+	int ret;
+	string compiler = "g++";
+	string script = "/tmp/exicon/script/sample.c";
+	string target = "/tmp/exicon/script/sample";
+	string incpath = "-I/tmp/exicon/include";
+	string libpath = "-L/tmp/exicon/lib";
+	string lib = "-ltbase -ltnet";
+
+	int status;
+	pid_t pid;
+	unlink(target.c_str());
+
+	pid = fork();
+
+	if(pid < 0)
+	{
+		perror("fork error");
+		ret = -1;
+	}
+	else if(pid == 0)
+	{
+		printf("compile child process\n");
+		ret = execlp(compiler.c_str(), compiler.c_str(), incpath.c_str(), "-o", target.c_str(), script.c_str(), libpath.c_str(), NULL);
+	}
+	else
+	{
+		waitpid(pid, &status, 0);
+		ret = pid;
+	}
+
+	printf("ret= %d\n", ret);
+	return ret;
+}
+
+int test_process()
+{
+	int ret;
+	int status;
+	string target = "/tmp/exicon/script/sample";
+	size_t pos = target.rfind('/') + 1;
+	char cell[8] = "1";
+	char port[8] = "2";
+
+	pid_t pid = fork();
+
+	if(pid < 0)
+	{
+		perror("fork error");
+		ret = -1;
+	}
+	else if(pid == 0)
+	{
+		printf("child process\n");
+		ret = execl(target.c_str(), target.substr(pos).c_str(), cell, port, NULL);
+	}
+	else
+	{
+		waitpid(pid, &status, 0);
+		ret = pid;
+	}
+
+	printf("ret= %d\n", ret);
+	return ret;
 }

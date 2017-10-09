@@ -47,8 +47,25 @@
 #define TYPE_MSGQ_SEND			1
 #define TYPE_MSGQ_RECV			2
 
-#define ON		1
-#define	OFF		0
+#define ON						1
+#define	OFF						0
+
+enum PORT
+{
+	PORT1 = 1,
+	PORT2 = 2,
+	PORT_MIN = 1,
+	PORT_MAX = 2,
+};
+
+enum
+{
+	YELLOW = 0,
+	RED = 1,
+	GREEN = 2,
+	BLUE = 3,
+};
+
 
 #define MSG_PACKET_SIZE			32
 #define MAX_MSG_STRING_LENGTH	(MSG_PACKET_SIZE - 12)
@@ -70,13 +87,6 @@ typedef struct tMsgPackQ
 	MsgPack		msg;
 }__attribute__ ((packed)) MsgPackQ;
 
-enum
-{
-	YELLOW = 0,
-	RED = 1,
-	GREEN = 2,
-	BLUE = 3,
-};
 
 enum
 {

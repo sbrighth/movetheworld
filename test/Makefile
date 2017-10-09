@@ -1,21 +1,21 @@
-CC		 	= gcc
-CXX		 	= g++
+CC			= gcc
+CXX			= g++
 BINPATH		= /tmp/exicon/bin
 INCPATH		= /tmp/exicon/include
 LIBPATH		= /tmp/exicon/lib
-CXXFLAGS 	= -O2 -g -Wall -fmessage-length=0 -I$(INCPATH)
-LDFLAGS  	=  -L$(LIBPATH) -ltbase -ltnet -lpthread 
+CXXFLAGS	= -O2 -g -Wall -I$(INCPATH) 
+LDFLAGS		= -L$(LIBPATH) -ltbase -ltnet -lpthread
 
-TARGET =	tdm
-OBJS =		tdm.o
+TARGET		= test
+OBJS 		= test.o
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) -o $@ -c $< 
 	
-$(TARGET):	$(OBJS)
+$(TARGET): $(OBJS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
-all:	$(TARGET)
+all: $(TARGET)
 	@[ -d $(BINPATH) ] || mkdir -p $(BINPATH)
 	cp -f $(TARGET) $(BINPATH)
 
@@ -23,3 +23,4 @@ clean:
 	rm -f $(OBJS) $(TARGET)
 
 .PONY: all clean
+	

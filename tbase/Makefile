@@ -1,10 +1,12 @@
 CC			= gcc
 CXX			= g++
+INCPATH		= /tmp/exicon/include/
+LIBPATH		= /tmp/exicon/lib/
 CXXFLAGS	= -o2 -g -Wall -fPIC
 LDFLAGS		= -shared
-
+ 
 TARGET		= libtbase.so
-OBJS		= tbase.o
+OBJS		= base.o
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
@@ -13,6 +15,10 @@ $(TARGET): $(OBJS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 all: $(TARGET)
+	@[ -d $(INCPATH) ] || mkdir -p $(INCPATH)
+	@[ -d $(LIBPATH) ] || mkdir -p $(LIBPATH)
+	cp -f *.h $(INCPATH)
+	cp -f *.so $(LIBPATH) 
 
 clean:
 	rm -f *.o $(TARGET)
