@@ -58,7 +58,7 @@ int CurNumMsgq(int id)
 	return buf.msg_qnum;
 }
 
-int SendMsgq(int id, void *msg, int size)
+int PushMsgq(int id, void *msg, int size)
 {
 	if(id < 0)
 		return -1;
@@ -72,7 +72,7 @@ int SendMsgq(int id, void *msg, int size)
 	return 0;
 }
 
-int RecvMsgq(int id, void *msg, int size)
+int PopMsgq(int id, void *msg, int size)
 {
 	if(id < 0)
 		return -1;

@@ -1,10 +1,10 @@
 CC		 =	gcc
 CXX		 =	g++
-CXXFLAGS =	-O2 -g -Wall -fmessage-length=0 
+CXXFLAGS =	-O2 -g -Wall -fmessage-length=0 -std=c++11
 LDFLAGS  = 	-L../tbase -ltbase -lpthread 
 
 TARGET =	tdm
-OBJS =		tdm.o msgbox.o
+OBJS =		tdm.o msgctrl.o
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) -o $@ -c $< 

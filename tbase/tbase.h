@@ -15,37 +15,37 @@ extern "C" {
 #endif
 
 //message queue
-int			CreateMsgq(int key);
-int			RemoveMsgq(int id);
-int			CurNumMsgq(int id);
-int			SendMsgq(int id, void *msg, int size);
-int			RecvMsgq(int id, void *msg, int size);
+extern int			CreateMsgq(int key);
+extern int			RemoveMsgq(int id);
+extern int			CurNumMsgq(int id);
+extern int			PushMsgq(int id, void *msg, int size);
+extern int			PopMsgq(int id, void *msg, int size);
 
 //semaphore
-int			CreateSem(int key);
-int			RemoveSem(int id);
-int			LockSem(int id);
-int			UnlockSem(int id);
+extern int			CreateSem(int key);
+extern int			RemoveSem(int id);
+extern int			LockSem(int id);
+extern int			UnlockSem(int id);
 
 //share memory
-int			CreateShmem(int key, int size);
-int			RemoveShmem(int id);
-int			GetShmem(int id, int offset, int size, char *data);
-int			SetShmem(int id, int offset, int size, char *data);
+extern int			CreateShmem(int key, int size);
+extern int			RemoveShmem(int id);
+extern int			GetShmem(int id, int offset, int size, char *data);
+extern int			SetShmem(int id, int offset, int size, char *data);
 
 //memory map
-int			CreateMmap(const char *filename, char **pmmap, int size);
-int			RemoveMmap(int fd, char *pmmap, int size);
+extern int			CreateMmap(const char *filename, char **pmmap, int size);
+extern int			RemoveMmap(int fd, char *pmmap, int size);
 
 //time
-int			StartTimer(int index);
-int			ReadTimer(int index, double *p);
-int			TimeToString(struct tm *t, char* cData);
-void		msleep(int);
+extern int			StartTimer(int index);
+extern int			ReadTimer(int index, double *p);
+extern int			TimeToString(struct tm *t, char* cData);
+extern void		msleep(int);
 
 //file
-int			IsFileExist(const char *filename);
-long		GetFileSize(const char *filename);
+extern int			IsFileExist(const char *filename);
+extern long		GetFileSize(const char *filename);
 
 #ifdef __cplusplus
 }
