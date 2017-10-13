@@ -23,18 +23,10 @@
 #include "msgsend.h"
 #include "tdm.h"
 
-#define PROG_NAME		"tdm"
-#define PROG_VERSION	"0.0.5"
-
 using namespace std;
-
-int g_condTestDm = 1;
-int g_idTpc = 0;
-CMsgqThread *g_pTestMsgq = NULL;
 
 int main(int argc, char *argv[])
 {
-	printf(">> cplusplus version = %d\n", __cplusplus);
 	//running check
 	if(CheckProgRunning() > 0)
 	{
@@ -55,13 +47,14 @@ int main(int argc, char *argv[])
 	//init test folder
 	string strTestMsgSendTo, strTestMsgRecvFrom;
 	string strTestPath;
-	char buf[64];
 
-	//sprintf(buf, "%s/rack_001/tester%03d/exe/", SYS_ATH_PATH, g_idTpc);
-	sprintf(buf, "/tmp/exicon/rack_001/tester%03d/exe/", g_idTpc);
-	strTestPath = buf;
+	//sprintf(g_test_path, "%s/rack_001/tester%03d/exe/", SYS_ATH_PATH, g_idTpc);
+	sprintf(g_test_path, "/tmp/exicon/rack_001/tester%03d/exe/", g_idTpc);
+
+	strTestPath = g_test_path;
 	CreateWorkFolder(strTestPath);
 
+	return 0;
 	strTestMsgSendTo = strTestPath + string(MSGBOX_SEND_TO);
 	strTestMsgRecvFrom = strTestPath + string(MSGBOX_RECV_FROM);
 
@@ -73,12 +66,12 @@ int main(int argc, char *argv[])
 
 	for(int idx=PORT_MIN; idx<=PORT_MAX; idx++)
 	{
-		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_INIT, 		PROG_VERSION);
-		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_INITCOLOR, 	"");
-		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_TEXT1, 		"EMPTY");
-		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_TEXT2, 		"");
-		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_TEXT3, 		PROG_VERSION);
-		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_TEXT4, 		"");
+		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_INIT, 		0, PROG_VERSION);
+		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_INITCOLOR, 	0, "");
+		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_TEXT1, 		0, "EMPTY");
+		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_TEXT2, 		0, "");
+		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_TEXT3, 		0, PROG_VERSION);
+		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_TEXT4, 		0, "");
 	}
 
 	while( g_condTestDm )
@@ -86,8 +79,14 @@ int main(int argc, char *argv[])
 		msleep(100);
 	}
 
+	if(g_pTestMsgq != NULL)
+	{
+		g_pTestMsgq->StopThread();
+		delete g_pTestMsgq;
+	}
+
 	printf("%s end!!\n", PROG_NAME);
-	delete g_pTestMsgq;
+
 	return EXIT_SUCCESS;
 }
 
@@ -134,10 +133,6 @@ int SetSignal()
 void ProcSignalStop(int sig_no)
 {
 	printf("testdm stop signal (%d)\n", sig_no);
-
-	if(g_pTestMsgq != NULL)
-		g_pTestMsgq->StopThread();
-
 	g_condTestDm = 0;
 }
 
@@ -166,41 +161,147 @@ int CreateWorkFolder(string path)
 	return 0;
 }
 
+int CheckTestRunning(int port)
+{
+	if(port < PORT_MIN || port > PORT_MAX)
+		return -1;
+
+	return g_test_status[port];
+}
+
 void RecvMsgProc(int idMsgq, MsgPack msg)
 {
-	MsgPack msg_temp;
-	memset(&msg_temp, 0, sizeof(MsgPack));
+	//int version		= msg.version;
+	int cell    	= msg.cell;
+	int port    	= msg.port-1;
+	int msg_no		= msg.msg_no;
+	//int packet 		= msg.packet;
+	//int flag 		= msg.flag;
+	string msg_str	= msg.string;
 
-	msg_temp.cell = msg.cell;
-	msg_temp.port = msg.port-1;
-
-	if(msg.cell != g_idTpc)
+	if(cell != g_idTpc)
+	{
+		printf(">> wrong tpc no\n");
 		return;
+	}
 
 	if(msg.port < PORT_MIN || msg.port > PORT_MAX)
 		return;
 
-	switch(msg.msg_no)
+	if(msg_no == MSG_TEST_START)
 	{
-	case MSG_TEST_START:
-		//compile
-		//run
-		msg_temp.msg_no = MSG_TEST;
-		SendMsgPack(idMsgq, msg_temp);
-		break;
-	case MSG_TEST_STOP:
-		msg_temp.msg_no = MSG_FAIL;
-		SendMsgPack(idMsgq, msg_temp);
-		break;
-	case MSG_INIT:
-		//init dut status
-		//init exe folder
-		msg_temp.msg_no = MSG_INITACK;
-		SendMsgPack(idMsgq, msg_temp);
-		break;
-	case MSG_INITACK:
-		break;
+		// test
+		if( CheckTestRunning( port ) == OFF )
+		{
+			if(msg_str.length() == 0)
+			{
+				//set script1.uts to share memory
+			}
+			else
+			{
+				char real_name[256];
+
+				if( SearchFile(g_test_path, msg_str.c_str(), real_name) == 0 )
+				{
+					//set main script to share memory
+				}
+			}
+
+			StartTestThread(port);
+			SendMsg(idMsgq, cell, port+1, MSG_TEST,	0, "");
+		}
+		else
+		{
+			printf(">> port %d is testing!!\n", port);
+		}
 	}
+	else if(msg_no == MSG_TEST_STOP)
+	{
+		if( CheckTestRunning(port) == ON )
+		{
+			StopTestThread(port);
+			SendMsg(idMsgq, cell, port+1, MSG_FAIL,	0, "");
+		}
+	}
+	else if(msg_no == MSG_INIT)
+	{
+		int send_mode;
+
+		if(msg_str.length() == 0)
+		{
+			send_mode = SC_FILE_DEFAULT;
+		}
+		else
+		{
+			string strScriptName = msg_str.substr(0, 14);
+			string strScriptSize = msg_str.substr(15, 5);
+
+			char buf[256];
+			char real_name[256];
+
+			//sprintf(buf, "%s/rack_001/tester%03d/exe/", SYS_ATH_PATH, g_idTpc);
+			sprintf(buf, "/tmp/exicon/rack_001/tester%03d/exe/", g_idTpc);
+
+			if( SearchFile(buf, strScriptName.c_str(), real_name) == 0 )
+			{
+				long in_size = atoi(strScriptSize.c_str());
+
+				strcat(buf, real_name);
+				long real_size = GetFileSize( buf );
+				real_size = real_size % 10000;
+
+				if( in_size == real_size )
+				{
+					send_mode = SC_FILE_PASS;
+				}
+				else
+				{
+					send_mode = SC_FILE_SIZE_ERR;
+				}
+			}
+			else
+			{
+				send_mode = SC_FILE_NONE_ERR;
+			}
+		}
+
+		switch(send_mode)
+		{
+		case SC_FILE_DEFAULT:
+			SendMsg(idMsgq, cell, port+1, MSG_INITACK,	0, PROG_VERSION);
+			SendMsg(idMsgq, cell, port+1, MSG_TEXT1, 	0, "");
+			SendMsg(idMsgq, cell, port+1, MSG_TEXT2, 	0, "");
+			SendMsg(idMsgq, cell, port+1, MSG_TEXT3, 	0, "");
+			SendMsg(idMsgq, cell, port+1, MSG_TEXT4, 	0, "");
+			break;
+		case SC_FILE_PASS:
+			SendMsg(idMsgq, cell, port+1, MSG_INITACK,	SC_FILE_PASS, PROG_VERSION);
+			SendMsg(idMsgq, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
+			break;
+		case SC_FILE_SIZE_ERR:
+			SendMsg(idMsgq, cell, port+1, MSG_INITACK,	SC_FILE_SIZE_ERR, PROG_VERSION);
+			SendMsg(idMsgq, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
+			break;
+		case SC_FILE_NONE_ERR:
+			SendMsg(idMsgq, cell, port+1, MSG_INITACK,	SC_FILE_NONE_ERR, PROG_VERSION);
+			SendMsg(idMsgq, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
+			break;
+		}
+	}
+	else if(msg_no == MSG_INITACK)
+	{
+		printf(">> msg_no == MSG_INITACK\n");
+	}
+}
+
+int StartTestThread(int port)
+{
+	return 0;
+}
+
+int StopTestThread(int port)
+{
+	return 0;
 }
 
 

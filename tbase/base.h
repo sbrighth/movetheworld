@@ -46,6 +46,7 @@ void		msleep(int);
 //file
 int			IsFileExist(const char *filename);
 long		GetFileSize(const char *filename);
+int			SearchFile(const char *path, const char *sim_name, char *real_name);
 
 #ifdef __cplusplus
 }

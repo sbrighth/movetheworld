@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 int SendMsgPack(int idMsgq, MsgPack msg);
-int SendMsg(int idMsgq, int cell, int port, int msg_no, const char* str);
+int SendMsg(int idMsgq, int cell, int port, int msg_no, int flag, const char* str);
 
 #ifdef __cplusplus
 }

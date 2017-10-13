@@ -19,6 +19,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <dirent.h>
 #include "def.h"
 #include "base.h"
 
@@ -334,6 +335,40 @@ long GetFileSize(const char *filename)
 
 	fclose(file);
 	return size;
+}
+
+int SearchFile(const char *path, const char *sim_name, char *real_name)
+{
+	bool bFind = false;
+	DIR *dir;
+	struct dirent *dirEntry;
+
+	if(real_name == NULL)
+		return -1;
+
+	dir = opendir(path);
+	if(dir)
+	{
+		while((dirEntry = readdir(dir)) != NULL)
+		{
+			if(dirEntry->d_type == DT_REG )
+			{
+				if(strstr(dirEntry->d_name, sim_name) != NULL)
+				{
+					strcpy(real_name, dirEntry->d_name);
+					bFind = true;
+					break;
+				}
+			}
+		}
+
+		closedir(dir);
+	}
+
+	if(bFind == false)
+		return -2;
+
+	return 0;
 }
 
 #ifdef __cplusplus

@@ -26,7 +26,6 @@ int test_shmem();
 int test_mmap();
 int test_compile_script();
 int test_process();
-void foo(const char *fmt, ...);
 
 int g_statMain;
 
@@ -49,7 +48,6 @@ int main(void) {
 		case '4':	test_mmap();	break;
 		case '5':   test_compile_script();
 					test_process();	break;
-		case '6':   foo("g++ -O2 -g -Wall -I/tmp/exicon/include  -o test.o -c test.cpp %s", "abc" );	break;
 		case 'x':	cond = 0;		break;
 		default:
 			continue;
@@ -68,7 +66,6 @@ int help_test()
 	cout << "3: Share memory test" << endl;
 	cout << "4: memory map test" << endl;
 	cout << "5: script test" << endl;
-	cout << "6: foo" << endl;
 	cout << "x: exit       " << endl;
 	cout << "--------------" << endl;
 	cout << "select cmd >  ";

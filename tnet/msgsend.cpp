@@ -19,14 +19,15 @@ int SendMsgPack(int idMsgq, MsgPack msg)
 	return PushMsgq(idMsgq, &msgq, sizeof(MsgPackQ));
 }
 
-int SendMsg(int idMsgq, int cell, int port, int msg_no, const char* str)
+int SendMsg(int idMsgq, int cell, int port, int msg_no, int flag, const char* str)
 {
 	MsgPack msg;
 	memset(&msg, 0, sizeof(MsgPack));
 
-	msg.cell = cell;
-	msg.port = port;
-	msg.msg_no = msg_no;
+	msg.cell	= cell;
+	msg.port	= port;
+	msg.msg_no	= msg_no;
+	msg.flag 	= flag;
 	memcpy(msg.string, str, strlen(str));
 
 	return SendMsgPack(idMsgq, msg);
