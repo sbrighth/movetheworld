@@ -18,7 +18,7 @@
 #define int32	int
 #define int64	long long
 
-#define SYS_PATH				"/ssd"
+#define SYS_PATH				"/exicon"
 #define SYS_BIN_PATH			SYS_PATH "/bin"
 #define SYS_LIB_PATH			SYS_PATH "/lib"
 #define SYS_INC_PATH			SYS_PATH "/include"
@@ -36,10 +36,14 @@
 #define SYS_DIAG_PATH 			SYS_PATH "/diag"
 #define SYS_DEBUG_PATH 			SYS_PATH "/debug"
 
+//msgq
 #define KEY_TEST_MSGQ			0x1000
-#define KEY_DEBUG_MSGQ			0x1001
 
-#define KEY_DPS_LOCK			0x2000
+//semaphore
+#define KEY_DPS_LOCK			0x1000
+
+//share memory
+#define KEY_RES_SHARE			0x1000
 
 #define MSGBOX_SEND_TO			"in"
 #define MSGBOX_RECV_FROM		"out"

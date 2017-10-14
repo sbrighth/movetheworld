@@ -70,7 +70,7 @@ int CMsgBox::SendMsg(MsgPack msg)
 
 int CMsgBox::RecvMsg(MsgPack &msg)
 {
-	if( qReadMsg.size() > 0)
+	if(qReadMsg.size() > 0)
 	{
 		msg = qReadMsg.front();
 		qReadMsg.pop();
@@ -97,8 +97,11 @@ int CMsgBox::InitMsgFile(string filename)
 	MsgPack msg;
 	memset(&msg, 0, sizeof(MsgPack));
 
+	if(filename.empty())
+		return -1;
+
 	FILE* fp = fopen(filename.c_str(), "w");
-	if( fp )
+	if(fp)
 	{
 		msg.version = 0x3412;
 		fwrite(&msg, MSG_PACKET_SIZE, 1, fp);
@@ -114,37 +117,48 @@ int CMsgBox::WriteMsgFile()
 {
 	MsgPack *wmsg;
 	MsgPack hmsg;		//head message
-	int cur_cnt;
-	int send_cnt;
-	int size;
+	int cntCurMsg;
+	int cntWriteMsg;
+	long lFileSize;
 
-	send_cnt = qWriteMsg.size();
-	if(send_cnt==0)
+	cntWriteMsg = qWriteMsg.size();
+	if(cntWriteMsg==0)
 		return 0;
+
+	if(strWriteFileName.empty())
+		return -1;
 
 	FILE* fp = fopen(strWriteFileName.c_str(), "r+");
 	if( fp )
 	{
 		fseek(fp, 0, SEEK_END);
-		size = ftell(fp);
-		cur_cnt = (size / MSG_PACKET_SIZE);
+		lFileSize = ftell(fp);
 
-		wmsg = new MsgPack[send_cnt];
-		memset(wmsg, 0, sizeof(MsgPack)*send_cnt);
+		if(lFileSize % MSG_PACKET_SIZE != 0)
+		{
+			fclose(fp);
+			return -2;
+		}
+		else
+		{
+			cntCurMsg = (lFileSize / MSG_PACKET_SIZE) - 1;
+		}
 
-		for(int i=0; i<send_cnt; i++)
+		wmsg = new MsgPack[cntWriteMsg];
+		memset(wmsg, 0, sizeof(MsgPack)*cntWriteMsg);
+
+		for(int i=0; i<cntWriteMsg; i++)
 		{
 			wmsg[i] = qWriteMsg.front();
-			wmsg[i].packet = cur_cnt + i;
 			qWriteMsg.pop();
 		}
 
-		fwrite(wmsg, MSG_PACKET_SIZE, send_cnt, fp);
+		fwrite(wmsg, MSG_PACKET_SIZE, cntWriteMsg, fp);
 		fseek(fp, 0, SEEK_SET);
 
 		memset(&hmsg, 0, sizeof(MsgPack));
 		hmsg.version = 0x3412;
-		hmsg.msg_no = cur_cnt + send_cnt - 1;
+		hmsg.msg_no = cntCurMsg + cntWriteMsg;
 		fwrite(&hmsg, MSG_PACKET_SIZE, 1, fp);
 		fseek(fp, 0, SEEK_END);
 
@@ -159,50 +173,69 @@ int CMsgBox::WriteMsgFile()
 
 int CMsgBox::ReadMsgFile()
 {
-	int size = 0;
-	int rsize = 0;
-	char *temp_buf;
+	int cntCurMsg;
+	int cntReadMsg;
+	long lFileSize = 0;
+	char *buf;
 	MsgPack msg;
+
+	if(strReadFileName.empty())
+		return -1;
 
 	FILE* fp = fopen(strReadFileName.c_str(), "r");
 	if( fp )
 	{
 		fseek(fp, 0, SEEK_END);
-		size = ftell(fp);
-		if(size == 0)
+		lFileSize = ftell(fp);
+		if(lFileSize <= MSG_PACKET_SIZE)
 		{
 			fclose(fp);
 			return 0;
 		}
+		else if(lFileSize % MSG_PACKET_SIZE != 0)
+		{
+			printf(">> %s read file size error\n", __func__);
+			fclose(fp);
+			return -2;
+		}
 
-		temp_buf = new char[size];
-		rsize = fread(temp_buf, size, 1, fp);
+		buf = new char[lFileSize];
+		fseek(fp, 0, SEEK_SET);
+		fread(buf, lFileSize, 1, fp);
 		fclose(fp);
+
+		msg = ((MsgPack *)buf)[0];
+		cntCurMsg = msg.msg_no;
+		cntReadMsg = lFileSize/MSG_PACKET_SIZE - 1;
+
+		if(cntCurMsg != cntReadMsg)
+		{
+			printf(">> %s read file cnt error\n", __func__);
+			return 0;
+		}
 
 		InitMsgFile(strReadFileName);
 
-		for(int i=1; i<size; i++)
+		for(int i=1; i<=cntCurMsg; i++)
 		{
-			msg = ((MsgPack *)temp_buf)[i];
+			msg = ((MsgPack *)buf)[i];
 			qReadMsg.push(msg);
+			PrintMsg(msg);
 		}
 
-		delete []temp_buf;
+		delete []buf;
 	}
 	else
 		return -1;
 
-	return rsize;
+	return cntCurMsg;
 }
 
 void* CMsgBox::MsgFileThread(void* arg)
 {
-	printf(">> %s start!!\n", __func__);
-
 	CMsgBox* pthis = (CMsgBox*)arg;
 	pthis->_MsgFileThread();
 
-	printf(">> %s end!!\n", __func__);
 	pthread_exit( (void* )0 );
 }
 

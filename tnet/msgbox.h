@@ -24,7 +24,7 @@ public:
 
 public:
 	MsgPack			NewMsg(uint16 cell, uint16 port, uint16 msg_no, uint16 packet, uint16 flag, const char *data);
-	void			PrintMsg(MsgPack msg);
+	static void		PrintMsg(MsgPack msg);
 	int				InitMsg();
 	int				SendMsg(MsgPack msg);		//in
 	int				RecvMsg(MsgPack &msg);		//out
@@ -37,6 +37,8 @@ public:
 private:
 	int				InitMsgFile();
 	int				InitMsgFile(string filename);
+	int				InitMsgPacket();
+
 	int				WriteMsgFile();				//in
 	int				ReadMsgFile();				//out
 	static void*	MsgFileThread(void* arg);

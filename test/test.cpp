@@ -16,6 +16,7 @@
 #include "def.h"
 #include "base.h"
 #include "msgsend.h"
+#include "msgbox.h"
 
 using namespace std;
 int help_test();
@@ -26,8 +27,7 @@ int test_shmem();
 int test_mmap();
 int test_compile_script();
 int test_process();
-
-int g_statMain;
+int	test_msg_out();
 
 int main(void) {
 	int cond = 1;
@@ -48,6 +48,7 @@ int main(void) {
 		case '4':	test_mmap();	break;
 		case '5':   test_compile_script();
 					test_process();	break;
+		case '6':	test_msg_out();	break;
 		case 'x':	cond = 0;		break;
 		default:
 			continue;
@@ -66,6 +67,7 @@ int help_test()
 	cout << "3: Share memory test" << endl;
 	cout << "4: memory map test" << endl;
 	cout << "5: script test" << endl;
+	cout << "6: write out msg(UI -> tdm)" << endl;
 	cout << "x: exit       " << endl;
 	cout << "--------------" << endl;
 	cout << "select cmd >  ";
@@ -75,7 +77,6 @@ int help_test()
 
 int test_msg()
 {
-	int cnt;
 	char cmd;
 	char version[32];
 	char cell[32];
@@ -87,10 +88,10 @@ int test_msg()
 
 	cout << "<< msg program >>" << endl << endl;
 
-	g_statMain = 1;
+	int statMain = 1;
 	int id_msg = CreateMsgq(KEY_TEST_MSGQ);
 
-	while(g_statMain)
+	while(statMain)
 	{
 		help_msg();
 		cin >> cmd;
@@ -108,33 +109,22 @@ int test_msg()
 			cout << "cell    : "; cin >> cell;
 			cout << "port    : "; cin >> port;
 			cout << "msg_no  : "; cin >> msg_no;
-		}
+			cout << "string  : "; cin >> string;
 
+			memset(&msg, 0, sizeof(MsgPack));
+			msg.version = atoi(version);
+			msg.cell = atoi(cell);
+			msg.port = atoi(port);
+			msg.msg_no = atoi(msg_no);
+			sprintf(msg.string, "%s", string);
 
-		memset(&msg, 0, sizeof(MsgPack));
-		msg.version = atoi(version);
-		msg.cell = atoi(cell);
-		msg.port = atoi(port);
-		msg.msg_no = atoi(msg_no);
-		sprintf(msg.string, "%s", "google is good");;
-
-		printf(">> msg.string = %s(%s)\n", msg.string, string);
-		switch(cmd)
-		{
-		case '1':
 			//msgq.type = TYPE_MSGQ_SEND;
 			SendMsgPack(id_msg, msg);
-			break;
-		case 'x':
-			g_statMain = 0;
-			break;
-		default:
-			continue;
 		}
-
-		cnt = CurNumMsgq(id_msg);
-		printf(">> send msgq cnt = %d\n", cnt);
-		fseek(stdin, 0, SEEK_END);
+		else
+		{
+			statMain = 0;
+		}
 	}
 
 	return EXIT_SUCCESS;
@@ -144,7 +134,7 @@ int test_msg()
 int help_msg()
 {
 	cout << "--------------" << endl;
-	cout << "1: MSG send to in file" << endl;
+	cout << "1: MSG send" << endl;
 	cout << "x: exit       " << endl;
 	cout << "--------------" << endl;
 	cout << "select cmd >  ";
@@ -168,13 +158,15 @@ int test_shmem()
 	char buf[32];
 	int id_shmem = CreateShmem(0x3000, sizeof(buf));
 
-	memset(buf, 'a', sizeof(buf));
+	memset(buf, 'a', sizeof(buf)-1);
 	SetShmem(id_shmem, 0, 32, buf);
+	printf(">> write data = %s\n", buf);
 
 	memset(buf, 0, sizeof(buf));
 	GetShmem(id_shmem, 0, 32, buf);
+	printf(">> read data = %s\n", buf);
 
-	RemoveShmem(id_shmem);
+	//RemoveShmem(id_shmem);
 	return EXIT_SUCCESS;
 }
 
@@ -266,5 +258,60 @@ int run_prog(const char *fmt, ...)
     va_end(ap);
 
     return 0;
+}
+
+
+int test_msg_out()
+{
+	char cmd;
+	char version[32];
+	char cell[32];
+	char port[32];
+	char msg_no[32];
+	char string[32];
+	int statMain = 1;
+
+	MsgPack msg;
+	CMsgBox msgbox("/tmp/exicon/athost/rack_001/tester001/exe/out", "/tmp/exicon/athost/rack_001/tester001/exe/temp");
+	msgbox.StartThread();
+
+	cout << "<< msg write program >>" << endl << endl;
+
+	while(statMain)
+	{
+		help_msg();
+		cin >> cmd;
+		cout << endl;
+
+		if(cmd != 'x')
+		{
+			memset(version, 0, 32);
+			memset(cell, 0, 32);
+			memset(port, 0, 32);
+			memset(msg_no, 0, 32);
+			memset(string, 0, 32);
+
+			cout << "version : "; cin >> version;
+			cout << "cell    : "; cin >> cell;
+			cout << "port    : "; cin >> port;
+			cout << "msg_no  : "; cin >> msg_no;
+			cout << "string  : "; cin >> string;
+
+			memset(&msg, 0, sizeof(MsgPack));
+			msg.version = atoi(version);
+			msg.cell = atoi(cell);
+			msg.port = atoi(port);
+			msg.msg_no = atoi(msg_no);
+			sprintf(msg.string, "%s", string);
+
+			msgbox.SendMsg(msg);
+		}
+		else
+		{
+			statMain = 0;
+		}
+	}
+
+	return EXIT_SUCCESS;
 }
 

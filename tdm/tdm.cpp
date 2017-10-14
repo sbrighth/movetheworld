@@ -43,18 +43,18 @@ int main(int argc, char *argv[])
 
 	//get tpc bd id;
 	g_idTpc = 1;
+	g_idResShare = CreateShmem(KEY_RES_SHARE, 512);
 
 	//init test folder
 	string strTestMsgSendTo, strTestMsgRecvFrom;
 	string strTestPath;
 
 	//sprintf(g_test_path, "%s/rack_001/tester%03d/exe/", SYS_ATH_PATH, g_idTpc);
-	sprintf(g_test_path, "/tmp/exicon/rack_001/tester%03d/exe/", g_idTpc);
+	sprintf(g_test_path, "/tmp/%s/rack_001/tester%03d/exe/", SYS_ATH_PATH, g_idTpc);
 
 	strTestPath = g_test_path;
 	CreateWorkFolder(strTestPath);
 
-	return 0;
 	strTestMsgSendTo = strTestPath + string(MSGBOX_SEND_TO);
 	strTestMsgRecvFrom = strTestPath + string(MSGBOX_RECV_FROM);
 
@@ -74,6 +74,7 @@ int main(int argc, char *argv[])
 		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx, MSG_TEXT4, 		0, "");
 	}
 
+	g_condTestDm = 1;
 	while( g_condTestDm )
 	{
 		msleep(100);
@@ -169,6 +170,75 @@ int CheckTestRunning(int port)
 	return g_test_status[port];
 }
 
+int CheckScriptFile(int idMsgq, MsgPack msg)
+{
+	int cell    	= msg.cell;
+	int port    	= msg.port-1;
+	char *msg_str	= msg.string;
+
+	int iSendMode = SC_FILE_DEFAULT;
+	char szRealName[256] = {0,};
+
+	if(strlen(msg_str) > 0)
+	{
+		char szScriptName[14]={0,};
+		char szScriptSize[5]={0,};
+
+		memcpy(szScriptName, msg_str, sizeof(szScriptName));
+		memcpy(szScriptSize, msg_str+sizeof(szScriptName)+1, sizeof(szScriptSize));
+
+		if( SearchFile(g_test_path, szScriptName, szRealName) == 0 )
+		{
+			long lScriptSize = atoi(szScriptSize);
+
+			sprintf(szRealName, "%s/%s", g_test_path, szRealName);
+
+			long lRealSize = GetFileSize(szRealName);
+			lRealSize = lRealSize % 10000;
+
+			if( lScriptSize == lRealSize )
+			{
+				iSendMode = SC_FILE_PASS;
+			}
+			else
+			{
+				iSendMode = SC_FILE_SIZE_ERR;
+			}
+		}
+		else
+		{
+			iSendMode = SC_FILE_NONE_ERR;
+		}
+	}
+
+	switch(iSendMode)
+	{
+	case SC_FILE_DEFAULT:
+		SendMsg(idMsgq, cell, port+1, MSG_INITACK,	SC_FILE_DEFAULT, PROG_VERSION);
+		SendMsg(idMsgq, cell, port+1, MSG_TEXT1,    0,	"MSG_INIT");
+		SendMsg(idMsgq, cell, port+1, MSG_TEXT2,    0, 	"");
+		SendMsg(idMsgq, cell, port+1, MSG_TEXT3,    0, 	"");
+		SendMsg(idMsgq, cell, port+1, MSG_TEXT4,    0, 	"");
+		break;
+	case SC_FILE_PASS:
+		SendMsg(idMsgq, cell, port+1, MSG_INITACK,	SC_FILE_PASS, PROG_VERSION);
+		SendMsg(idMsgq, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
+		break;
+	case SC_FILE_SIZE_ERR:
+		SendMsg(idMsgq, cell, port+1, MSG_INITACK,	SC_FILE_SIZE_ERR, PROG_VERSION);
+		SendMsg(idMsgq, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
+		break;
+	case SC_FILE_NONE_ERR:
+		SendMsg(idMsgq, cell, port+1, MSG_INITACK,	SC_FILE_NONE_ERR, PROG_VERSION);
+		SendMsg(idMsgq, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
+		break;
+	case SC_FILE_OTHER_ERR:
+		break;
+	}
+
+	return iSendMode;
+}
+
 void RecvMsgProc(int idMsgq, MsgPack msg)
 {
 	//int version		= msg.version;
@@ -177,11 +247,11 @@ void RecvMsgProc(int idMsgq, MsgPack msg)
 	int msg_no		= msg.msg_no;
 	//int packet 		= msg.packet;
 	//int flag 		= msg.flag;
-	string msg_str	= msg.string;
+	char *msg_str	= msg.string;
 
 	if(cell != g_idTpc)
 	{
-		printf(">> wrong tpc no\n");
+		printf(">> invalid tpc no(c:%d, g_idTpc:%d)\n", cell, g_idTpc);
 		return;
 	}
 
@@ -190,25 +260,22 @@ void RecvMsgProc(int idMsgq, MsgPack msg)
 
 	if(msg_no == MSG_TEST_START)
 	{
-		// test
 		if( CheckTestRunning( port ) == OFF )
 		{
-			if(msg_str.length() == 0)
+			char szRealName[256] = {0,};
+
+			if( SearchFile(g_test_path,msg_str, szRealName) == 0 )
 			{
-				//set script1.uts to share memory
+				sprintf(szRealName, "%s/%s", g_test_path, szRealName);
+				SetShmem(g_idResShare, port, 256, szRealName);
+
+				if(StartTestThread(port) == 0)
+					SendMsg(idMsgq, cell, port+1, MSG_TEST,	0, "");
 			}
 			else
 			{
-				char real_name[256];
-
-				if( SearchFile(g_test_path, msg_str.c_str(), real_name) == 0 )
-				{
-					//set main script to share memory
-				}
+				printf(">> port %d script is not exist!!\n", port);
 			}
-
-			StartTestThread(port);
-			SendMsg(idMsgq, cell, port+1, MSG_TEST,	0, "");
 		}
 		else
 		{
@@ -225,77 +292,21 @@ void RecvMsgProc(int idMsgq, MsgPack msg)
 	}
 	else if(msg_no == MSG_INIT)
 	{
-		int send_mode;
-
-		if(msg_str.length() == 0)
-		{
-			send_mode = SC_FILE_DEFAULT;
-		}
-		else
-		{
-			string strScriptName = msg_str.substr(0, 14);
-			string strScriptSize = msg_str.substr(15, 5);
-
-			char buf[256];
-			char real_name[256];
-
-			//sprintf(buf, "%s/rack_001/tester%03d/exe/", SYS_ATH_PATH, g_idTpc);
-			sprintf(buf, "/tmp/exicon/rack_001/tester%03d/exe/", g_idTpc);
-
-			if( SearchFile(buf, strScriptName.c_str(), real_name) == 0 )
-			{
-				long in_size = atoi(strScriptSize.c_str());
-
-				strcat(buf, real_name);
-				long real_size = GetFileSize( buf );
-				real_size = real_size % 10000;
-
-				if( in_size == real_size )
-				{
-					send_mode = SC_FILE_PASS;
-				}
-				else
-				{
-					send_mode = SC_FILE_SIZE_ERR;
-				}
-			}
-			else
-			{
-				send_mode = SC_FILE_NONE_ERR;
-			}
-		}
-
-		switch(send_mode)
-		{
-		case SC_FILE_DEFAULT:
-			SendMsg(idMsgq, cell, port+1, MSG_INITACK,	0, PROG_VERSION);
-			SendMsg(idMsgq, cell, port+1, MSG_TEXT1, 	0, "");
-			SendMsg(idMsgq, cell, port+1, MSG_TEXT2, 	0, "");
-			SendMsg(idMsgq, cell, port+1, MSG_TEXT3, 	0, "");
-			SendMsg(idMsgq, cell, port+1, MSG_TEXT4, 	0, "");
-			break;
-		case SC_FILE_PASS:
-			SendMsg(idMsgq, cell, port+1, MSG_INITACK,	SC_FILE_PASS, PROG_VERSION);
-			SendMsg(idMsgq, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
-			break;
-		case SC_FILE_SIZE_ERR:
-			SendMsg(idMsgq, cell, port+1, MSG_INITACK,	SC_FILE_SIZE_ERR, PROG_VERSION);
-			SendMsg(idMsgq, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
-			break;
-		case SC_FILE_NONE_ERR:
-			SendMsg(idMsgq, cell, port+1, MSG_INITACK,	SC_FILE_NONE_ERR, PROG_VERSION);
-			SendMsg(idMsgq, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
-			break;
-		}
+		CheckScriptFile(idMsgq, msg);
 	}
 	else if(msg_no == MSG_INITACK)
 	{
-		printf(">> msg_no == MSG_INITACK\n");
+
 	}
 }
 
 int StartTestThread(int port)
 {
+	char real_name[256];
+	memset(real_name, 0, sizeof(real_name));
+
+	GetShmem(g_idResShare, port, 256, real_name);
+	printf(">> real_name = %s\n", real_name);
 	return 0;
 }
 

@@ -18,7 +18,7 @@
 #define SC_FILE_OTHER_ERR	0x5
 
 #define PROG_NAME		"tdm"
-#define PROG_VERSION	"0.0.6"
+#define PROG_VERSION	"0.0.7"
 
 int		CheckProgRunning();
 void	ProcSignalStop(int sig_no);
@@ -28,12 +28,14 @@ void	RecvMsgProc(int idMsgq, MsgPack msg);
 int		CheckTestRunning(int port);
 int		StartTestThread(int port);
 int		StopTestThread(int port);
-
+int		CheckScriptFile(int msg_no, string msg_str);
 
 char	g_test_path[256];
 int		g_test_status[PORT_MAX];
-int		g_condTestDm = 1;
-int		g_idTpc = 0;
+int		g_condTestDm;
+int		g_idTpc;
+int		g_idResShare;
+
 CMsgqThread *g_pTestMsgq = NULL;
 
 

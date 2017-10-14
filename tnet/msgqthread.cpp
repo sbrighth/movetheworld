@@ -18,39 +18,37 @@ void* MsgqCheckThread(void *arg)
 {
 	CMsgqThread* pthis = (CMsgqThread *)arg;
 	int ret;
-	MsgPack read_msg;
-	MsgPackQ temp_msgq;
-
-	printf(">> %s start!!\n", __func__);
+	MsgPack msgRead;
+	MsgPackQ msgqCheck;
 
 	while(pthis->condCheckThread)
 	{
-		//send msg to MsgBox
+		//pop send msg in MSGQ and pass to MsgBox
 		if(CurNumMsgq(pthis->idMsgq) > 0)
 		{
-			memset(&temp_msgq, 0, sizeof(MsgPackQ));
-			temp_msgq.type = TYPE_MSGQ_SEND;
+			memset(&msgqCheck, 0, sizeof(MsgPackQ));
+			msgqCheck.type = TYPE_MSGQ_SEND;
 
-			ret = PopMsgq(pthis->idMsgq, &temp_msgq, sizeof(MsgPackQ));
+			ret = PopMsgq(pthis->idMsgq, &msgqCheck, sizeof(MsgPackQ));
 			if(ret == 0)
-				pthis->SendMsg(temp_msgq.msg);
+				pthis->SendMsg(msgqCheck.msg);
 		}
 
-		//read msg from MsgBox
-		ret = pthis->RecvMsg(read_msg);
+		//check recv msg in MsgBox and push to MSGQ
+		memset(&msgRead, 0, sizeof(MsgPack));
+		ret = pthis->RecvMsg(msgRead);
 		if(ret == 0)
 		{
-			memset(&temp_msgq, 0, sizeof(MsgPackQ));
-			temp_msgq.type = TYPE_MSGQ_RECV;
-			temp_msgq.msg = read_msg;
+			memset(&msgqCheck, 0, sizeof(MsgPackQ));
+			msgqCheck.type = TYPE_MSGQ_RECV;
+			msgqCheck.msg = msgRead;
 
-			PushMsgq(pthis->idMsgq, &temp_msgq, sizeof(MsgPackQ));
+			PushMsgq(pthis->idMsgq, &msgqCheck, sizeof(MsgPackQ));
 		}
 
 		msleep(100);
 	}
 
-	printf(">> %s end!!\n", __func__);
 	pthread_exit( (void* )0 );
 	return (void* )0;
 }
@@ -58,30 +56,25 @@ void* MsgqCheckThread(void *arg)
 void* MsgqProcThread(void *arg)
 {
 	CMsgqThread *pthis = (CMsgqThread *)arg;
-	MsgPackQ proc_msgq;
-
-	printf(">> %s start!!\n", __func__);
+	MsgPackQ msgqProc;
 
 	while(pthis->condProcThread)
 	{
-		//Get msg from msgq
+		//pop recv msg and pass to proc function
 		if(CurNumMsgq(pthis->idMsgq) > 0)
 		{
-			memset(&proc_msgq, 0, sizeof(MsgPackQ));
-			proc_msgq.type = TYPE_MSGQ_RECV;
+			memset(&msgqProc, 0, sizeof(MsgPackQ));
+			msgqProc.type = TYPE_MSGQ_RECV;
 
-			if(PopMsgq(pthis->idMsgq, &proc_msgq, sizeof(MsgPackQ)) == 0)
+			if(PopMsgq(pthis->idMsgq, &msgqProc, sizeof(MsgPackQ)) == 0)
 			{
-				printf(">> incoming process msg!!!\n");
-				//pthis->PrintMsg(proc_msgq.msg);
-				pthis->ProcFunc(pthis->idMsgq, proc_msgq.msg);
+				pthis->ProcFunc(pthis->idMsgq, msgqProc.msg);
 			}
 		}
 
 		msleep(100);
 	}
 
-	printf(">> %s end!!\n", __func__);
 	pthread_exit( (void* )0 );
 	return (void* )0;
 }
