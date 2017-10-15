@@ -54,6 +54,8 @@
 #define ON						1
 #define	OFF						0
 
+#define PATHNAME_SIZE			256
+
 enum PORT
 {
 	PORT1 = 1,

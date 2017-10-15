@@ -11,7 +11,6 @@
 #include <iostream>
 #include <queue>
 #include <pthread.h>
-#include <functional>
 #include "def.h"
 
 using namespace std;

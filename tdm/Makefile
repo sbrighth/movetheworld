@@ -3,11 +3,11 @@ CXX		 	= g++
 BINPATH		= /tmp/exicon/bin
 INCPATH		= /tmp/exicon/include
 LIBPATH		= /tmp/exicon/lib
-CXXFLAGS 	= -O2 -g -Wall -fmessage-length=0 -I$(INCPATH)
+CXXFLAGS 	= -O2 -g -Wall -fmessage-length=0 -Wno-unused-result -I$(INCPATH)
 LDFLAGS  	=  -L$(LIBPATH) -ltbase -ltnet -lpthread 
 
 TARGET =	tdm
-OBJS =		tdm.o
+OBJS =		testdm.o testmng.o
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) -o $@ -c $< 
