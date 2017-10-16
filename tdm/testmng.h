@@ -28,17 +28,18 @@ public:
 	int				StartTest(string strPath, string strFileName);
 	int				StopTest();
 	int				IsTestOn();
-
-private:
 	int				CheckScriptExt(string strFileName);
 
-private:
-	int				condThread;
-	pthread_t		idThread;
+	string			strRunFile;
+	string			strWorkPath;
 	int				iCell;
 	int				iPort;
-
-	string			strScriptProcName;
+	pid_t			pidTestProcess;
+	int				iChildStatus;
+	int				condThread;
+	pthread_t		idThread;
+	pthread_cond_t	condSync;
+	pthread_mutex_t	mutexSync;
 };
 
 #endif /* TESTMNG_H_ */

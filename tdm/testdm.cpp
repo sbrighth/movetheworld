@@ -67,11 +67,11 @@ int main(int argc, char *argv[])
 	for(int idx=0; idx<PORT_MAX; idx++)
 	{
 		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx+1, MSG_INIT, 		0, PROG_VERSION);
-		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx+1, MSG_INITCOLOR, 	0, "");
-		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx+1, MSG_TEXT1, 		0, "EMPTY");
-		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx+1, MSG_TEXT2, 		0, "");
-		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx+1, MSG_TEXT3, 		0, PROG_VERSION);
-		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx+1, MSG_TEXT4, 		0, "");
+		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx+1, MSG_INITCOLOR, 0, "");
+		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx+1, MSG_TEXT1, 	0, "EMPTY");
+		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx+1, MSG_TEXT2, 	0, "");
+		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx+1, MSG_TEXT3, 	0, PROG_VERSION);
+		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx+1, MSG_TEXT4, 	0, "");
 
 		g_pTestMng[idx] = new CTestMng(g_idTpc, idx);
 	}
@@ -85,15 +85,19 @@ int main(int argc, char *argv[])
 	if(g_pTestMsgq != NULL)
 	{
 		g_pTestMsgq->StopThread();
+		delete g_pTestMsgq;
+	}
 
+	if(g_pTestMng != NULL)
+	{
 		for(int idx=0; idx<PORT_MAX; idx++)
 		{
 			delete g_pTestMng[idx];
 		}
-		delete []g_pTestMng;
 
-		delete g_pTestMsgq;
+		delete []g_pTestMng;
 	}
+
 
 	printf("%s end!!\n", PROG_NAME);
 
@@ -241,8 +245,7 @@ void RecvMsgProc(int idMsgq, MsgPack msg)
 				if(g_pTestMng[port]->StartTest(g_szTestPath, szRealName) == 0)
 				{
 					printf(">> test is started!!\n");
-					//g_iTestStatus[port] = ON;
-					//SendMsg(idMsgq, cell, port+1, MSG_TEST,	0, "");
+					SendMsg(idMsgq, cell, port+1, MSG_TEST,	0, "");
 				}
 			}
 			else
@@ -260,7 +263,6 @@ void RecvMsgProc(int idMsgq, MsgPack msg)
 		if(g_pTestMng[port]->IsTestOn() == ON)
 		{
 			g_pTestMng[port]->StopTest();
-			g_iTestStatus[port] = OFF;
 			SendMsg(idMsgq, cell, port+1, MSG_FAIL,	0, "");
 		}
 	}

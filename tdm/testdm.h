@@ -34,7 +34,6 @@ int		CheckScriptFile(char *msg_str);
 
 
 char	g_szTestPath[PATHNAME_SIZE];
-int		g_iTestStatus[PORT_MAX];
 int		g_condTestDm;
 int		g_idTpc;
 int		g_idResShare;

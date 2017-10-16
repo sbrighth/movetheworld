@@ -10,49 +10,82 @@
 #include <pthread.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
 #include <sstream>
 #include "def.h"
 #include "testmng.h"
-
-void *TestThread(void *)
-{
-	//script run.
-	pthread_exit((void *)0);
-}
 
 CTestMng::CTestMng(int iCell, int iPort):iCell(iCell),iPort(iPort)
 {
 	condThread = 1;
 	idThread = 0;
+	strWorkPath = "/tmp/";
 }
 
 CTestMng::~CTestMng()
 {
 }
 
+void *TestThread(void *arg)
+{
+	CTestMng *pthis = (CTestMng*)arg;
+	int status = 0;
+	pthis->iChildStatus = 0;
+
+	pid_t pid = fork();
+	if(pid < 0)
+	{
+		perror("fork error");
+	}
+	else if(pid == 0)
+	{
+		char cCell[2];
+		char cPort[2];
+		sprintf(cCell, "%d", pthis->iCell);
+		sprintf(cPort, "%d", pthis->iPort);
+
+		pthis->iChildStatus = execl(pthis->strRunFile.c_str(), pthis->strRunFile.c_str(), cCell, cPort, NULL);
+	}
+	else
+	{
+		pthis->pidTestProcess = pid;
+		waitpid(pid, &status, 0);
+	}
+
+	pthis->idThread = 0;
+	pthread_exit((void *)0);
+}
+
 int CTestMng::StartTest(string strPath, string strFileName)
 {
 	if(idThread == 0)
 	{
-		//copy script file to work folder
+		//check script file extension
+		string strScriptProcFile;
 		int iExtPos = CheckScriptExt(strFileName);
+
 		if(iExtPos < 0)
 		{
-			return -1;
+			printf(">> '%s' file is not eixst\n", TEST_SCRIPT_ORI_EXT);
+			return -2;
 		}
 		else if(iExtPos == 0)
 		{
-			strScriptProcName = strFileName;
+			strScriptProcFile = strWorkPath + "/" + strFileName;
 		}
 		else
 		{
-			strScriptProcName = strFileName.substr(0, iExtPos) + TEST_SCRIPT_RUN_EXT;
+			strScriptProcFile = strWorkPath + "/" + strFileName.substr(0, iExtPos) + TEST_SCRIPT_RUN_EXT;
 		}
 
-		string strWorkPath = "/tmp/";
+		//copy script to work folder
 		string strCmd;
-		strCmd = "cp -f " + strPath + "/" + strFileName + " " + strWorkPath + "/" + strScriptProcName;
-		//system(strCmd.c_str());
+		strCmd = "cp -f " + strPath + "/" + strFileName + " " + strScriptProcFile;
+		system(strCmd.c_str());
+
+		printf(">> cp cmd = %s\n", strCmd.c_str());
 
 		//compile script
 		string compiler	= "/usr/bin/gcc";
@@ -62,43 +95,49 @@ int CTestMng::StartTest(string strPath, string strFileName)
 
 		stringstream ss;
 		ss << strWorkPath << "test_script_" << iPort+1;
-		string target = ss.str();
-		unlink(target.c_str());
+		strRunFile = ss.str();
+		unlink(strRunFile.c_str());
 
-		strCmd = compiler + " " + incpath + " " + strWorkPath + strScriptProcName + " -o " + target + " " + libpath + " " + lib + " 2>&1";
+		strCmd = compiler + " " + incpath + " " + strScriptProcFile + " -o " + strRunFile + " " + libpath + " " + lib + " 2>&1";
+
+		printf(">> compile cmd = %s\n", strCmd.c_str());
 
 		FILE *file;
 		file = popen(strCmd.c_str(), "r");
 		if(file == NULL)
 		{
-			printf(">> compile fail!!\n");
+			printf(">> compile execute error!!\n");
+			return -3;
 		}
 		else
 		{
-			char buf[256];
+			char buf[256] = {0,};
+			stringstream ssCompileErr;
+
 			while(fgets(buf, sizeof(buf), file))
 			{
-				//compile error msg
-				printf(">> buf = %s\n", buf);
+				ssCompileErr << buf;
 			}
 
 			pclose(file);
 
-			//cout << "this is system!! - " << endl;
-			//system(strCmd.c_str());
-
-
-
-
-			//system(target.c_str());
-			//system(strCmd.c_str());
-			//start test
-			//pthread_create(&idThread, NULL, TestThread, (void *)0);
-			//pthread_detach(idThread);
+			if(ssCompileErr.str().size() > 0)
+			{
+				printf(">> compile error is happened!!\n");
+				return -4;
+			}
 		}
+
+		//delete script file
+		unlink(strScriptProcFile.c_str());
+
+		//run script
+		pthread_create(&idThread, NULL, TestThread, (void*)this);
+		pthread_detach(idThread);
 	}
 	else
 	{
+		printf(">> test is running\n");
 		return -1;
 	}
 
@@ -109,7 +148,8 @@ int CTestMng::StopTest()
 {
 	if(idThread != 0)
 	{
-		idThread = 0;
+		printf("child process status = %d\n", iChildStatus);
+		kill(pidTestProcess, SIGKILL);
 	}
 
 	return 0;
@@ -140,81 +180,9 @@ int CTestMng::CheckScriptExt(string strFileName)
 
 	if(strExt.compare("c") == 0)
 		return 0;
-	else if(strExt.compare("sct") == 0)
+	else if(strExt.compare(TEST_SCRIPT_ORI_EXT) == 0)
 		return pos+1;
 
 	return -2;
 }
-
-
-
-
-/*
-int test_compile_script()
-{
-	int ret;
-	string compiler = "g++";
-	string script = "/tmp/exicon/script/sample.c";
-	string target = "/tmp/exicon/script/sample";
-	string incpath = "-I/tmp/exicon/include";
-	string libpath = "-L/tmp/exicon/lib";
-	string lib = "-ltbase -ltnet";
-
-	int status;
-	pid_t pid;
-	unlink(target.c_str());
-
-	pid = fork();
-
-	if(pid < 0)
-	{
-		perror("fork error");
-		ret = -1;
-	}
-	else if(pid == 0)
-	{
-		printf("compile child process\n");
-		ret = execlp(compiler.c_str(), compiler.c_str(), incpath.c_str(), "-o", target.c_str(), script.c_str(), libpath.c_str(), NULL);
-	}
-	else
-	{
-		waitpid(pid, &status, 0);
-		ret = pid;
-	}
-
-	printf("ret= %d\n", ret);
-	return ret;
-}
-
-int test_process()
-{
-	int ret;
-	int status;
-	string target = "/tmp/exicon/script/sample";
-	size_t pos = target.rfind('/') + 1;
-	char cell[8] = "1";
-	char port[8] = "2";
-
-	pid_t pid = fork();
-
-	if(pid < 0)
-	{
-		perror("fork error");
-		ret = -1;
-	}
-	else if(pid == 0)
-	{
-		printf("child process\n");
-		ret = execl(target.c_str(), target.substr(pos).c_str(), cell, port, NULL);
-	}
-	else
-	{
-		waitpid(pid, &status, 0);
-		ret = pid;
-	}
-
-	printf("ret= %d\n", ret);
-	return ret;
-}
-*/
 
