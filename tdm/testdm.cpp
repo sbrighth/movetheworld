@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 	string strTestPath;
 
 	//sprintf(g_szTestPath, "%s/rack_001/tester%03d/exe/", SYS_ATH_PATH, g_idTpc);
-	sprintf(g_szTestPath, "/tmp/%s/rack_001/tester%03d/exe/", SYS_ATH_PATH, g_idTpc);
+	sprintf(g_szTestPath, "%s/rack_001/tester%03d/exe/", SYS_ATH_PATH, g_idTpc);
 
 	strTestPath = g_szTestPath;
 	CreateWorkFolder(strTestPath);
@@ -236,7 +236,7 @@ void RecvMsgProc(int idMsgq, MsgPack msg)
 
 	if(msg_no == MSG_TEST_START)
 	{
-		if( g_pTestMng[port]->IsTestOn() == OFF )
+		if( g_pTestMng[port]->IsTestOn() == 0 )
 		{
 			char szRealName[PATHNAME_SIZE] = {0,};
 
@@ -251,6 +251,7 @@ void RecvMsgProc(int idMsgq, MsgPack msg)
 			else
 			{
 				printf(">> port %d script is not exist!!\n", port);
+				//SendMsg(idMsgq, cell, port+1, MSG_DONE,	0, "SCRIPT NOT EXIST");
 			}
 		}
 		else
@@ -260,10 +261,11 @@ void RecvMsgProc(int idMsgq, MsgPack msg)
 	}
 	else if(msg_no == MSG_TEST_STOP)
 	{
-		if(g_pTestMng[port]->IsTestOn() == ON)
+		if(g_pTestMng[port]->IsTestOn() == 1)
 		{
 			g_pTestMng[port]->StopTest();
-			SendMsg(idMsgq, cell, port+1, MSG_FAIL,	0, "");
+			//SendMsg(idMsgq, cell, port+1, MSG_FAIL,	0, "ABORT");
+			//SendMsg(idMsgq, cell, port+1, MSG_FAIL,	0, "SLOT ABORT");
 		}
 	}
 	else if(msg_no == MSG_INIT)

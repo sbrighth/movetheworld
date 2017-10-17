@@ -47,6 +47,16 @@ void		msleep(int);
 int			IsFileExist(const char *filename);
 long		GetFileSize(const char *filename);
 int			SearchFile(const char *path, const char *sim_name, char *real_name);
+int			CreateFile(const char *filename);
+int			CopyFile(const char *target, const char *src);
+int			RemoveFile(const char *filename);
+long        WriteFileBin( const char* p, char* info, long size );
+long        ReadFileBin( const char* p, char* info, long offset, long size );
+long        AddFileBin( const char* p, char* info, long size );
+long        WriteFileText( const char* p, char* info, long size );
+long        ReadFileText( const char* p, char* info, long offset, long size );
+long        AddFileText( const char* p, char* info, long size );
+
 
 #ifdef __cplusplus
 }

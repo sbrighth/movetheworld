@@ -18,23 +18,46 @@
 #define int32	int
 #define int64	long long
 
-#define SYS_PATH				"/exicon"
+//#define SYS_PATH				"/exicon"
+#define SYS_PATH				"/tmp/exicon"
 #define SYS_BIN_PATH			SYS_PATH "/bin"
-#define SYS_LIB_PATH			SYS_PATH "/lib"
-#define SYS_INC_PATH			SYS_PATH "/include"
+
 #define SYS_CFG_PATH			SYS_PATH "/config"
-#define SYS_ATH_PATH			SYS_PATH "/athost"
-#define SYS_SCR_PATH			SYS_PATH "/script"
+
+
 #define SYS_SHE_PATH			SYS_PATH "/shell"
 #define SYS_SHA_PATH			SYS_PATH "/share"
 #define SYS_TMP_PATH			SYS_PATH "/temp"
-#define SYS_IMG_PATH			SYS_PATH "/images"
 #define SYS_SRC_PATH			SYS_PATH "/src"
 #define SYS_DATA_PATH 			SYS_PATH "/data"
 #define SYS_FIRM_PATH 			SYS_PATH "/firm"
 #define SYS_UTIL_PATH 			SYS_PATH "/util"
 #define SYS_DIAG_PATH 			SYS_PATH "/diag"
 #define SYS_DEBUG_PATH 			SYS_PATH "/debug"
+
+#define SYS_ATH_PATH			SYS_PATH "/athost"
+#define SYS_DATA_PATH 			SYS_PATH "/data"
+#define SYS_LIB_PATH			SYS_PATH "/lib"
+#define SYS_INC_PATH			SYS_PATH "/include"
+#define SYS_LOG_PATH			SYS_PATH "/bdlog"
+#define SYS_EXEC_PATH			SYS_PATH "/exec"
+#define SYS_SCR_PATH			SYS_PATH "/script"
+#define SYS_WORK_PATH			SYS_PATH "/work"
+#define SYS_UPDATE_PATH			SYS_PATH "/update"
+
+#define TEST_LOG_NAME			"port"
+#define EVENT_LOG_NAME			"event"
+#define MSGQ_LOG_NAME			"msgq"
+#define SOCKET_LOG_NAME			"socket"
+
+#define TEST_SCRIPT_ORI_EXT		"sct"
+#define	TEST_SCRIPT_RUN_EXT		"c"
+
+#define COMPILE_PROG			"/usr/bin/gcc"	//"tcc"
+#define COMPILE_INCPATH			"-I"SYS_INC_PATH
+#define COMPILE_LIBPATH			"-L"SYS_LIB_PATH
+#define COMPILE_LIB				"-ltbase -ltnet"
+
 
 //msgq
 #define KEY_TEST_MSGQ			0x1000
@@ -70,6 +93,7 @@ enum
 	RED = 1,
 	GREEN = 2,
 	BLUE = 3,
+	PINK=4,
 };
 
 

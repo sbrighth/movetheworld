@@ -11,6 +11,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <stdlib.h>
+#include <time.h>
 #include "base.h"
 #include "msgqthread.h"
 
@@ -31,7 +32,10 @@ void* MsgqCheckThread(void *arg)
 
 			ret = PopMsgq(pthis->idMsgq, &msgqCheck, sizeof(MsgPackQ));
 			if(ret == 0)
+			{
+				pthis->MsgqLog(msgqCheck.msg, 1);
 				pthis->SendMsg(msgqCheck.msg);
+			}
 		}
 
 		//check recv msg in MsgBox and push to MSGQ
@@ -68,6 +72,7 @@ void* MsgqProcThread(void *arg)
 
 			if(PopMsgq(pthis->idMsgq, &msgqProc, sizeof(MsgPackQ)) == 0)
 			{
+				pthis->MsgqLog(msgqProc.msg, 0);
 				pthis->ProcFunc(pthis->idMsgq, msgqProc.msg);
 			}
 		}
@@ -79,6 +84,31 @@ void* MsgqProcThread(void *arg)
 	return (void* )0;
 }
 
+int CMsgqThread::MsgqLog(MsgPack msg, int dir)
+{
+	char dt[20];
+	char fbuf[1032]={0};
+	time_t t = time(NULL);
+	struct tm *tp = localtime(&t);
+
+	strftime(dt, sizeof(dt), "%Y-%m-%d %H:%M:%S", tp);
+
+	sprintf( fbuf, "[%s] version:%5d, cell:%3d, port:%3d, msg_no:%3d, packet:%3d, flag:%3d, string:%s\n",
+			dt , msg.version, msg.cell, msg.port, msg.msg_no, msg.packet, msg.flag, msg.string);
+
+	char report[128] = {0,};
+	sprintf(report, "%s/%s_%s.txt", SYS_LOG_PATH, MSGQ_LOG_NAME, dir>0?"write":"read");
+
+	FILE* fp;
+	fp = fopen( report, "a" );
+	if( fp )
+	{
+		fwrite( fbuf, strlen(fbuf), 1, fp );
+		fclose( fp );
+	}
+
+	return 0;
+}
 
 CMsgqThread::CMsgqThread(int key, string strWriteTarget, string strReadTarget) : CMsgBox(strWriteTarget, strReadTarget)
 {

@@ -43,8 +43,8 @@ MsgPack CMsgBox::NewMsg(uint16 cell, uint16 port, uint16 msg_no, uint16 packet, 
 
 void CMsgBox::PrintMsg(MsgPack msg)
 {
-	printf("cell:%d, port:%d, msg_no:%d, packet:%d, flag:%d, string:%s\n",
-			msg.cell, msg.port, msg.msg_no, msg.packet, msg.flag, msg.string);
+	printf("version:%d, cell:%d, port:%d, msg_no:%d, packet:%d, flag:%d, string:%s\n",
+			msg.version, msg.cell, msg.port, msg.msg_no, msg.packet, msg.flag, msg.string);
 }
 
 int CMsgBox::InitMsg()
@@ -161,8 +161,8 @@ int CMsgBox::WriteMsgFile()
 		hmsg.msg_no = cntCurMsg + cntWriteMsg;
 		fwrite(&hmsg, MSG_PACKET_SIZE, 1, fp);
 		fseek(fp, 0, SEEK_END);
-
 		fclose(fp);
+
 		delete []wmsg;
 	}
 	else
@@ -244,14 +244,21 @@ void CMsgBox::_MsgFileThread()
 	while(condThread == 1)
 	{
 		if( IsFileExist(strWriteFileName.c_str()) )
+		{
+
 			WriteMsgFile();
+		}
 		else
+		{
 			InitMsgFile(strWriteFileName.c_str());
+		}
 
 		if( IsFileExist(strReadFileName.c_str()) )
+		{
 			ReadMsgFile();
+		}
 
-		usleep(100*1000);
+		usleep(500*1000);
 	}
 }
 

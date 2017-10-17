@@ -1,0 +1,39 @@
+folder path
+	- test share folder
+		=> /exicon/athost/rack_001/tester001/exe
+		=> /exicon/athost/bdlog
+		=> /exicon/athost/update
+		=> /exicon/athost/bin
+		=> /exicon/athost/exec
+	- bdlog folder
+		=> /exicon/bdlog
+	- update folder
+		=> /exicon/update
+	- exec folder
+		=> /exicon/exec
+	- exe folder
+		=> /exicon/exe
+	- data folder
+		=> /exicon/data
+	
+compile
+	- compiler
+	- compile option incpath
+	- compile option libpath
+	- compile ext
+
+log file
+	- test log filename
+		- port1.txt, port2.txt
+	- debug log file
+		- debug.txt, debug1.txt, debug2.txt
+	- event log file
+		- event.txt, 
+	- msg file log file
+		- msg_file.txt
+	- socket log file
+		- sock_packet.txt
+		
+
+	
+	

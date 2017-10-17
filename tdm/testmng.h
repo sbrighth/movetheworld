@@ -14,10 +14,6 @@
 
 using namespace std;
 
-
-#define TEST_SCRIPT_ORI_EXT		"sct"
-#define	TEST_SCRIPT_RUN_EXT		"c"
-
 class CTestMng
 {
 public:
@@ -28,10 +24,9 @@ public:
 	int				StartTest(string strPath, string strFileName);
 	int				StopTest();
 	int				IsTestOn();
-	int				CheckScriptExt(string strFileName);
+	int				CheckScriptExt(string strFileName, string strCheckExt);
 
 	string			strRunFile;
-	string			strWorkPath;
 	int				iCell;
 	int				iPort;
 	pid_t			pidTestProcess;

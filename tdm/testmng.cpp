@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <errno.h>
 #include <sstream>
 #include "def.h"
 #include "testmng.h"
@@ -21,7 +22,6 @@ CTestMng::CTestMng(int iCell, int iPort):iCell(iCell),iPort(iPort)
 {
 	condThread = 1;
 	idThread = 0;
-	strWorkPath = "/tmp/";
 }
 
 CTestMng::~CTestMng()
@@ -52,6 +52,7 @@ void *TestThread(void *arg)
 	{
 		pthis->pidTestProcess = pid;
 		waitpid(pid, &status, 0);
+		printf(">> child status = %d\n", pthis->iChildStatus);
 	}
 
 	pthis->idThread = 0;
@@ -63,44 +64,53 @@ int CTestMng::StartTest(string strPath, string strFileName)
 	if(idThread == 0)
 	{
 		//check script file extension
+		stringstream ss;
+		string strCmd;
 		string strScriptProcFile;
-		int iExtPos = CheckScriptExt(strFileName);
+		string strScriptOnlyName;
 
-		if(iExtPos < 0)
+		int iExtPos = CheckScriptExt(strFileName, TEST_SCRIPT_ORI_EXT);
+		if(iExtPos > 0)
+		{
+			strScriptOnlyName = strFileName.substr(0, iExtPos-1);
+
+			ss.str("");
+			ss << SYS_WORK_PATH <<  "/" << strFileName.substr(0, iExtPos) << TEST_SCRIPT_RUN_EXT;
+			strScriptProcFile = ss.str();
+		}
+		else
 		{
 			printf(">> '%s' file is not eixst\n", TEST_SCRIPT_ORI_EXT);
 			return -2;
 		}
-		else if(iExtPos == 0)
-		{
-			strScriptProcFile = strWorkPath + "/" + strFileName;
-		}
-		else
-		{
-			strScriptProcFile = strWorkPath + "/" + strFileName.substr(0, iExtPos) + TEST_SCRIPT_RUN_EXT;
-		}
 
+		printf(">> strScriptOnlyName = %s\n", strScriptOnlyName.c_str());
+		printf(">> strScriptProcFile = %s\n", strScriptProcFile.c_str());
 		//copy script to work folder
-		string strCmd;
-		strCmd = "cp -f " + strPath + "/" + strFileName + " " + strScriptProcFile;
+
+		ss.str("");
+		ss << "cp -f " << strPath << "/" << strFileName << " " << strScriptProcFile;
+		strCmd = ss.str();
 		system(strCmd.c_str());
 
 		printf(">> cp cmd = %s\n", strCmd.c_str());
 
 		//compile script
+		/*
 		string compiler	= "/usr/bin/gcc";
 		string incpath	= "-I/tmp/exicon/include";
 		string libpath	= "-L/tmp/exicon/lib";
 		string lib		= "-ltbase -ltnet";
+		*/
 
-		stringstream ss;
-		ss << strWorkPath << "test_script_" << iPort+1;
+		ss.str("");
+		ss << SYS_WORK_PATH << "/" << strScriptOnlyName << iPort+1;
 		strRunFile = ss.str();
 		unlink(strRunFile.c_str());
 
-		strCmd = compiler + " " + incpath + " " + strScriptProcFile + " -o " + strRunFile + " " + libpath + " " + lib + " 2>&1";
-
-		printf(">> compile cmd = %s\n", strCmd.c_str());
+		ss.str("");
+		ss << COMPILE_PROG << " " << COMPILE_INCPATH << " " << strScriptProcFile << " -o " << strRunFile << " " << COMPILE_LIBPATH << " " << COMPILE_LIB << " 2>&1";
+		strCmd = ss.str();
 
 		FILE *file;
 		file = popen(strCmd.c_str(), "r");
@@ -113,6 +123,8 @@ int CTestMng::StartTest(string strPath, string strFileName)
 		{
 			char buf[256] = {0,};
 			stringstream ssCompileErr;
+			ssCompileErr.str("");
+			printf(">>  size = %zu\n", ssCompileErr.str().size());
 
 			while(fgets(buf, sizeof(buf), file))
 			{
@@ -120,10 +132,12 @@ int CTestMng::StartTest(string strPath, string strFileName)
 			}
 
 			pclose(file);
-
+			printf(">>  size = %zu\n", ssCompileErr.str().size());
 			if(ssCompileErr.str().size() > 0)
 			{
 				printf(">> compile error is happened!!\n");
+				printf("str = %s\n", ssCompileErr.str().c_str());
+				printf("errono = %d\n", errno);
 				return -4;
 			}
 		}
@@ -146,10 +160,21 @@ int CTestMng::StartTest(string strPath, string strFileName)
 
 int CTestMng::StopTest()
 {
-	if(idThread != 0)
+	if(idThread > 0)
 	{
 		printf("child process status = %d\n", iChildStatus);
 		kill(pidTestProcess, SIGKILL);
+
+		int cnt = 0;
+		do
+		{
+			usleep( 100*1000 );
+			cnt++;
+
+		} while( idThread > 0 && cnt < 10 );
+
+		if(idThread > 0)
+			return -1;
 	}
 
 	return 0;
@@ -157,13 +182,13 @@ int CTestMng::StopTest()
 
 int CTestMng::IsTestOn()
 {
-	if(idThread == 0)
-		return 0;
-	else
+	if(idThread > 0)
 		return 1;
+	else
+		return 0;
 }
 
-int CTestMng::CheckScriptExt(string strFileName)
+int CTestMng::CheckScriptExt(string strFileName, string strCheckExt)
 {
 	string strExt;
 	string strName;
@@ -178,9 +203,7 @@ int CTestMng::CheckScriptExt(string strFileName)
 	cout << "strName : " << strName << endl;
 	cout << "strSuffix : " << strExt << endl;
 
-	if(strExt.compare("c") == 0)
-		return 0;
-	else if(strExt.compare(TEST_SCRIPT_ORI_EXT) == 0)
+	if(strExt.compare(strCheckExt) == 0)
 		return pos+1;
 
 	return -2;
