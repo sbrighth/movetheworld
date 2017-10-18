@@ -507,7 +507,7 @@ long AddFileText( const char* p, char* info, long size )
 	return len;
 }
 
-int	TestLog(int port, const char *fmt...)
+int	Print(int port, const char *fmt, ...)
 {
 	va_list	ap;
 	char buf[1024]={0};
@@ -520,7 +520,7 @@ int	TestLog(int port, const char *fmt...)
 	fflush(stdout);
 
 	char report[128] = {0,};
-	sprintf(report, "%s/%s%d.txt", SYS_LOG_PATH, TEST_LOG_NAME, port);
+	sprintf(report, "%s/%s%d.txt", SYS_WORK_PATH, TEST_LOG_NAME, port);
 
 	FILE* fp;
 	fp = fopen( report, "a" );
@@ -533,7 +533,7 @@ int	TestLog(int port, const char *fmt...)
 	return 0;
 }
 
-int	EventLog(int cell, const char *fmt...)
+int	EventLog(const char *fmt, ...)
 {
 	va_list	ap;
 	char dt[20], buf[1024]={0};
@@ -552,7 +552,7 @@ int	EventLog(int cell, const char *fmt...)
 	fflush(stdout);
 
 	char report[128] = {0,};
-	sprintf(report, "%s/%s%d.txt", SYS_PATH, EVENT_LOG_NAME, cell);
+	sprintf(report, "%s/%s.txt", SYS_PATH, EVENT_LOG_NAME);
 
 	FILE* fp;
 	fp = fopen( report, "a" );

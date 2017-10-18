@@ -9,6 +9,7 @@
 #define BASE_H_
 
 #include <sys/time.h>
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,6 +58,8 @@ long        WriteFileText( const char* p, char* info, long size );
 long        ReadFileText( const char* p, char* info, long offset, long size );
 long        AddFileText( const char* p, char* info, long size );
 
+int			Print(int port, const char *fmt, ...);
+int			EventLog(const char *fmt, ...);
 
 #ifdef __cplusplus
 }

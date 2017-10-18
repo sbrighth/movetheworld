@@ -41,7 +41,7 @@
 #define SYS_INC_PATH			SYS_PATH "/include"
 #define SYS_LOG_PATH			SYS_PATH "/bdlog"
 #define SYS_EXEC_PATH			SYS_PATH "/exec"
-#define SYS_SCR_PATH			SYS_PATH "/script"
+#define SYS_SCRIPT_PATH			SYS_PATH "/script"
 #define SYS_WORK_PATH			SYS_PATH "/work"
 #define SYS_UPDATE_PATH			SYS_PATH "/update"
 
@@ -56,7 +56,7 @@
 #define COMPILE_PROG			"/usr/bin/gcc"	//"tcc"
 #define COMPILE_INCPATH			"-I"SYS_INC_PATH
 #define COMPILE_LIBPATH			"-L"SYS_LIB_PATH
-#define COMPILE_LIB				"-ltbase -ltnet"
+#define COMPILE_LIB				"-ltbase -ltnet -lpthread"
 
 
 //msgq
@@ -74,6 +74,18 @@
 #define TYPE_MSGQ_SEND			1
 #define TYPE_MSGQ_RECV			2
 
+enum TYPE_MSG
+{
+	TYPE_MSG_DEFAULT	=	0,
+	TYPE_MSG_INFO,
+	TYPE_MSG_TPC_DIAG,
+	TYPE_MSG_UPDATE,
+	TYPE_MSG_DPS,
+	TYPE_MSG_PORT_DIAG,
+	TYPE_MSG_TEST,
+	TYPE_MSG_CNT		=	TYPE_MSG_TEST,
+};
+
 #define ON						1
 #define	OFF						0
 
@@ -81,10 +93,11 @@
 
 enum PORT
 {
+	PORT_NONE = 0,
 	PORT1 = 1,
 	PORT2 = 2,
-	PORT_MIN = 1,
-	PORT_MAX = 2,
+	PORT_MIN = PORT_NONE,
+	PORT_MAX = PORT2,
 };
 
 enum

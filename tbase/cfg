@@ -34,6 +34,9 @@ log file
 	- socket log file
 		- sock_packet.txt
 		
+dut status
+copy file to share folder
+trio/24uf mode select
 
 	
 	

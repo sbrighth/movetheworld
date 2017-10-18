@@ -52,6 +52,13 @@ void *TestThread(void *arg)
 	{
 		pthis->pidTestProcess = pid;
 		waitpid(pid, &status, 0);
+		if(WIFSIGNALED(status))
+		{
+			if(WTERMSIG(status) == SIGSEGV)
+				printf(">> pid:%d segmentaion fault\n", pid);
+			else
+				printf(">> pid:%d signal:%d\n", pid, WIFSIGNALED(status));
+		}
 		printf(">> child status = %d\n", pthis->iChildStatus);
 	}
 
@@ -86,60 +93,42 @@ int CTestMng::StartTest(string strPath, string strFileName)
 
 		printf(">> strScriptOnlyName = %s\n", strScriptOnlyName.c_str());
 		printf(">> strScriptProcFile = %s\n", strScriptProcFile.c_str());
-		//copy script to work folder
 
+		//copy script to work folder
 		ss.str("");
 		ss << "cp -f " << strPath << "/" << strFileName << " " << strScriptProcFile;
 		strCmd = ss.str();
-		system(strCmd.c_str());
+		int ret = system(strCmd.c_str());
 
 		printf(">> cp cmd = %s\n", strCmd.c_str());
+		printf(">> ret = %d\n", ret);
 
 		//compile script
-		/*
-		string compiler	= "/usr/bin/gcc";
-		string incpath	= "-I/tmp/exicon/include";
-		string libpath	= "-L/tmp/exicon/lib";
-		string lib		= "-ltbase -ltnet";
-		*/
-
 		ss.str("");
 		ss << SYS_WORK_PATH << "/" << strScriptOnlyName << iPort+1;
 		strRunFile = ss.str();
 		unlink(strRunFile.c_str());
 
 		ss.str("");
-		ss << COMPILE_PROG << " " << COMPILE_INCPATH << " " << strScriptProcFile << " -o " << strRunFile << " " << COMPILE_LIBPATH << " " << COMPILE_LIB << " 2>&1";
+		ss << SYS_LOG_PATH << "/" << "compile" << iPort+1 << ".txt";
+		string strCompileLog;
+		strCompileLog = ss.str();
+
+		ss.str("");
+		ss << COMPILE_PROG << " " << COMPILE_INCPATH << " " << strScriptProcFile << " -o " << strRunFile << " " << COMPILE_LIBPATH << " " << COMPILE_LIB << " 2> " << strCompileLog;
 		strCmd = ss.str();
 
-		FILE *file;
-		file = popen(strCmd.c_str(), "r");
-		if(file == NULL)
+		printf(">> strCmd = %s\n", strCmd.c_str());
+		ret = system(strCmd.c_str());
+		printf(">> ret = %d\n", ret);
+
+		if(ret != 0)
 		{
-			printf(">> compile execute error!!\n");
+			printf(">> compile error is happened!!\n");
+			char buf[256];
+			sprintf(buf, "cat %s > /dev/stdout", strCompileLog.c_str());
+			system(buf);
 			return -3;
-		}
-		else
-		{
-			char buf[256] = {0,};
-			stringstream ssCompileErr;
-			ssCompileErr.str("");
-			printf(">>  size = %zu\n", ssCompileErr.str().size());
-
-			while(fgets(buf, sizeof(buf), file))
-			{
-				ssCompileErr << buf;
-			}
-
-			pclose(file);
-			printf(">>  size = %zu\n", ssCompileErr.str().size());
-			if(ssCompileErr.str().size() > 0)
-			{
-				printf(">> compile error is happened!!\n");
-				printf("str = %s\n", ssCompileErr.str().c_str());
-				printf("errono = %d\n", errno);
-				return -4;
-			}
 		}
 
 		//delete script file

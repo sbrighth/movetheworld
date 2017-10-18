@@ -23,12 +23,13 @@
 #define SC_FILE_OTHER_ERR	0x5
 
 #define PROG_NAME		"tdm"
-#define PROG_VERSION	"0.0.8"
+#define PROG_VERSION	"0.0.9"
 
 int		CheckProgRunning();
 void	ProcSignalStop(int sig_no);
 int		SetSignal();
-int		CreateWorkFolder(string path);
+int		CreateTestFolders();
+int		CreateFolder(string path);
 void	RecvMsgProc(int idMsgq, MsgPack msg);
 int		CheckScriptFile(char *msg_str);
 

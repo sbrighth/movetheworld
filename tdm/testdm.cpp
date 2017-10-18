@@ -38,7 +38,6 @@ int main(int argc, char *argv[])
 	if(SetSignal() < 0)
 		return -1;
 
-
 	//get tpc bd id;
 	g_idTpc = 1;
 	g_idResShare = CreateShmem(KEY_RES_SHARE, 512);
@@ -47,12 +46,9 @@ int main(int argc, char *argv[])
 	string strTestMsgSendTo, strTestMsgRecvFrom;
 	string strTestPath;
 
-	//sprintf(g_szTestPath, "%s/rack_001/tester%03d/exe/", SYS_ATH_PATH, g_idTpc);
-	sprintf(g_szTestPath, "%s/rack_001/tester%03d/exe/", SYS_ATH_PATH, g_idTpc);
+	CreateTestFolders();
 
 	strTestPath = g_szTestPath;
-	CreateWorkFolder(strTestPath);
-
 	strTestMsgSendTo = strTestPath + MSGBOX_SEND_TO;
 	strTestMsgRecvFrom = strTestPath + MSGBOX_RECV_FROM;
 
@@ -66,12 +62,12 @@ int main(int argc, char *argv[])
 
 	for(int idx=0; idx<PORT_MAX; idx++)
 	{
-		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx+1, MSG_INIT, 		0, PROG_VERSION);
-		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx+1, MSG_INITCOLOR, 0, "");
-		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx+1, MSG_TEXT1, 	0, "EMPTY");
-		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx+1, MSG_TEXT2, 	0, "");
-		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx+1, MSG_TEXT3, 	0, PROG_VERSION);
-		SendMsg(g_pTestMsgq->idMsgq, g_idTpc, idx+1, MSG_TEXT4, 	0, "");
+		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_INIT, 		0, PROG_VERSION);
+		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_INITCOLOR, 0, "");
+		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT1, 	0, "EMPTY");
+		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT2, 	0, "");
+		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT3, 	0, PROG_VERSION);
+		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT4, 	0, "");
 
 		g_pTestMng[idx] = new CTestMng(g_idTpc, idx);
 	}
@@ -79,6 +75,7 @@ int main(int argc, char *argv[])
 	g_condTestDm = 1;
 	while( g_condTestDm )
 	{
+		//this is for monitoring job
 		msleep(100);
 	}
 
@@ -150,7 +147,41 @@ void ProcSignalStop(int sig_no)
 	g_condTestDm = 0;
 }
 
-int CreateWorkFolder(string path)
+int CreateTestFolders()
+{
+	char szMakePath[PATHNAME_SIZE];
+	sprintf(g_szTestPath, "%s/rack_001/tester%03d/exe/", SYS_ATH_PATH, g_idTpc);
+	CreateFolder(g_szTestPath);
+	memcpy(g_szTestPath, szMakePath, sizeof(g_szTestPath));
+
+	sprintf(szMakePath, "%s/%s", SYS_ATH_PATH, SYS_DATA_PATH);
+	CreateFolder(szMakePath);
+
+	sprintf(szMakePath, "%s/%s", SYS_ATH_PATH, SYS_LIB_PATH);
+	CreateFolder(szMakePath);
+
+	sprintf(szMakePath, "%s/%s", SYS_ATH_PATH, SYS_INC_PATH);
+	CreateFolder(szMakePath);
+
+	sprintf(szMakePath, "%s/%s", SYS_ATH_PATH, SYS_LOG_PATH);
+	CreateFolder(szMakePath);
+
+	sprintf(szMakePath, "%s/%s", SYS_ATH_PATH, SYS_EXEC_PATH);
+	CreateFolder(szMakePath);
+
+	sprintf(szMakePath, "%s/%s", SYS_ATH_PATH, SYS_SCRIPT_PATH);
+	CreateFolder(szMakePath);
+
+	sprintf(szMakePath, "%s/%s", SYS_ATH_PATH, SYS_WORK_PATH);
+	CreateFolder(szMakePath);
+
+	sprintf(szMakePath, "%s/%s", SYS_ATH_PATH, SYS_UPDATE_PATH);
+	CreateFolder(szMakePath);
+
+	return 0;
+}
+
+int CreateFolder(string path)
 {
 	string temp, subdir;
 	size_t current, previous = 0;
@@ -217,7 +248,7 @@ int CheckScriptFile(char *msg_str)
 
 void RecvMsgProc(int idMsgq, MsgPack msg)
 {
-	//int version		= msg.version;
+	int version		= msg.version;
 	int cell    	= msg.cell;
 	int port    	= msg.port-1;	// 0, 1
 	int msg_no		= msg.msg_no;
@@ -245,13 +276,13 @@ void RecvMsgProc(int idMsgq, MsgPack msg)
 				if(g_pTestMng[port]->StartTest(g_szTestPath, szRealName) == 0)
 				{
 					printf(">> test is started!!\n");
-					SendMsg(idMsgq, cell, port+1, MSG_TEST,	0, "");
+					SendMsg(idMsgq, version, cell, port+1, MSG_TEST,	0, "");
 				}
 			}
 			else
 			{
 				printf(">> port %d script is not exist!!\n", port);
-				//SendMsg(idMsgq, cell, port+1, MSG_DONE,	0, "SCRIPT NOT EXIST");
+				//SendMsg(idMsgq, version, cell, port+1, MSG_DONE,	0, "SCRIPT NOT EXIST");
 			}
 		}
 		else
@@ -264,8 +295,8 @@ void RecvMsgProc(int idMsgq, MsgPack msg)
 		if(g_pTestMng[port]->IsTestOn() == 1)
 		{
 			g_pTestMng[port]->StopTest();
-			//SendMsg(idMsgq, cell, port+1, MSG_FAIL,	0, "ABORT");
-			//SendMsg(idMsgq, cell, port+1, MSG_FAIL,	0, "SLOT ABORT");
+			//SendMsg(idMsgq, version, cell, port+1, MSG_FAIL,	0, "ABORT");
+			//SendMsg(idMsgq, version, cell, port+1, MSG_FAIL,	0, "SLOT ABORT");
 		}
 	}
 	else if(msg_no == MSG_INIT)
@@ -273,23 +304,23 @@ void RecvMsgProc(int idMsgq, MsgPack msg)
 		switch(CheckScriptFile(msg_str))
 		{
 		case SC_FILE_DEFAULT:
-			SendMsg(idMsgq, cell, port+1, MSG_INITACK,	SC_FILE_DEFAULT, PROG_VERSION);
-			SendMsg(idMsgq, cell, port+1, MSG_TEXT1,    0,	"MSG_INIT");
-			SendMsg(idMsgq, cell, port+1, MSG_TEXT2,    0, 	"");
-			SendMsg(idMsgq, cell, port+1, MSG_TEXT3,    0, 	"");
-			SendMsg(idMsgq, cell, port+1, MSG_TEXT4,    0, 	"");
+			SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_DEFAULT, PROG_VERSION);
+			SendMsg(idMsgq, version, cell, port+1, MSG_TEXT1,    0,	"MSG_INIT");
+			SendMsg(idMsgq, version, cell, port+1, MSG_TEXT2,    0, "");
+			SendMsg(idMsgq, version, cell, port+1, MSG_TEXT3,    0, "");
+			SendMsg(idMsgq, version, cell, port+1, MSG_TEXT4,    0, "");
 			break;
 		case SC_FILE_PASS:
-			SendMsg(idMsgq, cell, port+1, MSG_INITACK,	SC_FILE_PASS, PROG_VERSION);
-			SendMsg(idMsgq, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
+			SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_PASS, PROG_VERSION);
+			SendMsg(idMsgq, version, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
 			break;
 		case SC_FILE_SIZE_ERR:
-			SendMsg(idMsgq, cell, port+1, MSG_INITACK,	SC_FILE_SIZE_ERR, PROG_VERSION);
-			SendMsg(idMsgq, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
+			SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_SIZE_ERR, PROG_VERSION);
+			SendMsg(idMsgq, version, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
 			break;
 		case SC_FILE_NONE_ERR:
-			SendMsg(idMsgq, cell, port+1, MSG_INITACK,	SC_FILE_NONE_ERR, PROG_VERSION);
-			SendMsg(idMsgq, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
+			SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_NONE_ERR, PROG_VERSION);
+			SendMsg(idMsgq, version, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
 			break;
 		case SC_FILE_OTHER_ERR:
 			break;
