@@ -39,31 +39,31 @@ int main(int argc, char *argv[])
 		return -1;
 
 	//get tpc bd id;
-	g_idTpc = 1;
+	g_idTpc = 2;
 	g_idResShare = CreateShmem(KEY_RES_SHARE, 512);
 
 	//init test folder
-	string strTestMsgSendTo, strTestMsgRecvFrom;
-	string strTestPath;
+	char szTestMsgSendTo[PATHNAME_SIZE];
+	char szTestMsgRecvFrom[PATHNAME_SIZE];
+
 
 	CreateTestFolders();
 
-	strTestPath = g_szTestPath;
-	strTestMsgSendTo = strTestPath + MSGBOX_SEND_TO;
-	strTestMsgRecvFrom = strTestPath + MSGBOX_RECV_FROM;
+	sprintf(szTestMsgSendTo, "%s/%s", g_szTestPath, MSGBOX_SEND_TO);
+	sprintf(szTestMsgRecvFrom, "%s/%s", g_szTestPath, MSGBOX_RECV_FROM);
 
-	cout << "strTestMsgSendTo : " << strTestMsgSendTo << endl;
-	cout << "strTestMsgRecvFrom : " << strTestMsgRecvFrom << endl;
+	cout << "strTestMsgSendTo : " << szTestMsgSendTo << endl;
+	cout << "strTestMsgRecvFrom : " << szTestMsgRecvFrom << endl;
 
-	g_pTestMsgq = new CMsgqThread(KEY_TEST_MSGQ, strTestMsgSendTo, strTestMsgRecvFrom);
+	g_pTestMsgq = new CMsgqThread(KEY_TEST_MSGQ, szTestMsgSendTo, szTestMsgRecvFrom);
 	g_pTestMsgq->StartThread(&RecvMsgProc);
 
 	g_pTestMng = new CTestMng*[PORT_MAX];
 
 	for(int idx=0; idx<PORT_MAX; idx++)
 	{
-		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_INIT, 		0, PROG_VERSION);
-		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_INITCOLOR, 0, "");
+		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_INIT,	0, PROG_VERSION);
+		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_INITCOLOR,0, "");
 		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT1, 	0, "EMPTY");
 		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT2, 	0, "");
 		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT3, 	0, PROG_VERSION);
@@ -150,58 +150,45 @@ void ProcSignalStop(int sig_no)
 int CreateTestFolders()
 {
 	char szMakePath[PATHNAME_SIZE];
-	sprintf(g_szTestPath, "%s/rack_001/tester%03d/exe/", SYS_ATH_PATH, g_idTpc);
-	CreateFolder(g_szTestPath);
+	sprintf(szMakePath, "%s/rack_001/tester%03d/exe", SYS_ATH_PATH, g_idTpc);
+	CreateFolder(szMakePath);
 	memcpy(g_szTestPath, szMakePath, sizeof(g_szTestPath));
 
-	sprintf(szMakePath, "%s/%s", SYS_ATH_PATH, SYS_DATA_PATH);
+	sprintf(szMakePath, "%s", SYS_DATA_PATH);
 	CreateFolder(szMakePath);
 
-	sprintf(szMakePath, "%s/%s", SYS_ATH_PATH, SYS_LIB_PATH);
+	sprintf(szMakePath, "%s", SYS_LIB_PATH);
 	CreateFolder(szMakePath);
 
-	sprintf(szMakePath, "%s/%s", SYS_ATH_PATH, SYS_INC_PATH);
+	sprintf(szMakePath, "%s", SYS_INC_PATH);
 	CreateFolder(szMakePath);
 
-	sprintf(szMakePath, "%s/%s", SYS_ATH_PATH, SYS_LOG_PATH);
+	sprintf(szMakePath, "%s", SYS_LOG_PATH);
 	CreateFolder(szMakePath);
 
-	sprintf(szMakePath, "%s/%s", SYS_ATH_PATH, SYS_EXEC_PATH);
+	sprintf(szMakePath, "%s", SYS_EXEC_PATH);
 	CreateFolder(szMakePath);
 
-	sprintf(szMakePath, "%s/%s", SYS_ATH_PATH, SYS_SCRIPT_PATH);
+	sprintf(szMakePath, "%s", SYS_SCRIPT_PATH);
 	CreateFolder(szMakePath);
 
-	sprintf(szMakePath, "%s/%s", SYS_ATH_PATH, SYS_WORK_PATH);
+	sprintf(szMakePath, "%s", SYS_WORK_PATH);
 	CreateFolder(szMakePath);
 
-	sprintf(szMakePath, "%s/%s", SYS_ATH_PATH, SYS_UPDATE_PATH);
+	sprintf(szMakePath, "%s", SYS_UPDATE_PATH);
 	CreateFolder(szMakePath);
 
 	return 0;
 }
 
-int CreateFolder(string path)
+int CreateFolder(char *path)
 {
-	string temp, subdir;
-	size_t current, previous = 0;
-	current = path.find_first_of('/');
+	if(path == NULL)
+		return -1;
 
-	while(current != string::npos)
-	{
-		temp = path.substr(previous, current - previous);
-		previous = current + 1;
-		current = path.find_first_of('/', previous);
-
-		if( temp.empty() )
-			continue;
-
-		subdir = path.substr(0, previous).c_str();
-		if(access(subdir.c_str(), F_OK) != 0)
-		{
-			mkdir(subdir.c_str(), 0755);
-		}
-	}
+	char cmd[PATHNAME_SIZE];
+	sprintf(cmd, "mkdir -p %s", path);
+	system(cmd);
 
 	return 0;
 }
@@ -214,20 +201,40 @@ int CheckScriptFile(char *msg_str)
 
 	if(strlen(msg_str) > 0)
 	{
-		char szScriptName[14]={0,};
-		char szScriptSize[5]={0,};
+		int nNameSize = 15;	//0~14
+		int nFileSize = 4;	//15~18
+
+		char *szScriptName = new char[nNameSize+1];
+		char *szScriptSize = new char[nFileSize+1];
+
+		memset(szScriptName, 0, sizeof(szScriptName));
+		memset(szScriptSize, 0, sizeof(szScriptSize));
 
 		memcpy(szScriptName, msg_str, sizeof(szScriptName));
-		memcpy(szScriptSize, msg_str+sizeof(szScriptName)+1, sizeof(szScriptSize));
+		memcpy(szScriptSize, msg_str+nNameSize, sizeof(szScriptSize));
+
+		for(int i=nNameSize; i>0; i--)
+		{
+			if(szScriptName[i-1] != '0')
+			{
+				szScriptName[i] = 0;
+				break;
+			}
+		}
+
+		printf("scriptName= %s\n", szScriptName);
+		printf("scriptSize= %s\n", szScriptSize);
 
 		if( SearchFile(g_szTestPath, szScriptName, szRealName) == 0 )
 		{
 			long lScriptSize = atoi(szScriptSize);
 
-			sprintf(szFileName, "%s%s", g_szTestPath, szRealName);
+			sprintf(szFileName, "%s/%s", g_szTestPath, szRealName);
+			printf(">. szFileName = %s\n", szFileName);
 			long lFileSize = GetFileSize(szFileName);
 			lFileSize = lFileSize % 10000;
 
+			printf(">> msg file size = %ld, read file size = %ld\n", lScriptSize, lFileSize);
 			if( lScriptSize == lFileSize )
 			{
 				iSendMode = SC_FILE_PASS;
@@ -241,6 +248,9 @@ int CheckScriptFile(char *msg_str)
 		{
 			iSendMode = SC_FILE_NONE_ERR;
 		}
+
+		delete szScriptName;
+		delete szScriptSize;
 	}
 
 	return iSendMode;
@@ -271,7 +281,7 @@ void RecvMsgProc(int idMsgq, MsgPack msg)
 		{
 			char szRealName[PATHNAME_SIZE] = {0,};
 
-			if( SearchFile(g_szTestPath,msg_str, szRealName) == 0 )
+			if( SearchFile(g_szTestPath, msg_str, szRealName) == 0 )
 			{
 				if(g_pTestMng[port]->StartTest(g_szTestPath, szRealName) == 0)
 				{
@@ -281,13 +291,13 @@ void RecvMsgProc(int idMsgq, MsgPack msg)
 			}
 			else
 			{
-				printf(">> port %d script is not exist!!\n", port);
+				printf(">> port %d script is not exist!!\n", port+1);
 				//SendMsg(idMsgq, version, cell, port+1, MSG_DONE,	0, "SCRIPT NOT EXIST");
 			}
 		}
 		else
 		{
-			printf(">> port %d is testing!!\n", port);
+			printf(">> port %d is testing!!\n", port+1);
 		}
 	}
 	else if(msg_no == MSG_TEST_STOP)

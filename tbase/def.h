@@ -50,7 +50,8 @@
 #define MSGQ_LOG_NAME			"msgq"
 #define SOCKET_LOG_NAME			"socket"
 
-#define TEST_SCRIPT_ORI_EXT		"sct"
+//#define TEST_SCRIPT_ORI_EXT		"stc"
+#define TEST_SCRIPT_ORI_EXT		"uts"
 #define	TEST_SCRIPT_RUN_EXT		"c"
 
 #define COMPILE_PROG			"/usr/bin/gcc"	//"tcc"

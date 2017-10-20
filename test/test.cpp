@@ -272,7 +272,7 @@ int test_msg_out()
 	int statMain = 1;
 
 	MsgPack msg;
-	CMsgBox msgbox("/tmp/exicon/athost/rack_001/tester001/exe/out", "/tmp/exicon/athost/rack_001/tester001/exe/temp");
+	CMsgBox msgbox("/tmp/exicon/athost/rack_001/tester002/exe/out", "/tmp/exicon/athost/rack_001/tester002/exe/temp");
 	msgbox.StartThread();
 
 	cout << "<< msg write program >>" << endl << endl;

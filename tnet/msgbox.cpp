@@ -12,6 +12,8 @@
 #include <sys/types.h>
 #include "base.h"
 #include "msgbox.h"
+#include <sys/stat.h>
+#include <time.h>
 
 CMsgBox::CMsgBox(string strWriteTarget, string strReadTarget)
 {
@@ -128,7 +130,7 @@ int CMsgBox::WriteMsgFile()
 	if(strWriteFileName.empty())
 		return -1;
 
-	FILE* fp = fopen(strWriteFileName.c_str(), "r+");
+	FILE* fp = fopen(strWriteFileName.c_str(), "rb+");
 	if( fp )
 	{
 		fseek(fp, 0, SEEK_END);
@@ -182,11 +184,12 @@ int CMsgBox::ReadMsgFile()
 	if(strReadFileName.empty())
 		return -1;
 
-	FILE* fp = fopen(strReadFileName.c_str(), "r");
+	FILE* fp = fopen(strReadFileName.c_str(), "rb");
 	if( fp )
 	{
 		fseek(fp, 0, SEEK_END);
 		lFileSize = ftell(fp);
+
 		if(lFileSize <= MSG_PACKET_SIZE)
 		{
 			fclose(fp);
@@ -210,7 +213,8 @@ int CMsgBox::ReadMsgFile()
 
 		if(cntCurMsg != cntReadMsg)
 		{
-			printf(">> %s read file cnt error\n", __func__);
+			printf(">> %s read file cnt error(cur:%d, read:%d)\n", __func__, cntCurMsg, cntReadMsg);
+			delete []buf;
 			return 0;
 		}
 
@@ -258,7 +262,7 @@ void CMsgBox::_MsgFileThread()
 			ReadMsgFile();
 		}
 
-		usleep(500*1000);
+		msleep(100);
 	}
 }
 

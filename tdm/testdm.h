@@ -29,7 +29,7 @@ int		CheckProgRunning();
 void	ProcSignalStop(int sig_no);
 int		SetSignal();
 int		CreateTestFolders();
-int		CreateFolder(string path);
+int		CreateFolder(char *path);
 void	RecvMsgProc(int idMsgq, MsgPack msg);
 int		CheckScriptFile(char *msg_str);
 
