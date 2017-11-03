@@ -6,7 +6,7 @@ CXXFLAGS	= -o2 -g -Wall -fPIC -I$(INCPATH)
 LDFLAGS		= -shared -L$(LIBPATH) -ltbase
 
 TARGET		= libtnet.so
-OBJS		= msgbox.o msgqthread.o msgsend.o
+OBJS		= msgbox.o msgqthread.o msgsend.o socketserver.o socketclient.o
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) -o $@ -c $< 

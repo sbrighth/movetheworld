@@ -17,6 +17,7 @@
 #include "base.h"
 #include "msgsend.h"
 #include "msgbox.h"
+#include "socketserver.h"
 
 using namespace std;
 int help_test();
@@ -28,6 +29,7 @@ int test_mmap();
 int test_compile_script();
 int test_process();
 int	test_msg_out();
+int test_socket();
 
 int main(void) {
 	int cond = 1;
@@ -49,6 +51,7 @@ int main(void) {
 		case '5':   test_compile_script();
 					test_process();	break;
 		case '6':	test_msg_out();	break;
+		case '7':	test_socket();	break;
 		case 'x':	cond = 0;		break;
 		default:
 			continue;
@@ -68,6 +71,7 @@ int help_test()
 	cout << "4: memory map test" << endl;
 	cout << "5: script test" << endl;
 	cout << "6: write out msg(UI -> tdm)" << endl;
+	cout << "7: socket test" << endl;
 	cout << "x: exit       " << endl;
 	cout << "--------------" << endl;
 	cout << "select cmd >  ";
@@ -112,10 +116,10 @@ int test_msg()
 			cout << "string  : "; cin >> string;
 
 			memset(&msg, 0, sizeof(MsgPack));
-			msg.version = atoi(version);
-			msg.cell = atoi(cell);
-			msg.port = atoi(port);
-			msg.msg_no = atoi(msg_no);
+			msg.hdr.version = atoi(version);
+			msg.hdr.cell = atoi(cell);
+			msg.hdr.port = atoi(port);
+			msg.hdr.msg_no = atoi(msg_no);
 			sprintf(msg.string, "%s", string);
 
 			//msgq.type = TYPE_MSGQ_SEND;
@@ -298,10 +302,10 @@ int test_msg_out()
 			cout << "string  : "; cin >> string;
 
 			memset(&msg, 0, sizeof(MsgPack));
-			msg.version = atoi(version);
-			msg.cell = atoi(cell);
-			msg.port = atoi(port);
-			msg.msg_no = atoi(msg_no);
+			msg.hdr.version = atoi(version);
+			msg.hdr.cell = atoi(cell);
+			msg.hdr.port = atoi(port);
+			msg.hdr.msg_no = atoi(msg_no);
 			sprintf(msg.string, "%s", string);
 
 			msgbox.SendMsg(msg);
@@ -315,3 +319,74 @@ int test_msg_out()
 	return EXIT_SUCCESS;
 }
 
+int test_socket()
+{
+	CSocketServer *sock = new CSocketServer((char*)"127.0.0.1", PORT_TDM);
+
+	sock->StartThread();
+
+	int ver=0;
+	while(1)
+	{
+		char temp;
+		cin >> temp;
+
+		if(temp == 'x')
+		{
+			break;
+		}
+		else
+		{
+			printf(">> pressed key = %c\n", temp);
+			ver++;
+			ver = ver % 7;
+			char buf[512] = {0,};
+			sprintf(buf, "%s%d,%d,%d,%d,%d,%d,%c%s", SOCKET_START_MARK, ver, 2, 0, 0, 0, 0, temp, SOCKET_END_MARK);
+
+
+			int cnt = sock->Send(buf, strlen(buf));
+			printf(">> cnt = %d\n", cnt);
+		}
+	}
+
+	sock->StopThread();
+	delete (sock);
+
+
+/*
+	char buf[512] = {0,};
+	SockPack *tmp = (SockPack *)buf;
+
+	tmp->hdr.version = 1;
+	tmp->hdr.cell = 2;
+	tmp->hdr.port = 1;
+	tmp->hdr.msg_no = 9;
+	tmp->hdr.packet = 8;
+	tmp->hdr.flag = 7;
+
+
+	printf(">> line = %d\n", __LINE__);
+
+	printf(">> tmp->string = %p\n", tmp->string);
+
+	snprintf(tmp->string, SOCKET_STRING_LENGTH, "%s", "abc");
+	printf(">> line = %d\n", __LINE__);
+
+	for(int i=0; i<32; i++)
+	{
+		printf("%x ", buf[i]);
+	}
+	printf("\n");
+
+	return 0;
+	sock->CreateSocket();printf(">> line = %d\n", __LINE__);
+	sock->ConnectServer();printf(">> line = %d\n", __LINE__);
+
+	int cnt = sock->Send(buf, sizeof(buf));printf(">> line = %d\n", __LINE__);
+	printf(">> cnt = %d\n", cnt);
+	sock->CloseSocket();printf(">> line = %d\n", __LINE__);
+
+	delete(sock);
+*/
+	return EXIT_SUCCESS;
+}

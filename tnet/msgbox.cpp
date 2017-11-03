@@ -32,13 +32,13 @@ MsgPack CMsgBox::NewMsg(uint16 cell, uint16 port, uint16 msg_no, uint16 packet, 
 {
 	MsgPack msg;
 
-	msg.cell = cell;
-	msg.port = port;
-	msg.msg_no = msg_no;
-	msg.packet = packet;
-	msg.flag = flag;
+	msg.hdr.cell = cell;
+	msg.hdr.port = port;
+	msg.hdr.msg_no = msg_no;
+	msg.hdr.packet = packet;
+	msg.hdr.flag = flag;
 
-	memcpy(msg.string, data, MAX_MSG_STRING_LENGTH);
+	memcpy(msg.string, data, MSG_STRING_LENGTH);
 
 	return msg;
 }
@@ -46,7 +46,7 @@ MsgPack CMsgBox::NewMsg(uint16 cell, uint16 port, uint16 msg_no, uint16 packet, 
 void CMsgBox::PrintMsg(MsgPack msg)
 {
 	printf("version:%d, cell:%d, port:%d, msg_no:%d, packet:%d, flag:%d, string:%s\n",
-			msg.version, msg.cell, msg.port, msg.msg_no, msg.packet, msg.flag, msg.string);
+			msg.hdr.version, msg.hdr.cell, msg.hdr.port, msg.hdr.msg_no, msg.hdr.packet, msg.hdr.flag, msg.string);
 }
 
 int CMsgBox::InitMsg()
@@ -105,7 +105,7 @@ int CMsgBox::InitMsgFile(string filename)
 	FILE* fp = fopen(filename.c_str(), "w");
 	if(fp)
 	{
-		msg.version = 0x3412;
+		msg.hdr.version = 0x3412;
 		fwrite(&msg, MSG_PACKET_SIZE, 1, fp);
 		fclose(fp);
 	}
@@ -159,8 +159,8 @@ int CMsgBox::WriteMsgFile()
 		fseek(fp, 0, SEEK_SET);
 
 		memset(&hmsg, 0, sizeof(MsgPack));
-		hmsg.version = 0x3412;
-		hmsg.msg_no = cntCurMsg + cntWriteMsg;
+		hmsg.hdr.version = 0x3412;
+		hmsg.hdr.msg_no = cntCurMsg + cntWriteMsg;
 		fwrite(&hmsg, MSG_PACKET_SIZE, 1, fp);
 		fseek(fp, 0, SEEK_END);
 		fclose(fp);
@@ -208,7 +208,7 @@ int CMsgBox::ReadMsgFile()
 		fclose(fp);
 
 		msg = ((MsgPack *)buf)[0];
-		cntCurMsg = msg.msg_no;
+		cntCurMsg = msg.hdr.msg_no;
 		cntReadMsg = lFileSize/MSG_PACKET_SIZE - 1;
 
 		if(cntCurMsg != cntReadMsg)

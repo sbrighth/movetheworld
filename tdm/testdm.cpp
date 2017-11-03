@@ -25,7 +25,7 @@ using namespace std;
 int main(int argc, char *argv[])
 {
 	//running check
-	if(CheckProgRunning() > 0)
+	if(CheckProgRunning() > 2)
 	{
 		printf("%s is runinning\n", PROG_NAME);
 		return -1;
@@ -46,7 +46,6 @@ int main(int argc, char *argv[])
 	char szTestMsgSendTo[PATHNAME_SIZE];
 	char szTestMsgRecvFrom[PATHNAME_SIZE];
 
-
 	CreateTestFolders();
 
 	sprintf(szTestMsgSendTo, "%s/%s", g_szTestPath, MSGBOX_SEND_TO);
@@ -55,9 +54,16 @@ int main(int argc, char *argv[])
 	cout << "strTestMsgSendTo : " << szTestMsgSendTo << endl;
 	cout << "strTestMsgRecvFrom : " << szTestMsgRecvFrom << endl;
 
+	//MsgqThread
 	g_pTestMsgq = new CMsgqThread(KEY_TEST_MSGQ, szTestMsgSendTo, szTestMsgRecvFrom);
 	g_pTestMsgq->StartThread(&RecvMsgProc);
 
+	//Socket
+	//CSocketClient *g_pSocket  = new CSocketClient(g_idTpc, (char *)"127.0.0.1", PORT_TDM);
+	CSocketClient *g_pSocket  = new CSocketClient(g_idTpc, (char *)"192.168.10.68", 3132);
+	g_pSocket->StartThread();
+
+	//TestMng
 	g_pTestMng = new CTestMng*[PORT_MAX];
 
 	for(int idx=0; idx<PORT_MAX; idx++)
@@ -77,6 +83,12 @@ int main(int argc, char *argv[])
 	{
 		//this is for monitoring job
 		msleep(100);
+	}
+
+	if(g_pSocket != NULL)
+	{
+		g_pSocket->StopThread();
+		delete g_pSocket;
 	}
 
 	if(g_pTestMsgq != NULL)
@@ -107,7 +119,7 @@ int CheckProgRunning()
 	char cmd[32] = {0,};
 	char buf[32] = {0,};
 
-	sprintf(cmd, "ps -ae | grep ^%s$ | wc -l", PROG_NAME);
+	sprintf(cmd, "ps -a | grep %s | wc -l", PROG_NAME);
 	file = popen(cmd, "r");
 	if(file == NULL)
 		return -1;
@@ -258,10 +270,10 @@ int CheckScriptFile(char *msg_str)
 
 void RecvMsgProc(int idMsgq, MsgPack msg)
 {
-	int version		= msg.version;
-	int cell    	= msg.cell;
-	int port    	= msg.port-1;	// 0, 1
-	int msg_no		= msg.msg_no;
+	int version		= msg.hdr.version;
+	int cell    	= msg.hdr.cell;
+	int port    	= msg.hdr.port-1;	// 0, 1
+	int msg_no		= msg.hdr.msg_no;
 	//int packet 		= msg.packet;
 	//int flag 		= msg.flag;
 	char *msg_str	= msg.string;
@@ -272,7 +284,7 @@ void RecvMsgProc(int idMsgq, MsgPack msg)
 		return;
 	}
 
-	if(msg.port < PORT_MIN || msg.port > PORT_MAX)
+	if(msg.hdr.port < PORT_MIN || msg.hdr.port > PORT_MAX)
 		return;
 
 	if(msg_no == MSG_TEST_START)
@@ -305,8 +317,7 @@ void RecvMsgProc(int idMsgq, MsgPack msg)
 		if(g_pTestMng[port]->IsTestOn() == 1)
 		{
 			g_pTestMng[port]->StopTest();
-			//SendMsg(idMsgq, version, cell, port+1, MSG_FAIL,	0, "ABORT");
-			//SendMsg(idMsgq, version, cell, port+1, MSG_FAIL,	0, "SLOT ABORT");
+			SendMsg(idMsgq, version, cell, port+1, MSG_FAIL,	0, "ABORT");
 		}
 	}
 	else if(msg_no == MSG_INIT)

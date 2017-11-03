@@ -69,6 +69,13 @@
 //share memory
 #define KEY_RES_SHARE			0x1000
 
+//socket
+#define PORT_TDM				5000
+#define SOCKET_START_MARK		"<"
+#define SOCKET_END_MARK			">"
+#define SOCKET_BUF_SIZE			1024
+#define SOCKET_MAX_BUF_SIZE		SOCKET_BUF_SIZE*1024
+
 #define MSGBOX_SEND_TO			"in"
 #define MSGBOX_RECV_FROM		"out"
 
@@ -111,18 +118,24 @@ enum
 };
 
 
-#define MSG_PACKET_SIZE			32
-#define MAX_MSG_STRING_LENGTH	(MSG_PACKET_SIZE - 12)
-
-typedef struct tMsgPack
+typedef struct tMsgHdr
 {
 	uint16		version;	// Version of this structure.
 	uint16		cell;		// Cell from/to.
 	uint16		port;		// Port from/to.
 	uint16		msg_no;		// Msg.
-	uint16		packet;		// This is running counter (every packet will have unique id
+	uint16		packet;
 	uint16		flag;
-    char		string[MAX_MSG_STRING_LENGTH];
+}__attribute__ ((packed)) MsgHdr;
+
+#define MSG_HEADER_SIZE			sizeof(MsgHdr)
+#define MSG_PACKET_SIZE			32
+#define MSG_STRING_LENGTH		(MSG_PACKET_SIZE - MSG_HEADER_SIZE)
+
+typedef struct tMsgPack
+{
+	MsgHdr		hdr;
+    char		string[MSG_STRING_LENGTH];
 }__attribute__ ((packed)) MsgPack;
 
 typedef struct tMsgPackQ
@@ -131,8 +144,13 @@ typedef struct tMsgPackQ
 	MsgPack		msg;
 }__attribute__ ((packed)) MsgPackQ;
 
+typedef struct tSockPack
+{
+	MsgHdr		hdr;
+	char		*string;
+}__attribute__ ((packed)) SockPack;
 
-enum
+enum MSG_NUMBER
 {
 	MSG_NONE = 0,
 	MSG_TEST_START,     //  1:Host ---> Target     - Request Target to start the test
@@ -210,6 +228,17 @@ enum
 	MSG_SYS_TEXT8,
 
 	MSG_ENDMARKER = 0xFFFF,
+};
+
+
+enum MSG_VERSION
+{
+	BD_INFO = 1,
+	BD_DIAG,
+	BD_UPDATAE,
+	DUT_DPS,
+	DUT_DIAG,
+	DUT_TEST,
 };
 
 #endif /* DEF_H_ */

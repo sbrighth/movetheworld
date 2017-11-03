@@ -1,32 +1,25 @@
 folder path
 	- test share folder
 		=> /exicon/athost/rack_001/tester001/exe
-		=> /exicon/athost/bdlog
-		=> /exicon/athost/update
-		=> /exicon/athost/bin
-		=> /exicon/athost/exec
-	- bdlog folder
+	- bdlog folder	(log file)
 		=> /exicon/bdlog
-	- update folder
+	- update folder	(update file)
 		=> /exicon/update
-	- exec folder
+	- exec folder	(script)
 		=> /exicon/exec
-	- exe folder
-		=> /exicon/exe
-	- data folder
+	- run folder	(shell, binary)
+		=> /exicon/run
+	- data folder	(something to save data file)
 		=> /exicon/data
 	
 compile
-	- compiler
+	- compiler(tcc, gcc)
 	- compile option incpath
 	- compile option libpath
-	- compile ext
 
 log file
 	- test log filename
 		- port1.txt, port2.txt
-	- debug log file
-		- debug.txt, debug1.txt, debug2.txt
 	- event log file
 		- event.txt, 
 	- msg file log file
@@ -34,9 +27,30 @@ log file
 	- socket log file
 		- sock_packet.txt
 		
-dut status
-copy file to share folder
-trio/24uf mode select
+status
+	- test mode
+	- tpc no
+	- script name
+	- dut status
+	- cpu, ram, storage percentage
+	- network(mount)
+	
+copy file from/to share folder
+
+cfg file
+	- read trio/duo mode
+	- dut cnt
+
+socket
+	- <version,cell,port,msg_no,packet,flag,"string">	version,cell,port,msg_no,packet,flag is int value
+	- version
+		1: bd info
+		2: bd diag
+		3: bd update
+		4: dut dps
+		5: dut diag
+		6: dut test
+	
 
 	
 	

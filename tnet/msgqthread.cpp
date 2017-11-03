@@ -94,7 +94,7 @@ int CMsgqThread::MsgqLog(MsgPack msg, int dir)
 	strftime(dt, sizeof(dt), "%Y-%m-%d %H:%M:%S", tp);
 
 	sprintf( fbuf, "[%s] version:%5d, cell:%3d, port:%3d, msg_no:%3d, packet:%3d, flag:%3d, string:%s\n",
-			dt , msg.version, msg.cell, msg.port, msg.msg_no, msg.packet, msg.flag, msg.string);
+			dt , msg.hdr.version, msg.hdr.cell, msg.hdr.port, msg.hdr.msg_no, msg.hdr.packet, msg.hdr.flag, msg.string);
 
 	char report[128] = {0,};
 	sprintf(report, "%s/%s_%s.txt", SYS_LOG_PATH, MSGQ_LOG_NAME, dir>0?"write":"read");

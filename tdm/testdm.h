@@ -13,6 +13,7 @@
 #include "base.h"
 #include "msgqthread.h"
 #include "msgsend.h"
+#include "socketclient.h"
 #include "testmng.h"
 
 #define SC_FILE_DEFAULT		0x0

@@ -26,12 +26,12 @@ int SendMsg(int idMsgq, int version, int cell, int port, int msg_no, int flag, c
 
 	int len = strlen(str);
 
-	msg.version	= version;
-	msg.cell	= cell;
-	msg.port	= port;
-	msg.msg_no	= msg_no;
-	msg.flag 	= flag;
-	memcpy(msg.string, str, (len > MAX_MSG_STRING_LENGTH) ? MAX_MSG_STRING_LENGTH : len);
+	msg.hdr.version	= version;
+	msg.hdr.cell	= cell;
+	msg.hdr.port	= port;
+	msg.hdr.msg_no	= msg_no;
+	msg.hdr.flag 	= flag;
+	memcpy(msg.string, str, (len > (int)MSG_STRING_LENGTH) ? MSG_STRING_LENGTH : len);
 
 	return SendMsgPack(idMsgq, msg);
 }
