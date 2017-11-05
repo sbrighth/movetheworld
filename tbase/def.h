@@ -73,8 +73,10 @@
 #define PORT_TDM				5000
 #define SOCKET_START_MARK		"<"
 #define SOCKET_END_MARK			">"
+#define SOCKET_SPLIT_MARK       ","
+#define SOCKET_DATA_CNT         7
 #define SOCKET_BUF_SIZE			1024
-#define SOCKET_MAX_BUF_SIZE		SOCKET_BUF_SIZE*1024
+#define SOCKET_MAX_BUF_SIZE		SOCKET_BUF_SIZE*1
 
 #define MSGBOX_SEND_TO			"in"
 #define MSGBOX_RECV_FROM		"out"
@@ -91,7 +93,7 @@ enum TYPE_MSG
 	TYPE_MSG_DPS,
 	TYPE_MSG_PORT_DIAG,
 	TYPE_MSG_TEST,
-	TYPE_MSG_CNT		=	TYPE_MSG_TEST,
+    TYPE_MSG_CNT,
 };
 
 #define ON						1
@@ -114,7 +116,7 @@ enum
 	RED = 1,
 	GREEN = 2,
 	BLUE = 3,
-	PINK=4,
+    PINK = 4,
 };
 
 
@@ -147,7 +149,7 @@ typedef struct tMsgPackQ
 typedef struct tSockPack
 {
 	MsgHdr		hdr;
-	char		*string;
+    char		*pstring;
 }__attribute__ ((packed)) SockPack;
 
 enum MSG_NUMBER

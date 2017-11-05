@@ -14,11 +14,13 @@
 #include <netinet/in.h>
 #include <poll.h>
 #include <errno.h>
-#include <string>
 #include <signal.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-
+#include <string>
+#include <vector>
+#include <queue>
+#include "base.h"
 
 CSocketClient::CSocketClient(int iCell, char *szServerAddr, int iServerPort) {
 	// TODO Auto-generated constructor stub
@@ -47,6 +49,31 @@ CSocketClient::CSocketClient(int iCell, char *szServerAddr, int iServerPort) {
 
 CSocketClient::~CSocketClient() {
 	// TODO Auto-generated destructor stub
+
+    StopThread();
+}
+
+int CSocketClient::InitSockData()
+{
+    while(!qRecv.empty())
+    {
+        SockPack sockData = qRecv.front();
+        qRecv.pop();
+
+        if(sockData.pstring)
+            delete sockData.pstring;
+    }
+
+    while(!qSend.empty())
+    {
+        SockPack sockData = qSend.front();
+        qSend.pop();
+
+        if(sockData.pstring)
+            delete sockData.pstring;
+    }
+
+    return 0;
 }
 
 int CSocketClient::IsConnected()
@@ -104,11 +131,11 @@ int CSocketClient::ConnectServer()
 		if(errno == EINPROGRESS)
 		{
 			struct timeval tv;
-			tv.tv_sec = 30;
+            tv.tv_sec = 10;
 			tv.tv_usec = 0;
 
 			fd_set myset;
-			FD_ZERO(&myset);
+            FD_ZERO(&myset);
 			FD_SET(iClientSocket, &myset);
 
 			if(select(iClientSocket+1, NULL, &myset, NULL, &tv) > 0)
@@ -198,13 +225,13 @@ int CSocketClient::SendCheckDummy()
 	return 0;
 }
 
-void *SocketClientThread( void *arg )
+void *SocketCheckThread( void *arg )
 {
 	CSocketClient *pthis = (CSocketClient *)arg;
-	std::string strBuf;;
+    string strBuf;;
 
-	pthis->condThread = ON;
-	while( pthis->condThread == ON )                // Socket receive Loop
+    pthis->condCheckThread = ON;
+    while( pthis->condCheckThread == ON )                // Socket receive Loop
 	{
 		if(pthis->CreateSocket() < 0)
 		{
@@ -249,7 +276,7 @@ void *SocketClientThread( void *arg )
 
 				while(iCnt--)
 				{
-					std::string strPacketData;
+                    string strPacketData;
 
 					int ret = pthis->ParseData(strBuf, strPacketData);
 					if(ret > 0)
@@ -259,15 +286,17 @@ void *SocketClientThread( void *arg )
 						printf(">> after erase strBuf = %s\n", strBuf.c_str());
 						printf(">> strData = %s\n", strPacketData.c_str());
 
-
+                        SockPack sockData;
+                        pthis->DataSplit(strPacketData, sockData);
+                        pthis->qRecv.push(sockData);
 					}
 					else
 					{
 						if(strBuf.size() > SOCKET_MAX_BUF_SIZE)
 						{
-							std::size_t iEndMarkPos = strBuf.find(SOCKET_END_MARK);
+                            size_t iEndMarkPos = strBuf.find(SOCKET_END_MARK);
 
-							if(iEndMarkPos == std::string::npos)
+                            if(iEndMarkPos == string::npos)
 								strBuf.erase();
 							else
 								strBuf.erase(0, iEndMarkPos+1);
@@ -281,57 +310,151 @@ void *SocketClientThread( void *arg )
 		{
 			pthis->SendCheckDummy();
 		}
-	} // End of while( idThread )
+    } // End of while( idCheckThread )
 
-	pthis->CloseSocket();
+    pthis->CloseSocket();
 	return (void*)0;
 }
 
-int CSocketClient::ParseData(std::string strBuf, std::string &strData)
+void *SocketProcThread( void *arg )
 {
-	std::size_t iStartMarkPos = strBuf.find(SOCKET_START_MARK);
-	std::size_t iEndMarkPos = strBuf.find(SOCKET_END_MARK);
+    CSocketClient *pthis = (CSocketClient *)arg;
 
-	if(iStartMarkPos == std::string::npos)
+    pthis->condProcThread = ON;
+    while( pthis->condProcThread == ON )                // Socket receive Loop
+    {
+        if(pthis->qRecv.size() > 0)
+        {
+            SockPack sockData = pthis->qRecv.front();
+            pthis->qRecv.pop();
+            pthis->ProcFunc(sockData);
+
+            if(sockData.pstring)
+                delete sockData.pstring;
+        }
+        else
+        {
+            msleep(100);
+        }
+    }
+
+    return (void*)0;
+}
+
+int CSocketClient::ParseData(string strBuf, string &strData)
+{
+    size_t iStartMarkPos = strBuf.find(SOCKET_START_MARK);
+    size_t iEndMarkPos = strBuf.find(SOCKET_END_MARK);
+
+    if(iStartMarkPos == string::npos)
 	{
 		return -1;	//this is not what I want packet
 	}
-	else if(iEndMarkPos == std::string::npos)
+    else if(iEndMarkPos == string::npos)
 	{
 		return 0;	//wait until all packet arrive.
 	}
 	else if(iStartMarkPos < iEndMarkPos)
 	{
-		strData = strBuf.substr(iStartMarkPos, iEndMarkPos-iStartMarkPos+1);
-	}
+        strData = strBuf.substr(iStartMarkPos+1, iEndMarkPos-iStartMarkPos-1);
+    }
 	else
 	{
-		strData = strBuf.substr(0, iEndMarkPos+1);
+        strData = strBuf.substr(1, iEndMarkPos-1);
 	}
 
 	return iEndMarkPos+1;
 }
 
-int CSocketClient::DataSplit(std::string strData, tSockPack2 &sockData)
+int CSocketClient::DataSplit(string strData, SockPack &sockData)
 {
-	string *strResult = new string[6;
+    vector<string> vectData;
+    size_t iFindPos = 0;
+    int iCnt = 0;
+
+    if(strData.length() == string::npos)
+        return -1;
+
+    for(size_t iPos=0; iPos<strData.size(); )
+    {
+        iFindPos = strData.find_first_of(SOCKET_SPLIT_MARK, iPos);
+
+        if(iFindPos == string::npos)
+        {
+            vectData.push_back(strData.substr(iPos));
+            iPos = strData.size();
+        }
+        else
+        {
+            vectData.push_back(strData.substr(iPos, iFindPos-iPos));
+            iPos = iFindPos+1;
+        }
+
+        iCnt++;
+    }
+
+    if(iCnt < SOCKET_DATA_CNT)
+        return -2;
+
+    sockData.hdr.version    = atoi(((string)vectData.at(0)).c_str());
+    sockData.hdr.cell       = atoi(((string)vectData.at(1)).c_str());
+    sockData.hdr.port       = atoi(((string)vectData.at(2)).c_str());
+    sockData.hdr.msg_no     = atoi(((string)vectData.at(3)).c_str());
+    sockData.hdr.packet     = atoi(((string)vectData.at(4)).c_str());
+    sockData.hdr.flag       = atoi(((string)vectData.at(5)).c_str());
+
+    int iStringLength = ((string)vectData.at(6)).length();
+    sockData.pstring = new char[iStringLength];
+    memcpy(sockData.pstring, ((string)vectData.at(6)).c_str(), iStringLength);
+
+
+//    printf(">> sizeof sockData = %ld\n", sizeof(sockData));
+//    printf(">> sock version = %d\n", sockData.hdr.version);
+//    printf(">> sock cell = %d\n", sockData.hdr.cell);
+//    printf(">> sock port = %d\n", sockData.hdr.port);
+//    printf(">> sock msg_no = %d\n", sockData.hdr.msg_no);
+//    printf(">> sock packet = %d\n", sockData.hdr.packet);
+//    printf(">> sock flag = %d\n", sockData.hdr.flag);
+//    printf(">> sock string = %s\n", sockData.pstring);
+
+//    vector<string>::iterator it;
+//    for(it=vectData.begin(); it!=vectData.end(); it++)
+//    {
+//        string temp = *it;
+//        printf(">> data %s\n", temp.c_str());
+//    }
 
 	return 0;
 }
 
-void CSocketClient::StartThread()
+void CSocketClient::StartThread(void (*SetFunc)(SockPack sockData))
 {
-	if(idThread == 0)
-		pthread_create(&idThread, NULL, &SocketClientThread, (void*)this);
+    ProcFunc = SetFunc;
+    InitSockData();
+
+    if(idCheckThread == 0)
+        pthread_create(&idCheckThread, NULL, &SocketCheckThread, (void*)this);
+
+    if(idProcThread == 0)
+        pthread_create(&idProcThread, NULL, &SocketProcThread, (void*)this);
 }
 
 void CSocketClient::StopThread()
 {
-	condThread = OFF;
+    condCheckThread = OFF;
+    condProcThread = OFF;
 
-	if(idThread != 0)
+    if(idProcThread != 0)
+    {
+        pthread_join(idProcThread, NULL);
+        idProcThread = 0;
+    }
+
+    if(idCheckThread != 0)
 	{
-		pthread_join(idThread, NULL);
-		idThread = 0;
+        pthread_join(idCheckThread, NULL);
+        idCheckThread = 0;
 	}
+
+    InitSockData();
 }

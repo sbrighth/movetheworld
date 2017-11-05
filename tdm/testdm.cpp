@@ -38,9 +38,11 @@ int main(int argc, char *argv[])
 	if(SetSignal() < 0)
 		return -1;
 
+
 	//get tpc bd id;
 	g_idTpc = 2;
 	g_idResShare = CreateShmem(KEY_RES_SHARE, 512);
+
 
 	//init test folder
 	char szTestMsgSendTo[PATHNAME_SIZE];
@@ -54,30 +56,35 @@ int main(int argc, char *argv[])
 	cout << "strTestMsgSendTo : " << szTestMsgSendTo << endl;
 	cout << "strTestMsgRecvFrom : " << szTestMsgRecvFrom << endl;
 
+
 	//MsgqThread
 	g_pTestMsgq = new CMsgqThread(KEY_TEST_MSGQ, szTestMsgSendTo, szTestMsgRecvFrom);
 	g_pTestMsgq->StartThread(&RecvMsgProc);
 
+
 	//Socket
-	//CSocketClient *g_pSocket  = new CSocketClient(g_idTpc, (char *)"127.0.0.1", PORT_TDM);
-	CSocketClient *g_pSocket  = new CSocketClient(g_idTpc, (char *)"192.168.10.68", 3132);
-	g_pSocket->StartThread();
+    CSocketClient *g_pSocketClient  = new CSocketClient(g_idTpc, (char *)"127.0.0.1", PORT_TDM);
+    //CSocketClient *g_pSocket  = new CSocketClient(g_idTpc, (char *)"192.168.10.68", 3132);
+    g_pSocketClient->StartThread(&RecvSockProc);
 
-	//TestMng
-	g_pTestMng = new CTestMng*[PORT_MAX];
 
-	for(int idx=0; idx<PORT_MAX; idx++)
-	{
-		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_INIT,	0, PROG_VERSION);
-		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_INITCOLOR,0, "");
-		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT1, 	0, "EMPTY");
-		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT2, 	0, "");
-		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT3, 	0, PROG_VERSION);
-		SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT4, 	0, "");
+    //TestMng
+    g_pTestMng = new CTestMng*[PORT_MAX];
 
-		g_pTestMng[idx] = new CTestMng(g_idTpc, idx);
-	}
+    for(int idx=0; idx<PORT_MAX; idx++)
+    {
+        SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_INIT,	0, PROG_VERSION);
+        SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_INITCOLOR,0, "");
+        SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT1, 	0, "EMPTY");
+        SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT2, 	0, "");
+        SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT3, 	0, PROG_VERSION);
+        SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT4, 	0, "");
 
+        g_pTestMng[idx] = new CTestMng(g_idTpc, idx);
+    }
+
+
+    //TPC b'd status monitor
 	g_condTestDm = 1;
 	while( g_condTestDm )
 	{
@@ -85,16 +92,18 @@ int main(int argc, char *argv[])
 		msleep(100);
 	}
 
-	if(g_pSocket != NULL)
-	{
-		g_pSocket->StopThread();
-		delete g_pSocket;
-	}
 
-	if(g_pTestMsgq != NULL)
+    //clear resources
+    if(g_pTestMsgq != NULL)
+    {
+        g_pTestMsgq->StopThread();
+        delete g_pTestMsgq;
+    }
+
+    if(g_pSocketClient != NULL)
 	{
-		g_pTestMsgq->StopThread();
-		delete g_pTestMsgq;
+        g_pSocketClient->StopThread();
+        delete g_pSocketClient;
 	}
 
 	if(g_pTestMng != NULL)
@@ -109,7 +118,6 @@ int main(int argc, char *argv[])
 
 
 	printf("%s end!!\n", PROG_NAME);
-
 	return EXIT_SUCCESS;
 }
 
@@ -268,87 +276,123 @@ int CheckScriptFile(char *msg_str)
 	return iSendMode;
 }
 
-void RecvMsgProc(int idMsgq, MsgPack msg)
+void RecvMsgProc(MsgPack msg)
 {
-	int version		= msg.hdr.version;
-	int cell    	= msg.hdr.cell;
-	int port    	= msg.hdr.port-1;	// 0, 1
-	int msg_no		= msg.hdr.msg_no;
-	//int packet 		= msg.packet;
-	//int flag 		= msg.flag;
-	char *msg_str	= msg.string;
+    int cell    	= msg.hdr.cell;
 
-	if(cell != g_idTpc)
+    if(cell != g_idTpc)
 	{
 		printf(">> invalid tpc no(c:%d, g_idTpc:%d)\n", cell, g_idTpc);
 		return;
 	}
 
-	if(msg.hdr.port < PORT_MIN || msg.hdr.port > PORT_MAX)
-		return;
+    ProcTypeMsgTest(msg.hdr, msg.string);
+}
 
-	if(msg_no == MSG_TEST_START)
-	{
-		if( g_pTestMng[port]->IsTestOn() == 0 )
-		{
-			char szRealName[PATHNAME_SIZE] = {0,};
+void RecvSockProc(SockPack sockData)
+{
+    int version		= sockData.hdr.version;
+    int cell    	= sockData.hdr.cell;
 
-			if( SearchFile(g_szTestPath, msg_str, szRealName) == 0 )
-			{
-				if(g_pTestMng[port]->StartTest(g_szTestPath, szRealName) == 0)
-				{
-					printf(">> test is started!!\n");
-					SendMsg(idMsgq, version, cell, port+1, MSG_TEST,	0, "");
-				}
-			}
-			else
-			{
-				printf(">> port %d script is not exist!!\n", port+1);
-				//SendMsg(idMsgq, version, cell, port+1, MSG_DONE,	0, "SCRIPT NOT EXIST");
-			}
-		}
-		else
-		{
-			printf(">> port %d is testing!!\n", port+1);
-		}
-	}
-	else if(msg_no == MSG_TEST_STOP)
-	{
-		if(g_pTestMng[port]->IsTestOn() == 1)
-		{
-			g_pTestMng[port]->StopTest();
-			SendMsg(idMsgq, version, cell, port+1, MSG_FAIL,	0, "ABORT");
-		}
-	}
-	else if(msg_no == MSG_INIT)
-	{
-		switch(CheckScriptFile(msg_str))
-		{
-		case SC_FILE_DEFAULT:
-			SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_DEFAULT, PROG_VERSION);
-			SendMsg(idMsgq, version, cell, port+1, MSG_TEXT1,    0,	"MSG_INIT");
-			SendMsg(idMsgq, version, cell, port+1, MSG_TEXT2,    0, "");
-			SendMsg(idMsgq, version, cell, port+1, MSG_TEXT3,    0, "");
-			SendMsg(idMsgq, version, cell, port+1, MSG_TEXT4,    0, "");
-			break;
-		case SC_FILE_PASS:
-			SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_PASS, PROG_VERSION);
-			SendMsg(idMsgq, version, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
-			break;
-		case SC_FILE_SIZE_ERR:
-			SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_SIZE_ERR, PROG_VERSION);
-			SendMsg(idMsgq, version, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
-			break;
-		case SC_FILE_NONE_ERR:
-			SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_NONE_ERR, PROG_VERSION);
-			SendMsg(idMsgq, version, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
-			break;
-		case SC_FILE_OTHER_ERR:
-			break;
-		}
-	}
-	else if(msg_no == MSG_INITACK)
-	{
+    if(cell != g_idTpc)
+    {
+        printf(">> invalid tpc no(c:%d, g_idTpc:%d)\n", cell, g_idTpc);
+        return;
+    }
 
-	}
+    if( version == TYPE_MSG_INFO || version == TYPE_MSG_TPC_DIAG || version == TYPE_MSG_UPDATE || version == TYPE_MSG_DPS || version == TYPE_MSG_PORT_DIAG )
+    {
+        printf(">> thi sis TYPE others\n");
+
+    }
+    else if(version == TYPE_MSG_TEST)
+    {
+        ProcTypeMsgTest(sockData.hdr, sockData.pstring);
+    }
+}
+
+
+int ProcTypeMsgTest(MsgHdr hdr, char *msg_str)
+{
+    int version	= hdr.version;
+    int cell    = hdr.cell;
+    int port    = hdr.port-1;	// 0, 1
+    int msg_no	= hdr.msg_no;
+    //int packet 		= msg.packet;
+    //int flag 		= msg.flag;
+
+    int idMsgq  = KEY_TEST_MSGQ;
+
+    if(port < PORT_MIN || port > PORT_MAX)
+        return -1;
+
+    if(msg_str == NULL)
+        return -2;
+
+    if(msg_no == MSG_TEST_START)
+    {
+        if( g_pTestMng[port]->IsTestOn() == 0 )
+        {
+            char szRealName[PATHNAME_SIZE] = {0,};
+
+            if( SearchFile(g_szTestPath, msg_str, szRealName) == 0 )
+            {
+                if(g_pTestMng[port]->StartTest(g_szTestPath, szRealName) == 0)
+                {
+                    printf(">> test is started!!\n");
+                    SendMsg(idMsgq, version, cell, port+1, MSG_TEST,	0, "");
+                }
+            }
+            else
+            {
+                printf(">> port %d script is not exist!!\n", port+1);
+                SendMsg(idMsgq, version, cell, port+1, MSG_DONE,	0, "SCRIPT NOT EXIST");
+            }
+        }
+        else
+        {
+            printf(">> port %d is testing!!\n", port+1);
+        }
+    }
+    else if(msg_no == MSG_TEST_STOP)
+    {
+        if(g_pTestMng[port]->IsTestOn() == 1)
+        {
+            g_pTestMng[port]->StopTest();
+            SendMsg(idMsgq, version, cell, port+1, MSG_FAIL,	0, "ABORT");
+        }
+    }
+    else if(msg_no == MSG_INIT)
+    {
+        switch(CheckScriptFile(msg_str))
+        {
+        case SC_FILE_DEFAULT:
+            SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_DEFAULT, PROG_VERSION);
+            SendMsg(idMsgq, version, cell, port+1, MSG_TEXT1,    0,	"MSG_INIT");
+            SendMsg(idMsgq, version, cell, port+1, MSG_TEXT2,    0, "");
+            SendMsg(idMsgq, version, cell, port+1, MSG_TEXT3,    0, "");
+            SendMsg(idMsgq, version, cell, port+1, MSG_TEXT4,    0, "");
+            break;
+        case SC_FILE_PASS:
+            SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_PASS, PROG_VERSION);
+            SendMsg(idMsgq, version, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
+            break;
+        case SC_FILE_SIZE_ERR:
+            SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_SIZE_ERR, PROG_VERSION);
+            SendMsg(idMsgq, version, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
+            break;
+        case SC_FILE_NONE_ERR:
+            SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_NONE_ERR, PROG_VERSION);
+            SendMsg(idMsgq, version, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
+            break;
+        case SC_FILE_OTHER_ERR:
+            break;
+        }
+    }
+    else if(msg_no == MSG_INITACK)
+    {
+        // do nothing
+    }
+
+    return 0;
 }

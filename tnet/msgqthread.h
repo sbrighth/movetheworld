@@ -24,11 +24,11 @@ public:
 
 public:
 	int				InitMsgq();
-	void			StartThread(void (*SetFunc)(int idMsgq, MsgPack msg));
+    void			StartThread(void (*SetFunc)(MsgPack msg));
 	void			StopThread();
 	int				MsgqLog(MsgPack msg, int dir);
 
-	void			(*ProcFunc)(int idMsgq, MsgPack msg);
+    void			(*ProcFunc)(MsgPack msg);
 
 	int				idMsgq;
 	pthread_t		idCheckThread;

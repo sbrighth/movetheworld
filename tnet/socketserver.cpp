@@ -297,35 +297,35 @@ void *SocketServerThread( void *arg )
 				}
 
 /*
-				//do process
-				//SockPack *pSock = (SockPack *)cRecvBuf;
-				//printf(">> v(%d), c(%d), p(%d), m(%d), p(%d), f(%d)\n", pSock->hdr.version, pSock->hdr.cell, pSock->hdr.port, pSock->hdr.msg_no, pSock->hdr.packet, pSock->hdr.flag);
+                //do process
+                //SockPack *pSock = (SockPack *)cRecvBuf;
+                //printf(">> v(%d), c(%d), p(%d), m(%d), p(%d), f(%d)\n", pSock->hdr.version, pSock->hdr.cell, pSock->hdr.port, pSock->hdr.msg_no, pSock->hdr.packet, pSock->hdr.flag);
 
-				rnd++;
-				memset(cSendBuf, 0, sizeof(cSendBuf));
-				sprintf(cSendBuf, "<%d,%d,%d,%d,%d,%d,", rnd%7, 1, 0, 0, 0, 0 );
+                rnd++;
+                memset(cSendBuf, 0, sizeof(cSendBuf));
+                sprintf(cSendBuf, "<%d,%d,%d,%d,%d,%d,", rnd%7, 1, 0, 0, 0, 0 );
 
-				char cTemp[512];
-				memset(cTemp, 'a', sizeof(cTemp));
-				sprintf(cSendBuf, "%s%s>", cSendBuf, cTemp);
-				printf(">> strlen = %d\n", strlen(cSendBuf));
+                char cTemp[512];
+                memset(cTemp, 'a', sizeof(cTemp));
+                sprintf(cSendBuf, "%s%s>", cSendBuf, cTemp);
+                printf(">> strlen = %d\n", strlen(cSendBuf));
 
-				iCnt = pthis->Send(cSendBuf, sizeof(cSendBuf));
-				if( iCnt < 0 )
-				{
-					printf( "socket send() Error! errno=%d\n" , errno );
-					pthis->CloseClientSocket();
-					m_tPollEvent[1].fd = -1;
-					m_tPollEvent[1].events = 0;
-					m_tPollEvent[1].revents = 0;
-					continue;
-				}
-				else
-				{
-					printf( "socket send() ok\n" );
-				}
+                iCnt = pthis->Send(cSendBuf, sizeof(cSendBuf));
+                if( iCnt < 0 )
+                {
+                    printf( "socket send() Error! errno=%d\n" , errno );
+                    pthis->CloseClientSocket();
+                    m_tPollEvent[1].fd = -1;
+                    m_tPollEvent[1].events = 0;
+                    m_tPollEvent[1].revents = 0;
+                    continue;
+                }
+                else
+                {
+                    printf( "socket send() ok\n" );
+                }
 */
-			}
+            }
 		}
 		else
 		{

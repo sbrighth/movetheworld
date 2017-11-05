@@ -15,6 +15,7 @@
 #include "msgsend.h"
 #include "socketclient.h"
 #include "testmng.h"
+#include "socketclient.h"
 
 #define SC_FILE_DEFAULT		0x0
 #define SC_FILE_PASS		0x1
@@ -31,9 +32,10 @@ void	ProcSignalStop(int sig_no);
 int		SetSignal();
 int		CreateTestFolders();
 int		CreateFolder(char *path);
-void	RecvMsgProc(int idMsgq, MsgPack msg);
+void	RecvMsgProc(MsgPack msg);
+void	RecvSockProc(SockPack sockData);
 int		CheckScriptFile(char *msg_str);
-
+int     ProcTypeMsgTest(MsgHdr hdr, char *msg_str);
 
 char	g_szTestPath[PATHNAME_SIZE];
 int		g_condTestDm;

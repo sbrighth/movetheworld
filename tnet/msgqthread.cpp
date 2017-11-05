@@ -73,7 +73,7 @@ void* MsgqProcThread(void *arg)
 			if(PopMsgq(pthis->idMsgq, &msgqProc, sizeof(MsgPackQ)) == 0)
 			{
 				pthis->MsgqLog(msgqProc.msg, 0);
-				pthis->ProcFunc(pthis->idMsgq, msgqProc.msg);
+                pthis->ProcFunc(msgqProc.msg);
 			}
 		}
 
@@ -126,7 +126,7 @@ CMsgqThread::~CMsgqThread()
 	StopThread();
 }
 
-void CMsgqThread::StartThread(void (*SetFunc)(int idMsgq, MsgPack msg))
+void CMsgqThread::StartThread(void (*SetFunc)(MsgPack msg))
 {
 	ProcFunc = SetFunc;
 	CMsgBox::StartThread();

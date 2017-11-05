@@ -75,7 +75,7 @@ int CMsgBox::RecvMsg(MsgPack &msg)
 	if(qReadMsg.size() > 0)
 	{
 		msg = qReadMsg.front();
-		qReadMsg.pop();
+        qReadMsg.pop();
 	}
 	else
 		return -1;
@@ -268,6 +268,8 @@ void CMsgBox::_MsgFileThread()
 
 void CMsgBox::StartThread()
 {
+    InitMsg();
+
 	if(idThread == 0)
 		pthread_create(&idThread, NULL, &MsgFileThread, (void*)this);
 }
@@ -281,4 +283,6 @@ void CMsgBox::StopThread()
 		pthread_join(idThread, NULL);
 		idThread = 0;
 	}
+
+    InitMsg();
 }
