@@ -325,28 +325,42 @@ int test_socket()
 
 	sock->StartThread();
 
-	int ver=0;
 	while(1)
 	{
-		char temp;
-		cin >> temp;
+        string version;
+        string cell;
+        string port;
+        string text;
 
-		if(temp == 'x')
-		{
-			break;
-		}
-		else
-		{
-			printf(">> pressed key = %c\n", temp);
-			ver++;
-			ver = ver % 7;
-			char buf[512] = {0,};
-			sprintf(buf, "%s%d,%d,%d,%d,%d,%d,%c%s", SOCKET_START_MARK, ver, 2, 0, 0, 0, 0, temp, SOCKET_END_MARK);
+        cout << "version: ";
+        cin >> version;
+        if(version == "quit")
+            break;
+
+        cout << "cell: ";
+        cin >> cell;
+        if(cell == "quit")
+            break;
 
 
-			int cnt = sock->Send(buf, strlen(buf));
-			printf(">> cnt = %d\n", cnt);
-		}
+        cout << "port: ";
+        cin >> port;
+        if(port == "quit")
+            break;
+
+
+        cout << "text: ";
+        cin >> text;
+        if(text == "quit")
+            break;
+
+
+        char buf[512] = {0,};
+        sprintf(buf, "%s%s,%s,%s,%d,%d,%d,%s%s", SOCKET_START_MARK, version.c_str(), cell.c_str(), port.c_str(), 0, 0, 0, text.c_str(), SOCKET_END_MARK);
+
+        printf(">> buf = %s\n", buf);
+        int cnt = sock->Send(buf, strlen(buf));
+        printf(">> cnt = %d\n", cnt);
 	}
 
 	sock->StopThread();

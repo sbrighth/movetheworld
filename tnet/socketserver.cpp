@@ -73,7 +73,7 @@ int CSocketServer::CreateSocket()
 	}
 	else
 	{
-		printf( "socket() ok\n" );
+        //printf( "socket() ok\n" );
 	}
 
 	//set socket option (SO_REUSEADDR)
@@ -84,7 +84,7 @@ int CSocketServer::CreateSocket()
 	}
 	else
 	{
-		printf( "setsockopt() ok\n" );
+        //printf( "setsockopt() ok\n" );
 	}
 
 	int flag =	fcntl(iServerSocket, F_GETFL, 0);
@@ -103,7 +103,7 @@ int CSocketServer::BindSocket()
 	}
 	else
 	{
-		printf( "bind() ok\n" );
+        //printf( "bind() ok\n" );
 	}
 
 	return 0;
@@ -118,7 +118,7 @@ int CSocketServer::ListenSocket()
 	}
 	else
 	{
-		printf( "listen() ok\n" );
+        //printf( "listen() ok\n" );
 	}
 
 	return 0;
@@ -140,7 +140,7 @@ int CSocketServer::AcceptClient()
 	}
 	else
 	{
-		printf( "accept() ok\n" );
+        //printf( "accept() ok\n" );
 		bAccept = true;
 	}
 
@@ -152,7 +152,7 @@ int CSocketServer::AcceptClient()
 
 void CSocketServer::CloseServerSocket()
 {
-	printf("close server socket\n");
+    //printf("close server socket\n");
 
 	if(iServerSocket > 0)
 	{
@@ -164,7 +164,7 @@ void CSocketServer::CloseServerSocket()
 
 void CSocketServer::CloseClientSocket()
 {
-	printf("close client socket\n");
+    //printf("close client socket\n");
 
 	if(iClientSocket > 0)
 	{
@@ -227,11 +227,10 @@ void *SocketServerThread( void *arg )
 	pthis->condThread = ON;
 	while( pthis->condThread == ON )                // Socket receive Loop
 	{
-		printf(">> loop!!\n");
 		if( poll((struct pollfd*)&m_tPollEvent, 2, 1000) > 0 )
 		{
-			printf(">> 0 revent = %d\n", m_tPollEvent[0].revents);
-			printf(">> 1 revent = %d\n", m_tPollEvent[1].revents);
+            //printf(">> 0 revent = %d\n", m_tPollEvent[0].revents);
+            //printf(">> 1 revent = %d\n", m_tPollEvent[1].revents);
 
 			if( m_tPollEvent[0].revents & POLLIN )
 			{
@@ -246,7 +245,7 @@ void *SocketServerThread( void *arg )
 				}
 				else
 				{
-					printf( "accept() done\n" );
+                    //printf( "accept() done\n" );
 
 					m_tPollEvent[1].revents = 0;
 
@@ -280,19 +279,19 @@ void *SocketServerThread( void *arg )
 
 				strBuf.append(cRecvBuf, (strlen(cRecvBuf) > (size_t)iCnt)? iCnt : strlen(cRecvBuf));
 
-				printf(">> recv count = %ld, iCnt = %d\n", strlen(cRecvBuf), iCnt);
-				printf(">> before erase strBuf = %s\n", strBuf.c_str());
+                //printf(">> recv count = %ld, iCnt = %d\n", strlen(cRecvBuf), iCnt);
+                //printf(">> before erase strBuf = %s\n", strBuf.c_str());
 
 				int ret = pthis->ParseData(strBuf);
 				if( ret > 0)
 				{
 					strBuf.erase(0, ret);
-					printf(">> erase pos = %d\n", ret);
-					printf(">> after erase strBuf = %s\n", strBuf.c_str());
+                    //printf(">> erase pos = %d\n", ret);
+                    //printf(">> after erase strBuf = %s\n", strBuf.c_str());
 				}
 				else
 				{
-					printf(">> strBuf is not enogh!!\n");
+                    //printf(">> strBuf is not enogh!!\n");
 					continue;
 				}
 
@@ -329,7 +328,6 @@ void *SocketServerThread( void *arg )
 		}
 		else
 		{
-			printf(">> poll error = %d\n", errno);
 			continue;
 		}
 
@@ -385,17 +383,17 @@ int CSocketServer::ParseData(std::string &strBuf)
 	{
 		strData = strData = strBuf.substr(iStartMarkPos, iEndMarkPos-iStartMarkPos+1);
 
-		printf(">> start < end\n");
-		printf(">> sfound = %ld, efound = %ld\n", iStartMarkPos, iEndMarkPos);
-		printf(">> strBuf = %s\n", strData.c_str());
+        //printf(">> start < end\n");
+        //printf(">> sfound = %ld, efound = %ld\n", iStartMarkPos, iEndMarkPos);
+        //printf(">> strBuf = %s\n", strData.c_str());
 	}
 	else
 	{
 		strData = strData = strBuf.substr(0, iEndMarkPos+1);
 
-		printf(">> start > end\n");
-		printf(">> sfound = %ld, efound = %ld\n", iStartMarkPos, iEndMarkPos);
-		printf(">> strBuf = %s\n", strData.c_str());
+        //printf(">> start > end\n");
+        //printf(">> sfound = %ld, efound = %ld\n", iStartMarkPos, iEndMarkPos);
+        //printf(">> strBuf = %s\n", strData.c_str());
 	}
 
 	return iEndMarkPos+1;

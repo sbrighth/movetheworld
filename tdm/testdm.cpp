@@ -302,8 +302,9 @@ void RecvSockProc(SockPack sockData)
 
     if( version == TYPE_MSG_INFO || version == TYPE_MSG_TPC_DIAG || version == TYPE_MSG_UPDATE || version == TYPE_MSG_DPS || version == TYPE_MSG_PORT_DIAG )
     {
-        printf(">> thi sis TYPE others\n");
+        printf(">> this is TYPE others\n");
 
+        ProcTypeMsgInfo(sockData.hdr, sockData.pstring);
     }
     else if(version == TYPE_MSG_TEST)
     {
@@ -311,6 +312,41 @@ void RecvSockProc(SockPack sockData)
     }
 }
 
+int ProcTypeMsgInfo(MsgHdr hdr, char *msg_str)
+{
+    int version	= hdr.version;
+    int cell    = hdr.cell;
+    int port    = hdr.port-1;
+    int msg_no	= hdr.msg_no;
+    //int packet 		= msg.packet;
+    //int flag 		= msg.flag;
+
+    int idMsgq  = KEY_TEST_MSGQ;
+
+    if(port < PORT_MIN || port > PORT_MAX)
+        return -1;
+
+    if(msg_str == NULL)
+        return -2;
+
+    char szRealName[PATHNAME_SIZE] = {0,};
+
+    if( SearchFile(g_szTestPath, msg_str, szRealName) == 0 )
+    {
+        if(g_pTestMng[port]->StartTest(g_szTestPath, szRealName) == 0)
+        {
+            printf(">> test is started!!\n");
+            SendMsg(idMsgq, version, cell, port+1, MSG_TEST,	0, "");
+        }
+    }
+    else
+    {
+        printf(">> Info script is not exist!!\n");
+        SendMsg(idMsgq, version, cell, port+1, MSG_DONE,	0, "SCRIPT NOT EXIST");
+    }
+
+    return 0;
+}
 
 int ProcTypeMsgTest(MsgHdr hdr, char *msg_str)
 {

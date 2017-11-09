@@ -97,10 +97,10 @@ int CSocketClient::CreateSocket()
 		printf( "socket() Error! errno=%d\n" , errno );
 		return -1;
 	}
-	else
-	{
-		printf( "socket() ok\n" );
-	}
+    else
+    {
+        //printf( "socket() ok\n" );
+    }
 
 	//set socket option (SO_REUSEADDR)
 	if(setsockopt(iClientSocket , SOL_SOCKET , SO_REUSEADDR , &iSetSocketOption , sizeof(iSetSocketOption)) < 0 )
@@ -108,10 +108,10 @@ int CSocketClient::CreateSocket()
 		printf( "setsockopt() Error! errno=%d\n" , errno );
 		return -1;
 	}
-	else
-	{
-		printf( "setsockopt() ok\n" );
-	}
+    else
+    {
+        //printf( "setsockopt() ok\n" );
+    }
 
 	int flag =	fcntl(iClientSocket, F_GETFL, 0);
 	fcntl(iClientSocket, F_SETFL, flag | SOCK_NONBLOCK);
@@ -126,9 +126,9 @@ int CSocketClient::ConnectServer()
 
 	if(connect( iClientSocket , (struct sockaddr *)&tServerAddr, sizeof( tServerAddr ) ) < 0)
 	{
-		printf( "connect() Error! errno=%d\n" , errno );
+       // printf( "connect() Error! errno=%d\n" , errno );
 
-		if(errno == EINPROGRESS)
+        if(errno == EINPROGRESS)
 		{
 			struct timeval tv;
             tv.tv_sec = 10;
@@ -146,31 +146,31 @@ int CSocketClient::ConnectServer()
 				getsockopt(iClientSocket , SOL_SOCKET , SO_ERROR , &iGetSocketErr , &len);
 				if(iGetSocketErr)
 				{
-					printf("getsockopt connect() error %d\n", iGetSocketErr);
+                    //printf("getsockopt connect() error %d\n", iGetSocketErr);
 					bConnect = false;
 				}
 				else
 				{
-					printf("getsockopt connect() ok!\n");
-					bConnect = true;
+                    //printf("getsockopt connect() ok!\n");
+                    bConnect = true;
 				}
 			}
 			else
 			{
-				printf("connect() timeout error\n");
+                //printf("connect() timeout error\n");
 				bConnect = false;
 			}
 		}
 		else
 		{
-			printf("connect() error!!\n");
+            //printf("connect() error!!\n");
 			bConnect = false;;
 		}
 	}
 	else
 	{
-		printf( "connect() ok\n" );
-		bConnect = true;
+        //printf( "connect() ok\n" );
+        bConnect = true;
 	}
 
 	if(bConnect)
@@ -181,7 +181,7 @@ int CSocketClient::ConnectServer()
 
 void CSocketClient::CloseSocket()
 {
-	printf("close socket\n");
+    //printf("close socket\n");
 
 	if(iClientSocket >= 0)
 	{
@@ -217,7 +217,7 @@ int CSocketClient::SendCheckDummy()
 	int iSendCnt = Send(cSendBuf, strlen(cSendBuf));
 	if(iSendCnt < (ssize_t)strlen(cSendBuf))
 	{
-		printf("connection error!!\n");
+        //printf("connection error!!\n");
 		bConnect = false;
 		return -1;
 	}
@@ -243,7 +243,7 @@ void *SocketCheckThread( void *arg )
 
 		if(pthis->ConnectServer() < 0)
 		{
-			printf( "ConnectServer() Error!!! errno=%d\n", errno );
+            //printf( "ConnectServer() Error!!! errno=%d\n", errno );
 			pthis->CloseSocket();
 			strBuf.erase();
 			sleep(1);
@@ -271,8 +271,8 @@ void *SocketCheckThread( void *arg )
 
 				strBuf.append(cRecvBuf, (strlen(cRecvBuf) > (size_t)iCnt)? iCnt : strlen(cRecvBuf));
 
-				printf(">> recv count = %ld, iCnt = %d\n", strlen(cRecvBuf), iCnt);
-				printf(">> before erase strBuf = %s\n", strBuf.c_str());
+                //printf(">> recv count = %ld, iCnt = %d\n", strlen(cRecvBuf), iCnt);
+                //printf(">> before erase strBuf = %s\n", strBuf.c_str());
 
 				while(iCnt--)
 				{
@@ -282,9 +282,9 @@ void *SocketCheckThread( void *arg )
 					if(ret > 0)
 					{
 						strBuf.erase(0, ret);
-						printf(">> erase pos = %d\n", ret);
-						printf(">> after erase strBuf = %s\n", strBuf.c_str());
-						printf(">> strData = %s\n", strPacketData.c_str());
+                        //printf(">> erase pos = %d\n", ret);
+                        //printf(">> after erase strBuf = %s\n", strBuf.c_str());
+                        //printf(">> strData = %s\n", strPacketData.c_str());
 
                         SockPack sockData;
                         pthis->DataSplit(strPacketData, sockData);
@@ -403,10 +403,9 @@ int CSocketClient::DataSplit(string strData, SockPack &sockData)
     sockData.hdr.packet     = atoi(((string)vectData.at(4)).c_str());
     sockData.hdr.flag       = atoi(((string)vectData.at(5)).c_str());
 
-    int iStringLength = ((string)vectData.at(6)).length();
+    int iStringLength = ((string)vectData.at(6)).length()+1;
     sockData.pstring = new char[iStringLength];
     memcpy(sockData.pstring, ((string)vectData.at(6)).c_str(), iStringLength);
-
 
 //    printf(">> sizeof sockData = %ld\n", sizeof(sockData));
 //    printf(">> sock version = %d\n", sockData.hdr.version);
@@ -424,7 +423,7 @@ int CSocketClient::DataSplit(string strData, SockPack &sockData)
 //        printf(">> data %s\n", temp.c_str());
 //    }
 
-	return 0;
+    return 0;
 }
 
 void CSocketClient::StartThread(void (*SetFunc)(SockPack sockData))

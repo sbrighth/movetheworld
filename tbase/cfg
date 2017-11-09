@@ -26,15 +26,14 @@ log file
 		- msg_file.txt
 	- socket log file
 		- sock_packet.txt
+        - error log file
+                - error.txt
 		
 status
-	- test mode
-	- tpc no
-	- script name
-	- dut status
-	- cpu, ram, storage percentage
-	- network(mount)
-	
+    1) B'D status(time, mount, cpu/ram/storage usage)
+    2) test status(mode, script name)
+    3) device status(existance, perf, dps)
+
 copy file from/to share folder
 
 cfg file

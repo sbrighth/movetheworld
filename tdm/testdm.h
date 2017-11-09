@@ -35,6 +35,7 @@ int		CreateFolder(char *path);
 void	RecvMsgProc(MsgPack msg);
 void	RecvSockProc(SockPack sockData);
 int		CheckScriptFile(char *msg_str);
+int     ProcTypeMsgInfo(MsgHdr hdr, char *msg_str);
 int     ProcTypeMsgTest(MsgHdr hdr, char *msg_str);
 
 char	g_szTestPath[PATHNAME_SIZE];

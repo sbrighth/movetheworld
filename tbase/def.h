@@ -18,8 +18,7 @@
 #define int32	int
 #define int64	long long
 
-//#define SYS_PATH				"/exicon"
-#define SYS_PATH				"/tmp/exicon"
+#define SYS_PATH				"/exicon"
 #define SYS_BIN_PATH			SYS_PATH "/bin"
 
 #define SYS_CFG_PATH			SYS_PATH "/config"
