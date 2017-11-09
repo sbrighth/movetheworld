@@ -1,13 +1,13 @@
 CC			= gcc
 CXX			= g++
-BINPATH		= /tmp/exicon/bin
-INCPATH		= /tmp/exicon/include
-LIBPATH		= /tmp/exicon/lib
+BINPATH		= /exicon/bin
+INCPATH		= /exicon/include
+LIBPATH		= /exicon/lib
 CXXFLAGS	= -O2 -g -Wall -I$(INCPATH) 
 LDFLAGS		= -L$(LIBPATH) -ltbase -ltnet -lpthread
 
 TARGET		= test
-OBJS 		= test.o
+OBJS 		= test.o jsoncpp.cpp
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) -o $@ -c $< 

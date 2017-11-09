@@ -39,6 +39,10 @@ int main(int argc, char *argv[])
 		return -1;
 
 
+    CStatus status;
+    status.MakeStatus();
+    return  0;
+
 	//get tpc bd id;
 	g_idTpc = 2;
 	g_idResShare = CreateShmem(KEY_RES_SHARE, 512);

@@ -16,6 +16,7 @@
 #include "socketclient.h"
 #include "testmng.h"
 #include "socketclient.h"
+#include "status.h"
 
 #define SC_FILE_DEFAULT		0x0
 #define SC_FILE_PASS		0x1

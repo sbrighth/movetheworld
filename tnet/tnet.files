@@ -9,3 +9,4 @@
 /home/shjeong/workspace/duo_back/tnet/socketclient.h
 /home/shjeong/workspace/duo_back/tnet/socketserver.cpp
 /home/shjeong/workspace/duo_back/tnet/socketserver.h
+Makefile

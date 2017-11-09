@@ -9,34 +9,48 @@
 #define STATUS_H_
 
 #include "def.h"
+#include "json/json.h"
+#include "string"
 
-typedef struct tTestStatus
+using namespace std;
+
+typedef struct tOsStatus
 {
-    int mode;
-    int run_script_cnt;
-    char *script;
-    int step;
-    int status;
-}TestStatus;
+    char cTime[32];
+    char cCpuUsage[8];
+    char cMemUsage[8];
+    char cDiskUsage[8];
+    bool bMount;
+    bool bMcuConnect;
+}OsStatus;
+
+typedef struct tPortStatus
+{
+    float fDps5V[2];    //voltage, current
+    float fDps12V[2];
+    char cDpsStatus[8]; //on, off, ocp, ovp
+    bool bDutExist;
+    bool bDutType;
+}PortStatus;
+
+typedef struct tPerfStatus
+{
+    char cWrite[32];
+    char cRead[32];
+}PerfStatus;
 
 class CStatus {
 public:
 	CStatus();
 	virtual ~CStatus();
 
+    int CheckStatus();
 public:
-    bool    mount;
-    float   cpu;
-    float   ram;
-    float   storage;
-    char    time[32];
+    OsStatus    statOs;
+    PortStatus  statPort[MAX_PORT];
+    PerfStatus  statPerf[MAX_PORT];
 
-    int     test_mode[PORT_MAX];
-    char    test_script[PORT_MAX][256];
-
-    int     device_perf[PORT_MAX];
-    int
-
+    string  strJson;
 };
 
 #endif /* STATUS_H_ */

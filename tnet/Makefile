@@ -1,7 +1,7 @@
 CC			= gcc
 CXX			= g++
-INCPATH		= /tmp/exicon/include/
-LIBPATH		= /tmp/exicon/lib/
+INCPATH		= /exicon/include/
+LIBPATH		= /exicon/lib/
 CXXFLAGS	= -o2 -g -Wall -fPIC -I$(INCPATH)
 LDFLAGS		= -shared -L$(LIBPATH) -ltbase
 

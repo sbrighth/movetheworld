@@ -18,6 +18,7 @@
 #include "msgsend.h"
 #include "msgbox.h"
 #include "socketserver.h"
+#include "json/json.h"
 
 using namespace std;
 int help_test();
@@ -30,6 +31,7 @@ int test_compile_script();
 int test_process();
 int	test_msg_out();
 int test_socket();
+int test_json();
 
 int main(void) {
 	int cond = 1;
@@ -52,6 +54,7 @@ int main(void) {
 					test_process();	break;
 		case '6':	test_msg_out();	break;
 		case '7':	test_socket();	break;
+        case '8':   test_json();    break;
 		case 'x':	cond = 0;		break;
 		default:
 			continue;
@@ -72,6 +75,7 @@ int help_test()
 	cout << "5: script test" << endl;
 	cout << "6: write out msg(UI -> tdm)" << endl;
 	cout << "7: socket test" << endl;
+    cout << "8: jsong test" << endl;
 	cout << "x: exit       " << endl;
 	cout << "--------------" << endl;
 	cout << "select cmd >  ";
@@ -403,4 +407,104 @@ int test_socket()
 	delete(sock);
 */
 	return EXIT_SUCCESS;
+}
+
+int test_json()
+{
+
+    //cpu usage: top -n 1 | grep -i cpu\(s\) | awk '{print $5}' | tr -d "%id," | awk '{print 100-$1}'
+    //mem usage: free | grep Mem | awk '{print $3/$2*100}'
+    //storage usgae: df -h | grep [/]$ | awk '{print $5}'
+    //date: date +"%Y-%m-%d %H:%m:%S %Z"
+
+    Json::Value bdinfo;
+    bdinfo["time"] = "2017-11-09 19:11:56 KST";
+    bdinfo["mount"] = false;
+    bdinfo["cpu"] = 12.3;
+    bdinfo["mem"] = 30.3;
+    bdinfo["stroage"] = "35.5%";
+
+
+    Json::Value port1;
+    port1["port"] = "1";
+    port1["testmode"] = "SAS";
+    port1["script"] = "script1.uts";
+    port1["status"] = "running";
+
+    Json::Value port2;
+    port2["port"] = "2";
+    port2["testmode"] = "SATA";
+    port2["script"] = "script2.uts";
+    port2["status"] = "stop";
+
+    Json::Value portinfo;
+    portinfo.append(port1);
+    portinfo.append(port2);
+
+    Json::Value root;
+    root["bdinfo"] = bdinfo;
+    root["portinfo"] = portinfo;
+
+    Json::StyledWriter writer;
+    string str = writer.write(root);
+    cout << str << endl;
+
+
+    Json::Reader reader;
+    Json::Value root_read;
+    bool parsingRet = reader.parse(str, root_read);
+
+    if(!parsingRet)
+    {
+        cout << "fail parsing" << endl;
+        return -1;
+    }
+
+    cout << "1\n";
+    Json::Value read_bdinfo = root_read["bdinfo"];
+    cout << "2\n";
+    Json::Value read_portinfo = root_read["portinfo"];
+    cout << "3\n";
+
+    for (Json::Value::iterator it = root.begin(); it != root.end(); it++)
+    {
+        Json::Value key = it.key();
+        Json::Value value = (*it);
+
+        cout << "key: " << key.toStyledString();
+        cout << "value: " << value.toStyledString();
+    }
+
+
+
+/*
+            typedef struct tTestStatus
+            {
+                int mode;
+                int run_script_cnt;
+                char *script;
+                int step;
+                int status;
+            }TestStatus;
+
+            class CStatus {
+            public:
+                CStatus();
+                virtual ~CStatus();
+
+            public:
+                bool    mount;
+                float   cpu;
+                float   ram;
+                float   storage;
+                char    time[32];
+
+                int     test_mode[PORT_MAX];
+                char    test_script[PORT_MAX][256];
+
+                int     device_perf[PORT_MAX];
+                int
+*/
+
+    return 0;
 }
