@@ -1,6 +1,24 @@
+#eclise
 RemoteSystemsTempFiles/
-/.metadata/
+.metadata/
+.settings/
+.cproject
+.project
 
-**/*.o
-**/*~
-**/*.so
+#qt creator 
+*.config
+*.creator
+*.creator.user
+*.files
+*.includes
+
+#common
+*.o
+*~
+*.so
+*.swp
+.*.swp
+
+#bin
+tdm/tdm
+test/test
