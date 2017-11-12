@@ -6,11 +6,11 @@ RemoteSystemsTempFiles/
 .project
 
 #qt creator 
-*.config
-*.creator
+#*.config
+#*.creator
 *.creator.user
-*.files
-*.includes
+#*.files
+#*.includes
 
 #common
 *.o

@@ -1,13 +1,14 @@
 CC		 	= gcc
 CXX		 	= g++
-BINPATH		= /exicon/bin
-INCPATH		= /exicon/include
-LIBPATH		= /exicon/lib
-CXXFLAGS 	= -O2 -g -Wall -fmessage-length=0 -Wno-unused-result -I$(INCPATH)
-LDFLAGS  	=  -L$(LIBPATH) -ltbase -ltnet -lpthread 
+INCPATH		= -I../tbase/ -I../tnet/
+LIBPATH		= -L../tbase/ -L../tnet/
+CXXFLAGS 	= -O2 -g -Wall -fmessage-length=0 -Wno-unused-result -Wno-sizeof-pointer-memaccess $(INCPATH)
+LDFLAGS  	= $(LIBPATH) -ltbase -ltnet -lpthread
 
-TARGET =	tdm
-OBJS =		testdm.o testmng.o status.o jsoncpp.o
+CP_BINPATH	= ../output/bin
+
+TARGET		= tdm
+OBJS		= testdm.o testmng.o status.o jsoncpp.o
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) -o $@ -c $< 
@@ -16,12 +17,10 @@ $(TARGET):	$(OBJS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 all:	$(TARGET)
-
-copy:
-	@[ -d $(BINPATH) ] || mkdir -p $(BINPATH)
-	cp -f $(TARGET) $(BINPATH)
+	@[ -d $(CP_BINPATH) ] || mkdir -p $(CP_BINPATH)
+	cp -f $(TARGET) $(CP_BINPATH)
 
 clean:
 	rm -f $(OBJS) $(TARGET)
 
-.PONY: all copy clean
+.PONY: all clean

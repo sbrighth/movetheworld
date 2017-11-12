@@ -9,7 +9,6 @@
 #define TESTDM_H_
 
 #include "def.h"
-#include "def.h"
 #include "base.h"
 #include "msgqthread.h"
 #include "msgsend.h"

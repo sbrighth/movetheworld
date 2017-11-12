@@ -231,8 +231,8 @@ int CheckScriptFile(char *msg_str)
 		char *szScriptName = new char[nNameSize+1];
 		char *szScriptSize = new char[nFileSize+1];
 
-		memset(szScriptName, 0, sizeof(szScriptName));
-		memset(szScriptSize, 0, sizeof(szScriptSize));
+        memset(szScriptName, 0, sizeof(szScriptName));
+        memset(szScriptSize, 0, sizeof(szScriptSize));
 
 		memcpy(szScriptName, msg_str, sizeof(szScriptName));
 		memcpy(szScriptSize, msg_str+nNameSize, sizeof(szScriptSize));

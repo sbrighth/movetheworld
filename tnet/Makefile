@@ -1,9 +1,12 @@
 CC			= gcc
 CXX			= g++
-INCPATH		= /exicon/include/
-LIBPATH		= /exicon/lib/
-CXXFLAGS	= -o2 -g -Wall -fPIC -I$(INCPATH)
-LDFLAGS		= -shared -L$(LIBPATH) -ltbase
+INCPATH		= -I../tbase/
+LIBPATH		= -L../tbase/
+CXXFLAGS	= -o2 -g -Wall -fPIC $(INCPATH)
+LDFLAGS		= -shared $(LIBPATH) -ltbase
+
+CP_INCPATH  = ../output/include
+CP_LIBPATH  = ../output/lib
 
 TARGET		= libtnet.so
 OBJS		= msgbox.o msgqthread.o msgsend.o socketserver.o socketclient.o
@@ -15,14 +18,12 @@ $(TARGET): $(OBJS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 all: $(TARGET)
-
-copy:
-	@[ -d $(INCPATH) ] || mkdir -p $(INCPATH)
-	@[ -d $(LIBPATH) ] || mkdir -p $(LIBPATH)
-	cp -f *.h $(INCPATH)
-	cp -f *.so $(LIBPATH)
+	@[ -d $(CP_INCPATH) ] || mkdir -p $(CP_INCPATH)
+	@[ -d $(CP_LIBPATH) ] || mkdir -p $(CP_LIBPATH)
+	cp -f *.h $(CP_INCPATH)
+	cp -f *.so $(CP_LIBPATH)
 
 clean:
 	rm -f *.o $(TARGET)
 
-.PONY: all copy clean
+.PONY: all clean

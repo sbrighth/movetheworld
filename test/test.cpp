@@ -13,6 +13,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <stdarg.h>
+#include <unistd.h>
 #include "def.h"
 #include "base.h"
 #include "msgsend.h"
@@ -152,7 +153,7 @@ int help_msg()
 
 int test_sem()
 {
-	int id_sem = CreateSem(KEY_DPS_LOCK);
+    int id_sem = CreateSem(KEY_BD_LOCK);
 	RemoveSem(id_sem);
 
 	LockSem(id_sem);
@@ -163,16 +164,29 @@ int test_sem()
 
 int test_shmem()
 {
+    /*
 	char buf[32];
-	int id_shmem = CreateShmem(0x3000, sizeof(buf));
+    int id_shmem = CreateShmem(0x3000, sizeof(buf));
 
 	memset(buf, 'a', sizeof(buf)-1);
-	SetShmem(id_shmem, 0, 32, buf);
+    SetStringShmem(id_shmem, 0, 32, buf);
 	printf(">> write data = %s\n", buf);
 
 	memset(buf, 0, sizeof(buf));
-	GetShmem(id_shmem, 0, 32, buf);
+    GetStringShmem(id_shmem, 0, 32, buf);
 	printf(">> read data = %s\n", buf);
+    */
+
+    DpsStatus statDps[PORT_MAX];
+    memset(statDps, 0, sizeof(statDps));
+
+    int idDpsShmem = CreateShmem(KEY_DPS_SHARE, sizeof(statDps));
+    int idDpsShmemLock = CreateSem(KEY_DPS_SHARE_LOCK);
+
+    LockSem(idDpsShmemLock);
+    statDps[PORT1].bDpsOcp = true;
+    SetShmem(idDpsShmem, &statDps[PORT1], sizeof(statDps[PORT1]));
+    UnlockSem(idDpsShmemLock);
 
 	//RemoveShmem(id_shmem);
 	return EXIT_SUCCESS;
@@ -474,37 +488,6 @@ int test_json()
         cout << "key: " << key.toStyledString();
         cout << "value: " << value.toStyledString();
     }
-
-
-
-/*
-            typedef struct tTestStatus
-            {
-                int mode;
-                int run_script_cnt;
-                char *script;
-                int step;
-                int status;
-            }TestStatus;
-
-            class CStatus {
-            public:
-                CStatus();
-                virtual ~CStatus();
-
-            public:
-                bool    mount;
-                float   cpu;
-                float   ram;
-                float   storage;
-                char    time[32];
-
-                int     test_mode[PORT_MAX];
-                char    test_script[PORT_MAX][256];
-
-                int     device_perf[PORT_MAX];
-                int
-*/
 
     return 0;
 }

@@ -1,13 +1,14 @@
 CC			= gcc
 CXX			= g++
-BINPATH		= /exicon/bin
-INCPATH		= /exicon/include
-LIBPATH		= /exicon/lib
-CXXFLAGS	= -O2 -g -Wall -I$(INCPATH) 
-LDFLAGS		= -L$(LIBPATH) -ltbase -ltnet -lpthread
+INCPATH		= -I../tbase/ -I../tnet/
+LIBPATH		= -L../tbase/ -L../tnet/
+CXXFLAGS	= -O2 -g -Wall $(INCPATH)
+LDFLAGS		= $(LIBPATH) -ltbase -ltnet -lpthread
+
+CP_BINPATH	= ../output/bin
 
 TARGET		= test
-OBJS 		= test.o jsoncpp.cpp
+OBJS 		= test.o jsoncpp.o
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) -o $@ -c $< 
@@ -16,8 +17,8 @@ $(TARGET): $(OBJS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 all: $(TARGET)
-	@[ -d $(BINPATH) ] || mkdir -p $(BINPATH)
-	cp -f $(TARGET) $(BINPATH)
+	@[ -d $(CP_BINPATH) ] || mkdir -p $(CP_BINPATH)
+	cp -f $(TARGET) $(CP_BINPATH)
 
 clean:
 	rm -f $(OBJS) $(TARGET)
