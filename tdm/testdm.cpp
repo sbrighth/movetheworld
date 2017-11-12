@@ -38,15 +38,8 @@ int main(int argc, char *argv[])
 	if(SetSignal() < 0)
 		return -1;
 
-
-    CStatus status;
-    status.MakeStatus();
-    return  0;
-
 	//get tpc bd id;
 	g_idTpc = 2;
-	g_idResShare = CreateShmem(KEY_RES_SHARE, 512);
-
 
 	//init test folder
 	char szTestMsgSendTo[PATHNAME_SIZE];
@@ -67,37 +60,44 @@ int main(int argc, char *argv[])
 
 
 	//Socket
-    CSocketClient *g_pSocketClient  = new CSocketClient(g_idTpc, (char *)"127.0.0.1", PORT_TDM);
-    //CSocketClient *g_pSocket  = new CSocketClient(g_idTpc, (char *)"192.168.10.68", 3132);
+    g_pSocketClient  = new CSocketClient(g_idTpc, (char *)"127.0.0.1", PORT_TDM);
+    //g_pSocketClient  = new CSocketClient(g_idTpc, (char *)"192.168.10.68", 3132);
     g_pSocketClient->StartThread(&RecvSockProc);
-
 
     //TestMng
     g_pTestMng = new CTestMng*[PORT_MAX];
 
     for(int idx=0; idx<PORT_MAX; idx++)
     {
-        SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_INIT,	0, PROG_VERSION);
-        SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_INITCOLOR,0, "");
-        SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT1, 	0, "EMPTY");
-        SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT2, 	0, "");
-        SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT3, 	0, PROG_VERSION);
-        SendMsg(g_pTestMsgq->idMsgq, TYPE_MSG_TEST, g_idTpc, idx+1, MSG_TEXT4, 	0, "");
+        SendMsg(g_pTestMsgq->idMsgq, MODE_PORT_TEST, g_idTpc, idx+1, MSG_INIT,	0, PROG_VERSION);
+        SendMsg(g_pTestMsgq->idMsgq, MODE_PORT_TEST, g_idTpc, idx+1, MSG_INITCOLOR,0, "");
+        SendMsg(g_pTestMsgq->idMsgq, MODE_PORT_TEST, g_idTpc, idx+1, MSG_TEXT1, 	0, "EMPTY");
+        SendMsg(g_pTestMsgq->idMsgq, MODE_PORT_TEST, g_idTpc, idx+1, MSG_TEXT2, 	0, "");
+        SendMsg(g_pTestMsgq->idMsgq, MODE_PORT_TEST, g_idTpc, idx+1, MSG_TEXT3, 	0, PROG_VERSION);
+        SendMsg(g_pTestMsgq->idMsgq, MODE_PORT_TEST, g_idTpc, idx+1, MSG_TEXT4, 	0, "");
 
         g_pTestMng[idx] = new CTestMng(g_idTpc, idx);
     }
 
+    //Monitoring
+    g_pStatusMon = new CStatus();
 
     //TPC b'd status monitor
 	g_condTestDm = 1;
 	while( g_condTestDm )
 	{
 		//this is for monitoring job
-		msleep(100);
+        //msleep(100);
+        g_pStatusMon->CheckAll();
+        sleep(1);
 	}
 
-
     //clear resources
+    if(g_pStatusMon != NULL)
+    {
+        delete g_pStatusMon;
+    }
+
     if(g_pTestMsgq != NULL)
     {
         g_pTestMsgq->StopThread();
@@ -304,13 +304,21 @@ void RecvSockProc(SockPack sockData)
         return;
     }
 
-    if( version == TYPE_MSG_INFO || version == TYPE_MSG_TPC_DIAG || version == TYPE_MSG_UPDATE || version == TYPE_MSG_DPS || version == TYPE_MSG_PORT_DIAG )
+    if( version == MODE_BD_INFO || version == MODE_BD_DIAG || version == MODE_BD_UPDATE || version == MODE_PORT_DPS || version == MODE_PORT_DIAG )
     {
         printf(">> this is TYPE others\n");
 
+        cout << "version = " << version << endl;
+        cout << "cell = " << cell << endl;
+        cout << "port = " << sockData.hdr.port << endl;
+        cout << "msg_no = " << sockData.hdr.msg_no << endl;
+        cout << "packet = " << sockData.hdr.packet << endl;
+        cout << "flag = " << sockData.hdr.flag << endl;
+        cout << "string = " << sockData.pstring << endl;
+
         ProcTypeMsgInfo(sockData.hdr, sockData.pstring);
     }
-    else if(version == TYPE_MSG_TEST)
+    else if(version == MODE_PORT_TEST)
     {
         ProcTypeMsgTest(sockData.hdr, sockData.pstring);
     }
@@ -321,7 +329,7 @@ int ProcTypeMsgInfo(MsgHdr hdr, char *msg_str)
     int version	= hdr.version;
     int cell    = hdr.cell;
     int port    = hdr.port-1;
-    int msg_no	= hdr.msg_no;
+    //int msg_no	= hdr.msg_no;
     //int packet 		= msg.packet;
     //int flag 		= msg.flag;
 

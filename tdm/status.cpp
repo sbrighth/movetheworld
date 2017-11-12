@@ -5,65 +5,40 @@
  *      Author: shjeong
  */
 
+#include <stdio.h>
+#include <string.h>
 #include "status.h"
 #include "iostream"
-#include <stdio.h>
+#include "base.h"
 
 CStatus::CStatus() {
 	// TODO Auto-generated constructor stub
+    memset(&statOs, 0, sizeof(statOs));
+
+    for(int iPortIdx=0; iPortIdx<PORT_MAX; iPortIdx++)
+    {
+        memset(&statDps[iPortIdx], 0, sizeof(statDps[iPortIdx]));
+        memset(&statPerf[iPortIdx], 0, sizeof(statPerf[iPortIdx]));
+    }
+
+    idDpsShmem = CreateShmem(KEY_DPS_SHARE, sizeof(statDps));
+    idDpsShmemLock = CreateSem(KEY_DPS_SHARE_LOCK);
 }
 
 CStatus::~CStatus() {
 	// TODO Auto-generated destructor stub
 }
 
-int CStatus::CheckStatus()
+int CStatus::CheckAll()
 {
-    FILE *file;
-    char cmd[512] = {0,};
+    CheckOs();
 
-    memset(statOs, 0, sizeof(tOs));
-    for(int i=0; i<MAX_PORT; i++)
+    for(int iPortIdx=PORT_MIN; iPortIdx<PORT_MAX; iPortIdx++)
     {
-        memset(statPort[i], 0, sizeof(statPort[i]));
-        memset(statPerf[i], 0, sizeof(statPerf[i]));
+        CheckDps(iPortIdx);
     }
 
-    //time
-    sprintf(cmd, "date +%Y-%m-%d %H:%m:%S %Z");
-    file = popen(cmd, "r");
-    if(file == NULL)
-        return -1;
-
-    fread(statOs.cTime, sizeof(statOs.cTime), 1, file);
-    pclose(file);
-
-    //cpu
-    sprintf(cmd, "top -n 1 | grep -i cpu\(s\) | awk '{print $5}' | tr -d "%id," | awk '{print 100-$1}");
-    file = popen(cmd, "r");
-    if(file == NULL)
-        return -1;
-
-    fread(statOs.cCpuUsage, sizeof(statOs.cCpuUsage), 1, file);
-    pclose(file);
-
-    //mem
-    sprintf(cmd, "free | grep Mem | awk '{print $3/$2*100}");
-    file = popen(cmd, "r");
-    if(file == NULL)
-        return -1;
-    else
-        fread(statOs.cMemUsage, sizeof(statOs.cMemUsage), 1, file);
-
-    //disk
-    sprintf(cmd, "df -h | grep [/]$ | awk '{print $5}");
-    file = popen(cmd, "r");
-    if(file == NULL)
-        return -1;
-
-    fread(statOs.cDiskUsage, sizeof(statOs.cDiskUsage), 1, file);
-    pclose(file);
-
+/*
     string abc="time";
 
     Json::Value bdinfo;
@@ -97,6 +72,109 @@ int CStatus::CheckStatus()
     Json::StyledWriter writer;
     string str = writer.write(root);
     cout << str << endl;
+*/
+    return 0;
+}
+
+int CStatus::CheckOs()
+{
+    char buf[32] = {0,};
+    char cmd[128];
+
+    //time
+    GetStatusFromPipe("date \"+%Y-%m-%d %H:%m:%S %Z\" | awk '{printf \"%s %s %s\", $1, $2, $3}'", buf, sizeof(buf));
+    sprintf(statOs.sTime, "%s", buf);
+    cout << "time = " << statOs.sTime << endl;
+
+    //cpu
+    GetStatusFromPipe("top -n 1 | grep -i \"cpu(s)\" | awk '{print $5}' | tr -d \"%id,\" | awk '{printf \"%d%\", 100-$1}'", buf, sizeof(buf));
+    sprintf(statOs.sCpuUsage, "%s", buf);
+    cout << "cpu = " << statOs.sCpuUsage << endl;
+
+    //mem
+    GetStatusFromPipe("free | grep Mem | awk '{printf \"%d%\", $3/$2*100}'", buf, sizeof(buf));
+    sprintf(statOs.sMemUsage, "%s", buf);
+    cout << "mem = " << statOs.sMemUsage << endl;
+
+    //disk
+    GetStatusFromPipe("df -h | grep [/]$ | awk '{printf \"%s\", $5}'", buf, sizeof(buf));
+    sprintf(statOs.sDiskUsage, "%s", buf);
+    cout << "disk = " << statOs.sDiskUsage << endl;
+
+    //mount
+    sprintf(cmd, "mountpoint -q %s; echo $?", SYS_ATH_PATH);
+    GetStatusFromPipe((const char*)cmd, buf, sizeof(buf));
+
+    if(strcmp(buf, "0") == 0)
+    {
+        sprintf(statOs.sMount, "ok");
+    }
+    else
+    {
+        sprintf(statOs.sMount, "none");
+    }
+
+    cout << "mount = " << statOs.sMount << endl;
+
+    //bd connect
+    sprintf(cmd, "%s/bd_connect.txt", SYS_DATA_PATH);
+    GetStatusFromFile((const char*)cmd, buf, sizeof(buf));
+
+    sprintf(statOs.sBdConnect, "%s", buf);
+    cout << "bd connect = " << statOs.sBdConnect << endl;
+
+    return 0;
+}
+
+int CStatus::CheckDps(int port)
+{
+    //get status from share memory where dps check script save status
+    LockSem(idDpsShmemLock);
+    GetShmem(idDpsShmem, &statDps[port], sizeof(statDps[port]));
+    UnlockSem(idDpsShmemLock);
+
+    cout << "<PORT" << port+1 << ">" << endl;
+    cout << "DPS5V set/get voltage = " << statDps[port].fDpsSetVoltage[DPS_CH1] << " / " << statDps[port].fDpsGetVoltage[DPS_CH1] << endl;
+    cout << "DPS12V set/get voltage = " << statDps[port].fDpsSetVoltage[DPS_CH2] << " / " << statDps[port].fDpsGetVoltage[DPS_CH2] << endl;
+    cout << "DPS power = " << statDps[port].bDpsPower << endl;
+    cout << "DPS OCP = " << statDps[port].bDpsOcp << endl;
+    cout << "DPS OVP = " << statDps[port].bDpsOvp << endl << endl;
+
+    return 0;
+}
+
+int CStatus::GetStatusFromPipe(const char *szCmd, char *sBuf, int iBufSize)
+{
+    FILE *file;
+    memset(sBuf, 0, iBufSize);
+
+    if(szCmd == NULL || sBuf == NULL)
+        return -1;
+
+    file = popen(szCmd, "r");
+    if(file == NULL)
+        return -2;
+
+    fread(sBuf, iBufSize, 1, file);
+    pclose(file);
+
+    return 0;
+}
+
+int CStatus::GetStatusFromFile(const char *szCmd, char *sBuf, int iBufSize)
+{
+    FILE *file;
+    memset(sBuf, 0, iBufSize);
+
+    if(szCmd == NULL || sBuf == NULL)
+        return -1;
+
+    file = fopen(szCmd, "r");
+    if(file == NULL)
+        return -2;
+
+    fread(sBuf, iBufSize, 1, file);
+    fclose(file);
 
     return 0;
 }

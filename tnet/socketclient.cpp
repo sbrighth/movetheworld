@@ -220,7 +220,7 @@ int CSocketClient::SendCheckDummy()
         //printf("connection error!!\n");
 		bConnect = false;
 		return -1;
-	}
+    }
 
 	return 0;
 }
@@ -258,7 +258,7 @@ void *SocketCheckThread( void *arg )
 		if( poll((struct pollfd*)&tPollEvent, 1, 1000) > 0 )
 		{
 			if( tPollEvent.revents & POLLIN )
-			{
+            {
 				char cRecvBuf[SOCKET_BUF_SIZE];
 				memset( cRecvBuf , 0 , sizeof( cRecvBuf ) );
 

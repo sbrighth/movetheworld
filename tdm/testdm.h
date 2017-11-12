@@ -44,7 +44,9 @@ int		g_condTestDm;
 int		g_idTpc;
 int		g_idResShare;
 
-CMsgqThread *g_pTestMsgq = NULL;
-CTestMng	**g_pTestMng = NULL;
+CMsgqThread     *g_pTestMsgq = NULL;
+CSocketClient   *g_pSocketClient = NULL;
+CTestMng        **g_pTestMng = NULL;
+CStatus         *g_pStatusMon = NULL;
 
 #endif /* TESTDM_H_ */

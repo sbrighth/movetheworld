@@ -189,7 +189,7 @@ int RemoveShmem(int id)
 }
 
 
-int GetShmem(int id, int offset, int size, char* data)
+int GetStringShmem(int id, int offset, int size, char* data)
 {
 	if(id < 0)
 		return -1;
@@ -210,7 +210,7 @@ int GetShmem(int id, int offset, int size, char* data)
 }
 
 
-int SetShmem(int id, int offset, int size, char* data)
+int SetStringShmem(int id, int offset, int size, char* data)
 {
 	if( id < 0 )
 		return -1;
@@ -228,6 +228,40 @@ int SetShmem(int id, int offset, int size, char* data)
 	shmdt(pShmAddr);
 
 	return 0;
+}
+
+int GetShmem(int id, void *data, int size)
+{
+    if(id < 0)
+        return -1;
+
+    void* pShmAddr = NULL;
+    pShmAddr = shmat( id, (void *)0, 0666|IPC_CREAT );
+
+    if( pShmAddr == NULL || pShmAddr == (void*)-1 )
+        return -3;
+
+    memcpy(data, pShmAddr, size);
+    shmdt(pShmAddr);
+
+    return 0;
+}
+
+int SetShmem(int id, void *data, int size)
+{
+    if( id < 0 )
+        return -1;
+
+    void* pShmAddr;
+    pShmAddr = shmat( id, (void *)0, 0666|IPC_CREAT );
+
+    if( pShmAddr == NULL || pShmAddr == (void*)-1 )
+        return -3;
+
+    memcpy(pShmAddr, data, size);
+    shmdt(pShmAddr);
+
+    return 0;
 }
 
 //return fd!!!

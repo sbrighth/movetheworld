@@ -31,8 +31,10 @@ int			UnlockSem(int id);
 //share memory
 int			CreateShmem(int key, int size);
 int			RemoveShmem(int id);
-int			GetShmem(int id, int offset, int size, char *data);
-int			SetShmem(int id, int offset, int size, char *data);
+int			GetStringShmem(int id, int offset, int size, char *data);
+int			SetStringShmem(int id, int offset, int size, char *data);
+int			GetShmem(int id, void *data, int size);
+int			SetShmem(int id, void *data, int size);
 
 //memory map
 int			CreateMmap(const char *filename, char **pmmap, int size);

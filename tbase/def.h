@@ -8,23 +8,20 @@
 #ifndef DEF_H_
 #define DEF_H_
 
+//data type
 #define uint8	unsigned char
 #define uint16	unsigned short
 #define uint32	unsigned int
 #define uint64	unsigned long long
-
 #define int8	char
 #define int16	short
 #define int32	int
 #define int64	long long
 
+//path
 #define SYS_PATH				"/exicon"
-#define SYS_BIN_PATH			SYS_PATH "/bin"
 
 #define SYS_CFG_PATH			SYS_PATH "/config"
-
-
-#define SYS_SHE_PATH			SYS_PATH "/shell"
 #define SYS_SHA_PATH			SYS_PATH "/share"
 #define SYS_TMP_PATH			SYS_PATH "/temp"
 #define SYS_SRC_PATH			SYS_PATH "/src"
@@ -35,38 +32,43 @@
 #define SYS_DEBUG_PATH 			SYS_PATH "/debug"
 
 #define SYS_ATH_PATH			SYS_PATH "/athost"
+#define SYS_BIN_PATH			SYS_PATH "/bin"
 #define SYS_DATA_PATH 			SYS_PATH "/data"
 #define SYS_LIB_PATH			SYS_PATH "/lib"
 #define SYS_INC_PATH			SYS_PATH "/include"
-#define SYS_LOG_PATH			SYS_PATH "/bdlog"
+#define SYS_LOG_PATH			SYS_PATH "/log"
 #define SYS_EXEC_PATH			SYS_PATH "/exec"
 #define SYS_SCRIPT_PATH			SYS_PATH "/script"
+#define SYS_SHE_PATH			SYS_PATH "/shell"
 #define SYS_WORK_PATH			SYS_PATH "/work"
 #define SYS_UPDATE_PATH			SYS_PATH "/update"
 
+//log name
 #define TEST_LOG_NAME			"port"
 #define EVENT_LOG_NAME			"event"
 #define MSGQ_LOG_NAME			"msgq"
 #define SOCKET_LOG_NAME			"socket"
 
+//EXT name
 //#define TEST_SCRIPT_ORI_EXT		"stc"
 #define TEST_SCRIPT_ORI_EXT		"uts"
 #define	TEST_SCRIPT_RUN_EXT		"c"
 
+//compile option
 #define COMPILE_PROG			"/usr/bin/gcc"	//"tcc"
 #define COMPILE_INCPATH			"-I"SYS_INC_PATH
 #define COMPILE_LIBPATH			"-L"SYS_LIB_PATH
 #define COMPILE_LIB				"-ltbase -ltnet -lpthread"
 
-
 //msgq
 #define KEY_TEST_MSGQ			0x1000
 
 //semaphore
-#define KEY_DPS_LOCK			0x1000
+#define KEY_BD_LOCK             0x1000
+#define KEY_DPS_SHARE_LOCK  	0x1001
 
 //share memory
-#define KEY_RES_SHARE			0x1000
+#define KEY_DPS_SHARE			0x1000
 
 //socket
 #define PORT_TDM				5000
@@ -77,48 +79,89 @@
 #define SOCKET_BUF_SIZE			1024
 #define SOCKET_MAX_BUF_SIZE		SOCKET_BUF_SIZE*1
 
+//MSG monitoring file
 #define MSGBOX_SEND_TO			"in"
 #define MSGBOX_RECV_FROM		"out"
 
+//type MSGQ
 #define TYPE_MSGQ_SEND			1
 #define TYPE_MSGQ_RECV			2
 
-enum TYPE_MSG
-{
-	TYPE_MSG_DEFAULT	=	0,
-	TYPE_MSG_INFO,
-	TYPE_MSG_TPC_DIAG,
-	TYPE_MSG_UPDATE,
-	TYPE_MSG_DPS,
-	TYPE_MSG_PORT_DIAG,
-	TYPE_MSG_TEST,
-    TYPE_MSG_CNT,
-};
-
+//define value
 #define ON						1
 #define	OFF						0
 
 #define PATHNAME_SIZE			256
 
-enum PORT
+//port index
+enum PORT_INDEX
 {
-	PORT_NONE = 0,
-	PORT1 = 1,
-	PORT2 = 2,
-	PORT_MIN = PORT_NONE,
-	PORT_MAX = PORT2,
+    PORT_NONE   = 0,
+    PORT1       = 1,
+    PORT2       = 2,
+    PORT_MIN    = PORT_NONE,
+    PORT_MAX    = PORT2
 };
 
-enum
+//dps voltage index
+enum DPS_CH_INDEX
 {
-	YELLOW = 0,
-	RED = 1,
-	GREEN = 2,
-	BLUE = 3,
-    PINK = 4,
+    DPS_CH1 = 0,        //5V
+    DPS_CH2,            //12V
+    DPS_CH_CNT,
+    DPS_CH_MIN  = DPS_CH1,
+    DPS_CH_MAX  = DPS_CH2
 };
 
+//dps voltage calibration index
+enum DPS_VOLT_CAL_INDEX
+{
+    //VOLT_CAL_3V3 = 0,
+    VOLT_CAL_5V =0,
+    VOLT_CAL_12V,
+    VOLT_CAL_CNT
+};
 
+//dps current calibration index
+enum DPS_CUR_CAL_INDEX
+{
+    CUR_CAL_3V3 = 0,
+    CUR_CAL_5V,
+    CUR_CAL_12V,
+    CUR_CAL_CNT
+};
+
+//monitor os status
+typedef struct tOsStatus
+{
+    char sTime[32];
+    char sCpuUsage[32];
+    char sMemUsage[32];
+    char sDiskUsage[32];
+    char sMount[32];
+    char sBdConnect[32];
+}OsStatus;
+
+//monitor dps status
+typedef struct tDpsStatus
+{
+    float fDpsSetVoltage[DPS_CH_CNT];
+    float fDpsGetVoltage[DPS_CH_CNT];
+    float fDpsSetCurrent[DPS_CH_CNT];
+    float fDpsGetCurrent[DPS_CH_CNT];
+    bool bDpsPower; //on, off
+    bool bDpsOcp;
+    bool bDpsOvp;
+}DpsStatus;
+
+//monitor perf status
+typedef struct tPerfStatus
+{
+    char sWrite[32];
+    char sRead[32];
+}PerfStatus;
+
+//msg header
 typedef struct tMsgHdr
 {
 	uint16		version;	// Version of this structure.
@@ -133,24 +176,40 @@ typedef struct tMsgHdr
 #define MSG_PACKET_SIZE			32
 #define MSG_STRING_LENGTH		(MSG_PACKET_SIZE - MSG_HEADER_SIZE)
 
+//msg packet
 typedef struct tMsgPack
 {
 	MsgHdr		hdr;
     char		string[MSG_STRING_LENGTH];
 }__attribute__ ((packed)) MsgPack;
 
+//msgq of msg packet
 typedef struct tMsgPackQ
 {
 	long		type;
 	MsgPack		msg;
 }__attribute__ ((packed)) MsgPackQ;
 
+//socket packet
 typedef struct tSockPack
 {
 	MsgHdr		hdr;
     char		*pstring;
 }__attribute__ ((packed)) SockPack;
 
+//msg version
+enum MSG_VERSION
+{
+    MODE_NONE = 0,
+    MODE_BD_INFO,
+    MODE_BD_DIAG,
+    MODE_BD_UPDATE,
+    MODE_PORT_DPS,
+    MODE_PORT_DIAG,
+    MODE_PORT_TEST
+};
+
+//msg number
 enum MSG_NUMBER
 {
 	MSG_NONE = 0,
@@ -228,18 +287,7 @@ enum MSG_NUMBER
 	MSG_SYS_TEXT7,
 	MSG_SYS_TEXT8,
 
-	MSG_ENDMARKER = 0xFFFF,
-};
-
-
-enum MSG_VERSION
-{
-	BD_INFO = 1,
-	BD_DIAG,
-	BD_UPDATAE,
-	DUT_DPS,
-	DUT_DIAG,
-	DUT_TEST,
+    MSG_ENDMARKER = 0xFFFF
 };
 
 #endif /* DEF_H_ */

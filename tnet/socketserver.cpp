@@ -223,7 +223,7 @@ void *SocketServerThread( void *arg )
 
 	m_tPollEvent[1].fd = -1;
 
-	int rnd = 0;
+    //int rnd = 0;
 	pthis->condThread = ON;
 	while( pthis->condThread == ON )                // Socket receive Loop
 	{
@@ -262,7 +262,7 @@ void *SocketServerThread( void *arg )
 			if( m_tPollEvent[1].revents & POLLIN )
 			{
 				char cRecvBuf[4096];
-				char cSendBuf[4096];
+                //char cSendBuf[4096];
 				memset( cRecvBuf , 0 , sizeof( cRecvBuf ) );
 
 				int iCnt = pthis->Recv(cRecvBuf, sizeof(cRecvBuf));

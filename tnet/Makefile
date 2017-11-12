@@ -15,13 +15,14 @@ $(TARGET): $(OBJS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 all: $(TARGET)
+
+copy:
 	@[ -d $(INCPATH) ] || mkdir -p $(INCPATH)
 	@[ -d $(LIBPATH) ] || mkdir -p $(LIBPATH)
 	cp -f *.h $(INCPATH)
-	cp -f *.so $(LIBPATH) 
-
+	cp -f *.so $(LIBPATH)
 
 clean:
 	rm -f *.o $(TARGET)
 
-.PONY: all clean
+.PONY: all copy clean
