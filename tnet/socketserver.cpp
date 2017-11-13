@@ -250,11 +250,10 @@ static void *SocketCheckThread( void *arg )
 	{
 		if( poll((struct pollfd*)&m_tPollEvent, 2, 1000) > 0 )
 		{
-            //printf(">> 0 revent = %d\n", m_tPollEvent[0].revents);
-            //printf(">> 1 revent = %d\n", m_tPollEvent[1].revents);
-
 			if( m_tPollEvent[0].revents & POLLIN )
 			{
+                m_tPollEvent[0].revents = 0;            //reset return result
+
 				if(pthis->AcceptClient() < 0)
 				{
 					printf( "accept() Error!!! errno=%d\n", errno );
@@ -267,22 +266,21 @@ static void *SocketCheckThread( void *arg )
 				else
 				{
                     //printf( "accept() done\n" );
-                    m_tPollEvent[0].revents = 0;
 
-					m_tPollEvent[1].fd = pthis->iClientSocket;
+                    m_tPollEvent[1].fd = pthis->iClientSocket;
 					m_tPollEvent[1].events = POLLIN;
-					m_tPollEvent[1].revents = 0;
+					m_tPollEvent[1].revents = 0; 
 				}
 
-				sleep(1);
-				strBuf.erase();
-				continue;
+                strBuf.erase();
+                continue;
 			}
 
 			if( m_tPollEvent[1].revents & POLLIN )
 			{
+                m_tPollEvent[1].revents = 0;    //reset return event
+
 				char cRecvBuf[4096];
-                //char cSendBuf[4096];
 				memset( cRecvBuf , 0 , sizeof( cRecvBuf ) );
 
 				int iCnt = pthis->Recv(cRecvBuf, sizeof(cRecvBuf));
@@ -298,8 +296,6 @@ static void *SocketCheckThread( void *arg )
 				}
 
 				strBuf.append(cRecvBuf, (strlen(cRecvBuf) > (size_t)iCnt)? iCnt : strlen(cRecvBuf));
-                //printf(">> recv count = %ld, iCnt = %d\n", strlen(cRecvBuf), iCnt);
-                //printf(">> before erase strBuf = %s\n", strBuf.c_str());
 
                 while(iCnt--)
                 {
@@ -309,24 +305,10 @@ static void *SocketCheckThread( void *arg )
                     if(ret > 0)
                     {
                         strBuf.erase(0, ret);
-                        //printf(">> erase pos = %d\n", ret);
-                        //printf(">> after erase strBuf = %s\n", strBuf.c_str());
-                        //printf(">> strData = %s\n", strPacketData.c_str());
 
                         SockPack sockData;
                         pthis->DataSplit(strPacketData, sockData);
-                        printf(">> net lib push\n");
-                        cout << "version = " << sockData.hdr.version << endl;
-                        cout << "cell = " << sockData.hdr.cell << endl;
-                        cout << "port = " << sockData.hdr.port << endl;
-                        cout << "msg_no = " << sockData.hdr.msg_no << endl;
-                        cout << "packet = " << sockData.hdr.packet << endl;
-                        cout << "flag = " << sockData.hdr.flag << endl;
-                        cout << "string = " << sockData.pstring << endl;
-
                         pthis->qRecv.push(sockData);
-
-
                     }
                     else
                     {
@@ -344,13 +326,6 @@ static void *SocketCheckThread( void *arg )
                 }
             }
 		}
-		else
-		{
-			continue;
-		}
-
-		sleep(1);
-		continue;
 	} // End of while( idThread )
 
 	if(pthis->iClientSocket >= 0)
@@ -371,15 +346,6 @@ static void *SocketProcThread( void *arg )
         {
             SockPack sockData = pthis->qRecv.front();
             pthis->qRecv.pop();
-
-            printf(">>net lib pop\n");
-            cout << "version = " << sockData.hdr.version << endl;
-            cout << "cell = " << sockData.hdr.cell << endl;
-            cout << "port = " << sockData.hdr.port << endl;
-            cout << "msg_no = " << sockData.hdr.msg_no << endl;
-            cout << "packet = " << sockData.hdr.packet << endl;
-            cout << "flag = " << sockData.hdr.flag << endl;
-            cout << "string = " << sockData.pstring << endl;
             pthis->ProcFunc(sockData);
 
             if(sockData.pstring)
@@ -472,21 +438,6 @@ int CSocketServer::DataSplit(string strData, SockPack &sockData)
         sockData.pstring = new char[MSG_STRING_LENGTH];
         memset(sockData.pstring, 0, MSG_STRING_LENGTH);
     }
-//    printf(">> sizeof sockData = %ld\n", sizeof(sockData));
-//    printf(">> sock version = %d\n", sockData.hdr.version);
-//    printf(">> sock cell = %d\n", sockData.hdr.cell);
-//    printf(">> sock port = %d\n", sockData.hdr.port);
-//    printf(">> sock msg_no = %d\n", sockData.hdr.msg_no);
-//    printf(">> sock packet = %d\n", sockData.hdr.packet);
-//    printf(">> sock flag = %d\n", sockData.hdr.flag);
-//    printf(">> sock string = %s\n", sockData.pstring);
-
-//    vector<string>::iterator it;
-//    for(it=vectData.begin(); it!=vectData.end(); it++)
-//    {
-//        string temp = *it;
-//        printf(">> data %s\n", temp.c_str());
-//    }
 
     return 0;
 }

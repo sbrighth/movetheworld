@@ -1,4 +1,4 @@
-DIRS = tbase tnet tdm test
+DIRS = tbase tnet tdm texec test
 
 all: 
 	for dir in $(DIRS); do \

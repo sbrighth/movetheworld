@@ -171,7 +171,6 @@ int ProcExec(int iMode, string strArg)
         return -3;
     }
 
-
     stringstream ssSocketPacket;
     ssSocketPacket << SOCKET_START_MARK;
     ssSocketPacket << MSGVER_NONE << ",";
@@ -183,17 +182,15 @@ int ProcExec(int iMode, string strArg)
     ssSocketPacket << strArg << SOCKET_END_MARK;
 
     cout << "socket packet = " << ssSocketPacket.str() << endl;
-/*
-    sprintf(cSendBuf, "%s%d,%d,%d,%d,%d,%d,%s%s", SOCKET_START_MARK, 0, idTpc, 0, 0, 0, 0, "", SOCKET_END_MARK );
 
-    int iSendCnt = g_pSocketClient->Send(cSendBuf, strlen(cSendBuf));
-    if(iSendCnt < (ssize_t)strlen(cSendBuf))
+    int iSocketPacketLen = ssSocketPacket.str().length();
+    int iSendCnt = g_pSocketClient->Send((char*)ssSocketPacket.str().c_str(), iSocketPacketLen);
+
+    if(iSendCnt < iSocketPacketLen)
     {
-        //printf("connection error!!\n");
-        bConnect = false;
-        return -1;
+        printf("send error!!\n");
     }
-*/
+
     g_pSocketClient->CloseSocket();
     delete g_pSocketClient;
 

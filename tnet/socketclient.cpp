@@ -185,7 +185,7 @@ void CSocketClient::CloseSocket()
 
 	if(iClientSocket >= 0)
 	{
-		shutdown( iClientSocket , SHUT_RDWR );
+        shutdown( iClientSocket , SHUT_RDWR );
 		close( iClientSocket );
 
 		iClientSocket = -1;
@@ -259,6 +259,8 @@ static void *SocketCheckThread( void *arg )
 		{
 			if( tPollEvent.revents & POLLIN )
             {
+                tPollEvent.revents = 0;     //reset clinet return event
+
 				char cRecvBuf[SOCKET_BUF_SIZE];
 				memset( cRecvBuf , 0 , sizeof( cRecvBuf ) );
 
@@ -266,24 +268,18 @@ static void *SocketCheckThread( void *arg )
 				if( iCnt <= 0 )
 				{
 					printf( "socket recv() Error! errno=%d\n" , errno );
-					pthis->SendCheckDummy();
+                    continue;
 				}
 
                 strBuf.append(cRecvBuf, (strlen(cRecvBuf) > (size_t)iCnt)? iCnt : strlen(cRecvBuf));
-                //printf(">> recv count = %ld, iCnt = %d\n", strlen(cRecvBuf), iCnt);
-                //printf(">> before erase strBuf = %s\n", strBuf.c_str());
 
 				while(iCnt--)
 				{
                     string strPacketData;
-
                     int ret = pthis->StripMark(strBuf, strPacketData);
 					if(ret > 0)
 					{
 						strBuf.erase(0, ret);
-                        //printf(">> erase pos = %d\n", ret);
-                        //printf(">> after erase strBuf = %s\n", strBuf.c_str());
-                        //printf(">> strData = %s\n", strPacketData.c_str());
 
                         SockPack sockData;
                         pthis->DataSplit(strPacketData, sockData);
@@ -417,22 +413,6 @@ int CSocketClient::DataSplit(string strData, SockPack &sockData)
         sockData.pstring = new char[MSG_STRING_LENGTH];
         memset(sockData.pstring, 0, MSG_STRING_LENGTH);
     }
-
-//    printf(">> sizeof sockData = %ld\n", sizeof(sockData));
-//    printf(">> sock version = %d\n", sockData.hdr.version);
-//    printf(">> sock cell = %d\n", sockData.hdr.cell);
-//    printf(">> sock port = %d\n", sockData.hdr.port);
-//    printf(">> sock msg_no = %d\n", sockData.hdr.msg_no);
-//    printf(">> sock packet = %d\n", sockData.hdr.packet);
-//    printf(">> sock flag = %d\n", sockData.hdr.flag);
-//    printf(">> sock string = %s\n", sockData.pstring);
-
-//    vector<string>::iterator it;
-//    for(it=vectData.begin(); it!=vectData.end(); it++)
-//    {
-//        string temp = *it;
-//        printf(">> data %s\n", temp.c_str());
-//    }
 
     return 0;
 }

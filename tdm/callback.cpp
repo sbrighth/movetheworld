@@ -11,7 +11,8 @@
 
 using namespace std;
 
-static int ProcMsgVerInfo(MsgHdr hdr, char *msg_str);
+static int ProcMsgVerNone(MsgHdr hdr, char *msg_str);
+static int ProcMsgVerOther(MsgHdr hdr, char *msg_str);
 static int ProcMsgVerTest(MsgHdr hdr, char *msg_str);
 static int CheckScriptFile(char *msg_str);
 
@@ -20,6 +21,7 @@ extern char *g_szTestPath;
 extern CTestMng **g_ppTestMng;
 
 static char prog_version[] = "0.0.9";
+
 //msg file process callback
 void ProcRecvMsg(MsgPack msg)
 {
@@ -40,50 +42,69 @@ void ProcRecvSock(SockPack sockData)
     int version		= sockData.hdr.version;
     int cell    	= sockData.hdr.cell;
 
-    cout << "version = " << version << endl;
-    cout << "cell = " << cell << endl;
-    cout << "port = " << sockData.hdr.port << endl;
-    cout << "msg_no = " << sockData.hdr.msg_no << endl;
-    cout << "packet = " << sockData.hdr.packet << endl;
-    cout << "flag = " << sockData.hdr.flag << endl;
-    cout << "string = " << sockData.pstring << endl;
-
     if(cell != g_idTpc)
     {
         printf(">> invalid tpc no(c:%d, g_idTpc:%d)\n", cell, g_idTpc);
         return;
     }
 
-    if( version == MSGVER_BD_INFO || version == MSGVER_BD_DIAG || version == MSGVER_BD_UPDATE || version == MSGVER_PORT_DPS || version == MSGVER_PORT_DIAG )
+    if(version == MSGVER_NONE)
     {
-        printf(">> this is TYPE others\n");
-
-        cout << "version = " << version << endl;
-        cout << "cell = " << cell << endl;
-        cout << "port = " << sockData.hdr.port << endl;
-        cout << "msg_no = " << sockData.hdr.msg_no << endl;
-        cout << "packet = " << sockData.hdr.packet << endl;
-        cout << "flag = " << sockData.hdr.flag << endl;
-        cout << "string = " << sockData.pstring << endl;
-
-        ProcMsgVerInfo(sockData.hdr, sockData.pstring);
+        printf(">> this is MsgVerNone\n");
+        ProcMsgVerNone(sockData.hdr, sockData.pstring);
     }
-    else if(version == MSGVER_PORT_TEST)
+    if(version == MSGVER_PORT_TEST)
     {
+        printf(">> this is MsgVerTest\n");
         ProcMsgVerTest(sockData.hdr, sockData.pstring);
+    }
+    //else if( version == MSGVER_BD_INFO || version == MSGVER_BD_DIAG || version == MSGVER_BD_UPDATE || version == MSGVER_PORT_DPS || version == MSGVER_PORT_DIAG )
+    else
+    {
+        printf(">> this is MsgVerOther\n");
+        ProcMsgVerOther(sockData.hdr, sockData.pstring);
     }
 }
 
+//MSGVER_NONE
+static int ProcMsgVerNone(MsgHdr hdr, char *msg_str)
+{
+    int version	= hdr.version;
+    int cell    = hdr.cell;
+    int port    = hdr.port-1;
+    int msg_no	= hdr.msg_no;
+    int packet  = hdr.msg.packet;
+    int flag 	= hdr.msg.flag;
 
-//MSGVER_BD_INFO
+    int idMsgq  = KEY_TEST_MSGQ;
+    char szRealName[PATHNAME_SIZE] = {0,};
+
+    if( SearchFile(g_szTestPath, msg_str, szRealName) == 0 )
+    {
+        if(g_ppTestMng[port]->StartTest(g_szTestPath, szRealName) == 0)
+        {
+            printf(">> test is started!!\n");
+            SendMsg(idMsgq, version, cell, port+1, MSG_TEST,	0, "");
+        }
+    }
+    else
+    {
+        printf(">> Info script is not exist!!\n");
+        SendMsg(idMsgq, version, cell, port+1, MSG_DONE,	0, "SCRIPT NOT EXIST");
+    }
+
+    return 0;
+}
+
+//MSGVER_OTHER
 static int ProcMsgVerInfo(MsgHdr hdr, char *msg_str)
 {
     int version	= hdr.version;
     int cell    = hdr.cell;
     int port    = hdr.port-1;
-    //int msg_no	= hdr.msg_no;
-    //int packet 		= msg.packet;
-    //int flag 		= msg.flag;
+    int msg_no	= hdr.msg_no;
+    int packet  = msg.packet;
+    int flag 	= msg.flag;
 
     int idMsgq  = KEY_TEST_MSGQ;
 
