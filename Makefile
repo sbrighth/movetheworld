@@ -1,4 +1,4 @@
-DIRS = base tnet tdm test
+DIRS = tbase tnet tdm test
 
 all: 
 	for dir in $(DIRS); do \

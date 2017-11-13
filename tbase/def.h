@@ -76,8 +76,9 @@
 #define SOCKET_END_MARK			">"
 #define SOCKET_SPLIT_MARK       ","
 #define SOCKET_DATA_CNT         7
+#define SOCKET_MARK_CNT         (SOCKET_DATA_CNT-1)
 #define SOCKET_BUF_SIZE			1024
-#define SOCKET_MAX_BUF_SIZE		SOCKET_BUF_SIZE*1
+#define SOCKET_MAX_BUF_SIZE		(SOCKET_BUF_SIZE*1)
 
 //MSG monitoring file
 #define MSGBOX_SEND_TO			"in"
@@ -92,6 +93,14 @@
 #define	OFF						0
 
 #define PATHNAME_SIZE			256
+
+#define SC_FILE_DEFAULT		0x0
+#define SC_FILE_PASS		0x1
+#define SC_FILE_NAME_ERR	0x2
+#define SC_FILE_SIZE_ERR	0x3
+#define SC_FILE_NONE_ERR	0x4
+#define SC_FILE_OTHER_ERR	0x5
+
 
 //port index
 enum PORT_INDEX
@@ -200,13 +209,13 @@ typedef struct tSockPack
 //msg version
 enum MSG_VERSION
 {
-    MODE_NONE = 0,
-    MODE_BD_INFO,
-    MODE_BD_DIAG,
-    MODE_BD_UPDATE,
-    MODE_PORT_DPS,
-    MODE_PORT_DIAG,
-    MODE_PORT_TEST
+    MSGVER_NONE = 0,
+    MSGVER_BD_INFO,
+    MSGVER_BD_DIAG,
+    MSGVER_BD_UPDATE,
+    MSGVER_PORT_DPS,
+    MSGVER_PORT_DIAG,
+    MSGVER_PORT_TEST
 };
 
 //msg number

@@ -8,21 +8,23 @@
 #ifndef SOCKETSERVER_H_
 #define SOCKETSERVER_H_
 
-#include <pthread.h>
 #include <netinet/in.h>
 #include <string>
+#include <poll.h>
+#include <queue>
 #include "def.h"
+
+using namespace std;
 
 class CSocketServer {
 public:
-	CSocketServer(char *szAddr, int iPort);
+    CSocketServer(char *szAddr, int iPort);
 	virtual ~CSocketServer();
 
 public:
-	void			StartThread();
-	void			StopThread();
-	int				IsConnected();
-	int				CreateSocket();
+    int             InitSockData();
+    int				IsConnected();
+    int				CreateSocket();
 	int				BindSocket();
 	int				ListenSocket();
 	int				AcceptClient();
@@ -30,12 +32,20 @@ public:
 	void			CloseClientSocket();
 	int				Recv(char *buf, int size);
 	int				Send(char *buf, int size);
-	int				ParseData(std::string &strBuf);
-	int				SetData(std::string &strData, std::string strBuf);
+    void			StartThread(void (*SetFunc)(SockPack sockData));
+    void			StopThread();
+    int				StripMark(string strBuf, string &strData);
+    int				DataSplit(string strData, SockPack &sockData);
 
 public:
-	int				condThread;
-	pthread_t		idThread;
+    int				iCell;
+    void			(*ProcFunc)(SockPack sockData);
+
+    int				condCheckThread;
+    pthread_t		idCheckThread;
+
+    int             condProcThread;
+    pthread_t       idProcThread;
 
 	bool			bAccept;
 	int				iServerSocket;
@@ -45,6 +55,9 @@ public:
 
 	char			szServerSocketAddr[16];
 	int				iServerSocketPort;
+
+    queue<SockPack> qRecv;
+    queue<SockPack> qSend;
 };
 
 #endif /* SOCKETSERVER_H_ */

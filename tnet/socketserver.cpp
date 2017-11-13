@@ -12,18 +12,18 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <poll.h>
 #include <errno.h>
-#include <string>
 #include <signal.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <string>
+#include <vector>
+#include "base.h"
 
+#include <iostream>
+using namespace std;
 CSocketServer::CSocketServer(char *szAddr, int iPort) {
 	// TODO Auto-generated constructor stub
-
-	condThread = OFF;
-	idThread = 0;
 
 	if(strlen(szAddr) > sizeof(szServerSocketAddr))
 		return;
@@ -51,6 +51,29 @@ CSocketServer::~CSocketServer() {
 	// TODO Auto-generated destructor stub
 
 	StopThread();
+}
+
+int CSocketServer::InitSockData()
+{
+    while(!qRecv.empty())
+    {
+        SockPack sockData = qRecv.front();
+        qRecv.pop();
+
+        if(sockData.pstring)
+            delete sockData.pstring;
+    }
+
+    while(!qSend.empty())
+    {
+        SockPack sockData = qSend.front();
+        qSend.pop();
+
+        if(sockData.pstring)
+            delete sockData.pstring;
+    }
+
+    return 0;
 }
 
 int CSocketServer::IsConnected()
@@ -191,7 +214,7 @@ int CSocketServer::Send(char *buf, int size)
 	return send( iClientSocket, buf, size, 0 );
 }
 
-void *SocketServerThread( void *arg )
+static void *SocketCheckThread( void *arg )
 {
 	CSocketServer *pthis = (CSocketServer *)arg;
 	std::string strBuf;
@@ -220,12 +243,10 @@ void *SocketServerThread( void *arg )
 	m_tPollEvent[0].fd        = pthis->iServerSocket;
 	m_tPollEvent[0].events    = POLLIN;
 	m_tPollEvent[0].revents   = 0;
-
 	m_tPollEvent[1].fd = -1;
 
-    //int rnd = 0;
-	pthis->condThread = ON;
-	while( pthis->condThread == ON )                // Socket receive Loop
+    pthis->condCheckThread = ON;
+    while( pthis->condCheckThread == ON )                // Socket check Loop
 	{
 		if( poll((struct pollfd*)&m_tPollEvent, 2, 1000) > 0 )
 		{
@@ -246,8 +267,7 @@ void *SocketServerThread( void *arg )
 				else
 				{
                     //printf( "accept() done\n" );
-
-					m_tPollEvent[1].revents = 0;
+                    m_tPollEvent[0].revents = 0;
 
 					m_tPollEvent[1].fd = pthis->iClientSocket;
 					m_tPollEvent[1].events = POLLIN;
@@ -278,52 +298,50 @@ void *SocketServerThread( void *arg )
 				}
 
 				strBuf.append(cRecvBuf, (strlen(cRecvBuf) > (size_t)iCnt)? iCnt : strlen(cRecvBuf));
-
                 //printf(">> recv count = %ld, iCnt = %d\n", strlen(cRecvBuf), iCnt);
                 //printf(">> before erase strBuf = %s\n", strBuf.c_str());
 
-				int ret = pthis->ParseData(strBuf);
-				if( ret > 0)
-				{
-					strBuf.erase(0, ret);
-                    //printf(">> erase pos = %d\n", ret);
-                    //printf(">> after erase strBuf = %s\n", strBuf.c_str());
-				}
-				else
-				{
-                    //printf(">> strBuf is not enogh!!\n");
-					continue;
-				}
-
-/*
-                //do process
-                //SockPack *pSock = (SockPack *)cRecvBuf;
-                //printf(">> v(%d), c(%d), p(%d), m(%d), p(%d), f(%d)\n", pSock->hdr.version, pSock->hdr.cell, pSock->hdr.port, pSock->hdr.msg_no, pSock->hdr.packet, pSock->hdr.flag);
-
-                rnd++;
-                memset(cSendBuf, 0, sizeof(cSendBuf));
-                sprintf(cSendBuf, "<%d,%d,%d,%d,%d,%d,", rnd%7, 1, 0, 0, 0, 0 );
-
-                char cTemp[512];
-                memset(cTemp, 'a', sizeof(cTemp));
-                sprintf(cSendBuf, "%s%s>", cSendBuf, cTemp);
-                printf(">> strlen = %d\n", strlen(cSendBuf));
-
-                iCnt = pthis->Send(cSendBuf, sizeof(cSendBuf));
-                if( iCnt < 0 )
+                while(iCnt--)
                 {
-                    printf( "socket send() Error! errno=%d\n" , errno );
-                    pthis->CloseClientSocket();
-                    m_tPollEvent[1].fd = -1;
-                    m_tPollEvent[1].events = 0;
-                    m_tPollEvent[1].revents = 0;
-                    continue;
+                    string strPacketData;
+
+                    int ret = pthis->StripMark(strBuf, strPacketData);
+                    if(ret > 0)
+                    {
+                        strBuf.erase(0, ret);
+                        //printf(">> erase pos = %d\n", ret);
+                        //printf(">> after erase strBuf = %s\n", strBuf.c_str());
+                        //printf(">> strData = %s\n", strPacketData.c_str());
+
+                        SockPack sockData;
+                        pthis->DataSplit(strPacketData, sockData);
+                        printf(">> net lib push\n");
+                        cout << "version = " << sockData.hdr.version << endl;
+                        cout << "cell = " << sockData.hdr.cell << endl;
+                        cout << "port = " << sockData.hdr.port << endl;
+                        cout << "msg_no = " << sockData.hdr.msg_no << endl;
+                        cout << "packet = " << sockData.hdr.packet << endl;
+                        cout << "flag = " << sockData.hdr.flag << endl;
+                        cout << "string = " << sockData.pstring << endl;
+
+                        pthis->qRecv.push(sockData);
+
+
+                    }
+                    else
+                    {
+                        if(strBuf.size() > SOCKET_MAX_BUF_SIZE)
+                        {
+                            size_t iEndMarkPos = strBuf.find(SOCKET_END_MARK);
+
+                            if(iEndMarkPos == string::npos)
+                                strBuf.erase();
+                            else
+                                strBuf.erase(0, iEndMarkPos+1);
+                        }
+                        break;
+                    }
                 }
-                else
-                {
-                    printf( "socket send() ok\n" );
-                }
-*/
             }
 		}
 		else
@@ -333,29 +351,6 @@ void *SocketServerThread( void *arg )
 
 		sleep(1);
 		continue;
-
-		//do process
-		//printf(">> iCnt = %d\n", iCnt);
-		//SockPack *pSock = (SockPack *)cRecvBuf;
-		//printf(">> v(%d), c(%d), p(%d), m(%d), p(%d), f(%d)\n", pSock->hdr.version, pSock->hdr.cell, pSock->hdr.port, pSock->hdr.msg_no, pSock->hdr.packet, pSock->hdr.flag);
-/*
-		//memset( &cSendBuf, 0 , sizeof( cSendBuf ) );
-		memcpy(cSendBuf, cRecvBuf, sizeof( cRecvBuf ));
-
-		iCnt = pthis->Send(cSendBuf, sizeof(cSendBuf));
-		if( iCnt < 0 )
-		{
-			printf( "socket send() Error! errno=%d\n" , errno );
-			pthis->CloseSocket(pthis->iClientSocket);
-			continue;
-		}
-		else
-		{
-			printf( "socket send() ok\n" );
-		}
-*/
-		//pthis->CloseClientSocket();
-		//printf( "socket() Shutdown done\n" );
 	} // End of while( idThread )
 
 	if(pthis->iClientSocket >= 0)
@@ -365,54 +360,165 @@ void *SocketServerThread( void *arg )
 	return (void*)0;
 }
 
-int CSocketServer::ParseData(std::string &strBuf)
+static void *SocketProcThread( void *arg )
 {
-	std::string strData;
-	std::size_t iStartMarkPos	= strBuf.find(SOCKET_START_MARK);
-	std::size_t iEndMarkPos	= strBuf.find(SOCKET_END_MARK);
+    CSocketServer *pthis = (CSocketServer *)arg;
 
-	if(iStartMarkPos == std::string::npos)
-	{
-		return -1;	//this is not that I want packet
-	}
-	else if(iEndMarkPos == std::string::npos)
-	{
-		return 0;	//wait until all packet arrive.
-	}
-	else if(iStartMarkPos < iEndMarkPos)
-	{
-		strData = strData = strBuf.substr(iStartMarkPos, iEndMarkPos-iStartMarkPos+1);
+    pthis->condProcThread = ON;
+    while( pthis->condProcThread == ON )                // Socket process Loop
+    {
+        if(pthis->qRecv.size() > 0)
+        {
+            SockPack sockData = pthis->qRecv.front();
+            pthis->qRecv.pop();
 
-        //printf(">> start < end\n");
-        //printf(">> sfound = %ld, efound = %ld\n", iStartMarkPos, iEndMarkPos);
-        //printf(">> strBuf = %s\n", strData.c_str());
-	}
-	else
-	{
-		strData = strData = strBuf.substr(0, iEndMarkPos+1);
+            printf(">>net lib pop\n");
+            cout << "version = " << sockData.hdr.version << endl;
+            cout << "cell = " << sockData.hdr.cell << endl;
+            cout << "port = " << sockData.hdr.port << endl;
+            cout << "msg_no = " << sockData.hdr.msg_no << endl;
+            cout << "packet = " << sockData.hdr.packet << endl;
+            cout << "flag = " << sockData.hdr.flag << endl;
+            cout << "string = " << sockData.pstring << endl;
+            pthis->ProcFunc(sockData);
 
-        //printf(">> start > end\n");
-        //printf(">> sfound = %ld, efound = %ld\n", iStartMarkPos, iEndMarkPos);
-        //printf(">> strBuf = %s\n", strData.c_str());
-	}
+            if(sockData.pstring)
+                delete sockData.pstring;
+        }
+        else
+        {
+            msleep(100);
+        }
+    }
 
-	return iEndMarkPos+1;
+    return (void*)0;
 }
 
-
-void CSocketServer::StartThread()
+int CSocketServer::StripMark(string strBuf, string &strData)
 {
-	if(idThread == 0)
-		pthread_create(&idThread, NULL, &SocketServerThread, (void*)this);
+    size_t iStartMarkPos = strBuf.find(SOCKET_START_MARK);
+    size_t iEndMarkPos = strBuf.find(SOCKET_END_MARK);
+
+    if(iStartMarkPos == string::npos)
+    {
+        return -1;	//this is not what I want packet
+    }
+    else if(iEndMarkPos == string::npos)
+    {
+        return 0;	//wait until all packet arrive.
+    }
+    else if(iStartMarkPos < iEndMarkPos)
+    {
+        strData = strBuf.substr(iStartMarkPos+1, iEndMarkPos-iStartMarkPos-1);
+    }
+    else
+    {
+        strData = strBuf.substr(1, iEndMarkPos-1);
+    }
+
+    return iEndMarkPos+1;
+}
+
+int CSocketServer::DataSplit(string strData, SockPack &sockData)
+{
+    vector<string> vectData;
+    size_t iFindPos = 0;
+    int iMarkCnt = 0;
+    int iDataCnt = 0;
+
+    if(strData.length() == string::npos)
+        return -1;
+
+    for(size_t iPos=0; iPos<strData.size(); )
+    {
+        iFindPos = strData.find_first_of(SOCKET_SPLIT_MARK, iPos);
+
+        if(iFindPos == string::npos || iMarkCnt == SOCKET_MARK_CNT)
+        {
+            //get last data
+            vectData.push_back(strData.substr(iPos));
+            iPos = strData.size();
+            iDataCnt++;
+        }
+        else
+        {
+            //get chopped data
+            vectData.push_back(strData.substr(iPos, iFindPos-iPos));
+            iPos = iFindPos+1;
+            iMarkCnt++;
+            iDataCnt++;
+        }
+    }
+
+    if(iMarkCnt != SOCKET_MARK_CNT)
+        return -2;
+
+    sockData.hdr.version    = atoi(((string)vectData.at(0)).c_str());
+    sockData.hdr.cell       = atoi(((string)vectData.at(1)).c_str());
+    sockData.hdr.port       = atoi(((string)vectData.at(2)).c_str());
+    sockData.hdr.msg_no     = atoi(((string)vectData.at(3)).c_str());
+    sockData.hdr.packet     = atoi(((string)vectData.at(4)).c_str());
+    sockData.hdr.flag       = atoi(((string)vectData.at(5)).c_str());
+
+
+    if(iDataCnt == SOCKET_DATA_CNT)
+    {
+        int iStringLength = ((string)vectData.at(6)).length()+1;
+        sockData.pstring = new char[iStringLength];
+        memcpy(sockData.pstring, ((string)vectData.at(6)).c_str(), iStringLength);
+    }
+    else
+    {
+        sockData.pstring = new char[MSG_STRING_LENGTH];
+        memset(sockData.pstring, 0, MSG_STRING_LENGTH);
+    }
+//    printf(">> sizeof sockData = %ld\n", sizeof(sockData));
+//    printf(">> sock version = %d\n", sockData.hdr.version);
+//    printf(">> sock cell = %d\n", sockData.hdr.cell);
+//    printf(">> sock port = %d\n", sockData.hdr.port);
+//    printf(">> sock msg_no = %d\n", sockData.hdr.msg_no);
+//    printf(">> sock packet = %d\n", sockData.hdr.packet);
+//    printf(">> sock flag = %d\n", sockData.hdr.flag);
+//    printf(">> sock string = %s\n", sockData.pstring);
+
+//    vector<string>::iterator it;
+//    for(it=vectData.begin(); it!=vectData.end(); it++)
+//    {
+//        string temp = *it;
+//        printf(">> data %s\n", temp.c_str());
+//    }
+
+    return 0;
+}
+
+void CSocketServer::StartThread(void (*SetFunc)(SockPack sockData))
+{
+    ProcFunc = SetFunc;
+    InitSockData();
+
+    if(idCheckThread == 0)
+        pthread_create(&idCheckThread, NULL, &SocketCheckThread, (void*)this);
+
+    if(idProcThread == 0)
+        pthread_create(&idProcThread, NULL, &SocketProcThread, (void*)this);
 }
 
 void CSocketServer::StopThread()
 {
-	condThread = OFF;
+    condCheckThread = OFF;
+    condProcThread = OFF;
 
-	if(idThread != 0)
-	{
-		pthread_join(idThread, NULL);
-		idThread = 0;
-	}
+    if(idProcThread != 0)
+    {
+        pthread_join(idProcThread, NULL);
+        idProcThread = 0;
+    }
+
+    if(idCheckThread != 0)
+    {
+        pthread_join(idCheckThread, NULL);
+        idCheckThread = 0;
+    }
+
+    InitSockData();
 }

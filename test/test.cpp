@@ -339,6 +339,7 @@ int test_msg_out()
 
 int test_socket()
 {
+    /*
 	CSocketServer *sock = new CSocketServer((char*)"127.0.0.1", PORT_TDM);
 
 	sock->StartThread();
@@ -383,7 +384,7 @@ int test_socket()
 
 	sock->StopThread();
 	delete (sock);
-
+*/
 
 /*
 	char buf[512] = {0,};

@@ -225,13 +225,13 @@ int CSocketClient::SendCheckDummy()
 	return 0;
 }
 
-void *SocketCheckThread( void *arg )
+static void *SocketCheckThread( void *arg )
 {
 	CSocketClient *pthis = (CSocketClient *)arg;
     string strBuf;;
 
     pthis->condCheckThread = ON;
-    while( pthis->condCheckThread == ON )                // Socket receive Loop
+    while( pthis->condCheckThread == ON )                // Socket check Loop
 	{
 		if(pthis->CreateSocket() < 0)
 		{
@@ -269,8 +269,7 @@ void *SocketCheckThread( void *arg )
 					pthis->SendCheckDummy();
 				}
 
-				strBuf.append(cRecvBuf, (strlen(cRecvBuf) > (size_t)iCnt)? iCnt : strlen(cRecvBuf));
-
+                strBuf.append(cRecvBuf, (strlen(cRecvBuf) > (size_t)iCnt)? iCnt : strlen(cRecvBuf));
                 //printf(">> recv count = %ld, iCnt = %d\n", strlen(cRecvBuf), iCnt);
                 //printf(">> before erase strBuf = %s\n", strBuf.c_str());
 
@@ -278,7 +277,7 @@ void *SocketCheckThread( void *arg )
 				{
                     string strPacketData;
 
-					int ret = pthis->ParseData(strBuf, strPacketData);
+                    int ret = pthis->StripMark(strBuf, strPacketData);
 					if(ret > 0)
 					{
 						strBuf.erase(0, ret);
@@ -316,12 +315,12 @@ void *SocketCheckThread( void *arg )
 	return (void*)0;
 }
 
-void *SocketProcThread( void *arg )
+static void *SocketProcThread( void *arg )
 {
     CSocketClient *pthis = (CSocketClient *)arg;
 
     pthis->condProcThread = ON;
-    while( pthis->condProcThread == ON )                // Socket receive Loop
+    while( pthis->condProcThread == ON )                // Socket process Loop
     {
         if(pthis->qRecv.size() > 0)
         {
@@ -341,7 +340,7 @@ void *SocketProcThread( void *arg )
     return (void*)0;
 }
 
-int CSocketClient::ParseData(string strBuf, string &strData)
+int CSocketClient::StripMark(string strBuf, string &strData)
 {
     size_t iStartMarkPos = strBuf.find(SOCKET_START_MARK);
     size_t iEndMarkPos = strBuf.find(SOCKET_END_MARK);
@@ -370,7 +369,8 @@ int CSocketClient::DataSplit(string strData, SockPack &sockData)
 {
     vector<string> vectData;
     size_t iFindPos = 0;
-    int iCnt = 0;
+    int iMarkCnt = 0;
+    int iDataCnt = 0;
 
     if(strData.length() == string::npos)
         return -1;
@@ -379,21 +379,24 @@ int CSocketClient::DataSplit(string strData, SockPack &sockData)
     {
         iFindPos = strData.find_first_of(SOCKET_SPLIT_MARK, iPos);
 
-        if(iFindPos == string::npos)
+        if(iFindPos == string::npos || iMarkCnt == SOCKET_MARK_CNT)
         {
+            //get last data
             vectData.push_back(strData.substr(iPos));
             iPos = strData.size();
+            iDataCnt++;
         }
         else
         {
+            //get chopped data
             vectData.push_back(strData.substr(iPos, iFindPos-iPos));
             iPos = iFindPos+1;
+            iMarkCnt++;
+            iDataCnt++;
         }
-
-        iCnt++;
     }
 
-    if(iCnt < SOCKET_DATA_CNT)
+    if(iMarkCnt != SOCKET_MARK_CNT)
         return -2;
 
     sockData.hdr.version    = atoi(((string)vectData.at(0)).c_str());
@@ -403,9 +406,17 @@ int CSocketClient::DataSplit(string strData, SockPack &sockData)
     sockData.hdr.packet     = atoi(((string)vectData.at(4)).c_str());
     sockData.hdr.flag       = atoi(((string)vectData.at(5)).c_str());
 
-    int iStringLength = ((string)vectData.at(6)).length()+1;
-    sockData.pstring = new char[iStringLength];
-    memcpy(sockData.pstring, ((string)vectData.at(6)).c_str(), iStringLength);
+    if(iDataCnt == SOCKET_DATA_CNT)
+    {
+        int iStringLength = ((string)vectData.at(6)).length()+1;
+        sockData.pstring = new char[iStringLength];
+        memcpy(sockData.pstring, ((string)vectData.at(6)).c_str(), iStringLength);
+    }
+    else
+    {
+        sockData.pstring = new char[MSG_STRING_LENGTH];
+        memset(sockData.pstring, 0, MSG_STRING_LENGTH);
+    }
 
 //    printf(">> sizeof sockData = %ld\n", sizeof(sockData));
 //    printf(">> sock version = %d\n", sockData.hdr.version);

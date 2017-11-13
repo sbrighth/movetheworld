@@ -7,8 +7,8 @@ LDFLAGS  	= $(LIBPATH) -ltbase -ltnet -lpthread
 
 CP_BINPATH	= ../output/bin
 
-TARGET		= tdm
-OBJS		= testdm.o testmng.o status.o callback.o jsoncpp.o
+TARGET		= texec
+OBJS		= scriptexec.o
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) -o $@ -c $< 

@@ -12,31 +12,17 @@
 #include "base.h"
 #include "msgqthread.h"
 #include "msgsend.h"
-#include "socketclient.h"
 #include "testmng.h"
+#include "socketserver.h"
 #include "socketclient.h"
 #include "status.h"
-
-#define SC_FILE_DEFAULT		0x0
-#define SC_FILE_PASS		0x1
-#define SC_FILE_NAME_ERR	0x2
-#define SC_FILE_SIZE_ERR	0x3
-#define SC_FILE_NONE_ERR	0x4
-#define SC_FILE_OTHER_ERR	0x5
-
-#define PROG_NAME		"tdm"
-#define PROG_VERSION	"0.0.9"
+#include "callback.h"
 
 int		CheckProgRunning();
 void	ProcSignalStop(int sig_no);
 int		SetSignal();
 int		CreateTestFolders();
 int		CreateFolder(char *path);
-void	RecvMsgProc(MsgPack msg);
-void	RecvSockProc(SockPack sockData);
-int		CheckScriptFile(char *msg_str);
-int     ProcTypeMsgInfo(MsgHdr hdr, char *msg_str);
-int     ProcTypeMsgTest(MsgHdr hdr, char *msg_str);
 
 char	g_szTestPath[PATHNAME_SIZE];
 int		g_condTestDm;
@@ -44,8 +30,9 @@ int		g_idTpc;
 int		g_idResShare;
 
 CMsgqThread     *g_pTestMsgq = NULL;
+CSocketServer   *g_pSocketServer = NULL;
 CSocketClient   *g_pSocketClient = NULL;
-CTestMng        **g_pTestMng = NULL;
+CTestMng        **g_ppTestMng = NULL;
 CStatus         *g_pStatusMon = NULL;
 
 #endif /* TESTDM_H_ */

@@ -9,18 +9,12 @@
 #define SOCKETCLIENT_H_
 
 #include <netinet/in.h>
-#include "def.h"
 #include <string>
 #include <poll.h>
 #include <queue>
+#include "def.h"
 
 using namespace std;
-
-typedef struct tSockPack2
-{
-    MsgHdr		hdr;
-    string		text;
-} SockPack2;
 
 class CSocketClient {
 public:
@@ -38,7 +32,7 @@ public:
     void			StartThread(void (*SetFunc)(SockPack sockData));
 	void			StopThread();
 	int				SendCheckDummy();
-    int				ParseData(string strBuf, string &strData);
+    int				StripMark(string strBuf, string &strData);
     int				DataSplit(string strData, SockPack &sockData);
 
 public:
