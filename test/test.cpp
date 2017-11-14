@@ -177,7 +177,7 @@ int test_shmem()
 	printf(">> read data = %s\n", buf);
     */
 
-    DpsStatus statDps[PORT_MAX];
+    DpsStatus statDps[PORT_CNT];
     memset(statDps, 0, sizeof(statDps));
 
     int idDpsShmem = CreateShmem(KEY_DPS_SHARE, sizeof(statDps));

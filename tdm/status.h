@@ -24,11 +24,12 @@ public:
     int CheckDps(int port);
     int GetStatusFromPipe(const char *szCmd, char *sBuf, int iBufSize);
     int GetStatusFromFile(const char *szCmd, char *sBuf, int iBufSize);
+    int MakeJsonString();
 
 public:
     OsStatus    statOs;
-    DpsStatus   statDps[PORT_MAX];
-    PerfStatus  statPerf[PORT_MAX];
+    DpsStatus   statDps[PORT_CNT];
+    PerfStatus  statPerf[PORT_CNT];
 
     string  strJson;
     int idDpsShmem;

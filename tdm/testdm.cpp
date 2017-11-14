@@ -19,45 +19,60 @@
 #include <sys/wait.h>
 #include "testdm.h"
 
-#define PROG_NAME		"tdm"
-#define PROG_VERSION	"0.0.9"
-
 using namespace std;
+
+string strProgName = "tdm";
+string strProgVersion = "0.0.10";
 
 int main(int argc, char *argv[])
 {
 	//running check
 	if(CheckProgRunning() > 2)
 	{
-		printf("%s is runinning\n", PROG_NAME);
+        printf("%s is runinning\n", strProgName.c_str());
 		return -1;
-	}
+    }
 	else
 	{
-		printf("%s start!!\n", PROG_NAME);
+        printf("%s start!!\n", strProgName.c_str());
 	}
 
 	if(SetSignal() < 0)
 		return -1;
 
-	//get tpc bd id;
 	g_idTpc = 2;
 
-	//init test folder
-	char szTestMsgSendTo[PATHNAME_SIZE];
-	char szTestMsgRecvFrom[PATHNAME_SIZE];
+    CreateTestFolders();
+    InitResource();
 
-	CreateTestFolders();
+    g_condTestDm = 1;
+	while( g_condTestDm )
+	{
+		//this is for monitoring job
+        //msleep(100);
+       // g_pStatusMon->CheckAll();
+        sleep(1);
+	}
 
-	sprintf(szTestMsgSendTo, "%s/%s", g_szTestPath, MSGBOX_SEND_TO);
-	sprintf(szTestMsgRecvFrom, "%s/%s", g_szTestPath, MSGBOX_RECV_FROM);
+    DeleteResource();
+    printf("%s end!!\n", strProgName.c_str());
 
-	cout << "strTestMsgSendTo : " << szTestMsgSendTo << endl;
-	cout << "strTestMsgRecvFrom : " << szTestMsgRecvFrom << endl;
+	return EXIT_SUCCESS;
+}
 
+void InitResource()
+{
+    //msg read/write file
+    char szTestMsgSendTo[PATHNAME_SIZE];
+    char szTestMsgRecvFrom[PATHNAME_SIZE];
+    sprintf(szTestMsgSendTo, "%s/%s", g_szTestPath, MSGBOX_SEND_TO);
+    sprintf(szTestMsgRecvFrom, "%s/%s", g_szTestPath, MSGBOX_RECV_FROM);
 
-	//MsgqThread
-	g_pTestMsgq = new CMsgqThread(KEY_TEST_MSGQ, szTestMsgSendTo, szTestMsgRecvFrom);
+    cout << "strTestMsgSendTo : " << szTestMsgSendTo << endl;
+    cout << "strTestMsgRecvFrom : " << szTestMsgRecvFrom << endl;
+
+    //MsgqThread
+    g_pTestMsgq = new CMsgqThread(KEY_TEST_MSGQ, szTestMsgSendTo, szTestMsgRecvFrom);
     g_pTestMsgq->StartThread(ProcRecvMsg);
 
     //Socket Server
@@ -70,34 +85,27 @@ int main(int argc, char *argv[])
     g_pSocketClient->StartThread(&ProcRecvSock);
 
     //TestMng
-    g_ppTestMng = new CTestMng*[PORT_MAX];
+    g_ppTestMng = new CTestMng*[PORT_CNT];
 
-    for(int idx=0; idx<PORT_MAX; idx++)
+    for(int idx=0; idx<PORT_CNT; idx++)
     {
-        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_INIT,	0, PROG_VERSION);
+        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_INIT,	0, strProgVersion.c_str());
         SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_INITCOLOR,0, "");
         SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT1, 	0, "EMPTY");
         SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT2, 	0, "");
-        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT3, 	0, PROG_VERSION);
+        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT3, 	0, strProgVersion.c_str());
         SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT4, 	0, "");
 
         g_ppTestMng[idx] = new CTestMng(g_idTpc, idx);
     }
 
-    //Monitoring
+    //Status
     g_pStatusMon = new CStatus();
+}
 
-    //TPC b'd status monitor
-	g_condTestDm = 1;
-	while( g_condTestDm )
-	{
-		//this is for monitoring job
-        //msleep(100);
-        //g_pStatusMon->CheckAll();
-        sleep(1);
-	}
 
-    //clear resources
+void DeleteResource()
+{
     if(g_pStatusMon != NULL)
     {
         delete g_pStatusMon;
@@ -110,24 +118,20 @@ int main(int argc, char *argv[])
     }
 
     if(g_pSocketClient != NULL)
-	{
+    {
         g_pSocketClient->StopThread();
         delete g_pSocketClient;
-	}
+    }
 
     if(g_ppTestMng != NULL)
-	{
-		for(int idx=0; idx<PORT_MAX; idx++)
-		{
+    {
+        for(int idx=0; idx<PORT_CNT; idx++)
+        {
             delete g_ppTestMng[idx];
-		}
+        }
 
         delete []g_ppTestMng;
-	}
-
-
-	printf("%s end!!\n", PROG_NAME);
-	return EXIT_SUCCESS;
+    }
 }
 
 int CheckProgRunning()
@@ -136,7 +140,7 @@ int CheckProgRunning()
 	char cmd[32] = {0,};
 	char buf[32] = {0,};
 
-	sprintf(cmd, "ps -a | grep %s | wc -l", PROG_NAME);
+    sprintf(cmd, "ps -a | grep %s | wc -l", strProgName.c_str());
 	file = popen(cmd, "r");
 	if(file == NULL)
 		return -1;
@@ -178,36 +182,36 @@ void ProcSignalStop(int sig_no)
 
 int CreateTestFolders()
 {
-	char szMakePath[PATHNAME_SIZE];
-	sprintf(szMakePath, "%s/rack_001/tester%03d/exe", SYS_ATH_PATH, g_idTpc);
-	CreateFolder(szMakePath);
-	memcpy(g_szTestPath, szMakePath, sizeof(g_szTestPath));
+    char szMakePath[PATHNAME_SIZE];
+    sprintf(szMakePath, "%s/rack_001/tester%03d/exe", SYS_ATH_PATH, g_idTpc);
+    memcpy(g_szTestPath, szMakePath, sizeof(g_szTestPath));
+    CreateFolder(szMakePath);
 
-	sprintf(szMakePath, "%s", SYS_DATA_PATH);
-	CreateFolder(szMakePath);
+    sprintf(szMakePath, "%s", SYS_DATA_PATH);
+    CreateFolder(szMakePath);
 
-	sprintf(szMakePath, "%s", SYS_LIB_PATH);
-	CreateFolder(szMakePath);
+    sprintf(szMakePath, "%s", SYS_LIB_PATH);
+    CreateFolder(szMakePath);
 
-	sprintf(szMakePath, "%s", SYS_INC_PATH);
-	CreateFolder(szMakePath);
+    sprintf(szMakePath, "%s", SYS_INC_PATH);
+    CreateFolder(szMakePath);
 
-	sprintf(szMakePath, "%s", SYS_LOG_PATH);
-	CreateFolder(szMakePath);
+    sprintf(szMakePath, "%s", SYS_LOG_PATH);
+    CreateFolder(szMakePath);
 
-	sprintf(szMakePath, "%s", SYS_EXEC_PATH);
-	CreateFolder(szMakePath);
+    sprintf(szMakePath, "%s", SYS_EXEC_PATH);
+    CreateFolder(szMakePath);
 
-	sprintf(szMakePath, "%s", SYS_SCRIPT_PATH);
-	CreateFolder(szMakePath);
+    sprintf(szMakePath, "%s", SYS_SCRIPT_PATH);
+    CreateFolder(szMakePath);
 
-	sprintf(szMakePath, "%s", SYS_WORK_PATH);
-	CreateFolder(szMakePath);
+    sprintf(szMakePath, "%s", SYS_WORK_PATH);
+    CreateFolder(szMakePath);
 
-	sprintf(szMakePath, "%s", SYS_UPDATE_PATH);
-	CreateFolder(szMakePath);
+    sprintf(szMakePath, "%s", SYS_UPDATE_PATH);
+    CreateFolder(szMakePath);
 
-	return 0;
+    return 0;
 }
 
 int CreateFolder(char *path)

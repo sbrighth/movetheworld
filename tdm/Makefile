@@ -2,7 +2,7 @@ CC		 	= gcc
 CXX		 	= g++
 INCPATH		= -I../tbase/ -I../tnet/
 LIBPATH		= -L../tbase/ -L../tnet/
-CXXFLAGS 	= -O2 -g -Wall -fmessage-length=0 -Wno-unused-result -Wno-sizeof-pointer-memaccess $(INCPATH)
+CXXFLAGS 	= -O2 -g -Wall -fmessage-length=0 -Wno-unused-result $(INCPATH)
 LDFLAGS  	= $(LIBPATH) -ltbase -ltnet -lpthread
 
 CP_BINPATH	= ../output/bin

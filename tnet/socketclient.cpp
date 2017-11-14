@@ -138,7 +138,7 @@ int CSocketClient::ConnectServer()
             FD_ZERO(&myset);
 			FD_SET(iClientSocket, &myset);
 
-			if(select(iClientSocket+1, NULL, &myset, NULL, &tv) > 0)
+            if(select(iClientSocket+1, NULL, &myset, NULL, &tv) > 0)
 			{
 				int iGetSocketErr = 0;
 				socklen_t len = sizeof(iGetSocketErr);
@@ -166,7 +166,7 @@ int CSocketClient::ConnectServer()
             //printf("connect() error!!\n");
 			bConnect = false;;
 		}
-	}
+    }
 	else
 	{
         //printf( "connect() ok\n" );
@@ -232,7 +232,7 @@ static void *SocketCheckThread( void *arg )
 
     pthis->condCheckThread = ON;
     while( pthis->condCheckThread == ON )                // Socket check Loop
-	{
+    {
 		if(pthis->CreateSocket() < 0)
 		{
 			pthis->CloseSocket();
@@ -298,13 +298,13 @@ static void *SocketCheckThread( void *arg )
 						}
 						break;
 					}
-				}
+                }
 			}
 		}
 		else
 		{
 			pthis->SendCheckDummy();
-		}
+        }
     } // End of while( idCheckThread )
 
     pthis->CloseSocket();

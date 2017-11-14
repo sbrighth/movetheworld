@@ -1,13 +1,16 @@
 #include <iostream>
+#include <sstream>
+#include <vector>
+#include <iterator>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <libgen.h>
 #include "callback.h"
 #include "base.h"
 #include "msgsend.h"
 #include "testmng.h"
-
 
 using namespace std;
 
@@ -19,8 +22,7 @@ static int CheckScriptFile(char *msg_str);
 extern int g_idTpc;
 extern char *g_szTestPath;
 extern CTestMng **g_ppTestMng;
-
-static char prog_version[] = "0.0.9";
+extern string strProgVersion;
 
 //msg file process callback
 void ProcRecvMsg(MsgPack msg)
@@ -53,7 +55,7 @@ void ProcRecvSock(SockPack sockData)
         printf(">> this is MsgVerNone\n");
         ProcMsgVerNone(sockData.hdr, sockData.pstring);
     }
-    if(version == MSGVER_PORT_TEST)
+    else if(version == MSGVER_PORT_TEST)
     {
         printf(">> this is MsgVerTest\n");
         ProcMsgVerTest(sockData.hdr, sockData.pstring);
@@ -69,42 +71,52 @@ void ProcRecvSock(SockPack sockData)
 //MSGVER_NONE
 static int ProcMsgVerNone(MsgHdr hdr, char *msg_str)
 {
+/*
     int version	= hdr.version;
     int cell    = hdr.cell;
     int port    = hdr.port-1;
     int msg_no	= hdr.msg_no;
-    int packet  = hdr.msg.packet;
-    int flag 	= hdr.msg.flag;
+    int packet  = hdr.packet;
+    int flag 	= hdr.flag;
+*/
+    stringstream ssArg;
+    ssArg << msg_str;
 
-    int idMsgq  = KEY_TEST_MSGQ;
-    char szRealName[PATHNAME_SIZE] = {0,};
+    if(ssArg.str().empty())
+        return -1;
 
-    if( SearchFile(g_szTestPath, msg_str, szRealName) == 0 )
+    vector<string> vectArg;
+    string strArg;
+
+    while(ssArg >> strArg)
     {
-        if(g_ppTestMng[port]->StartTest(g_szTestPath, szRealName) == 0)
-        {
-            printf(">> test is started!!\n");
-            SendMsg(idMsgq, version, cell, port+1, MSG_TEST,	0, "");
-        }
+        vectArg.push_back(strArg);
     }
-    else
+
+    string strScriptPathName = vectArg.at(0);
+    size_t posSplit = strScriptName.find_last_of('/');
+
+    string strPath = strScriptPathName.substr(0,posSplit);
+    string strScriptName = strScriptPathName.substr(posSplit+1);
+
+    if(g_ppTestMng[0]->StartTest(strScriptName.substr(0,posSplit), strScriptName.substr(posSplit+1)) == 0)
     {
-        printf(">> Info script is not exist!!\n");
-        SendMsg(idMsgq, version, cell, port+1, MSG_DONE,	0, "SCRIPT NOT EXIST");
+        printf(">> test is started!!\n");
     }
 
     return 0;
 }
 
 //MSGVER_OTHER
-static int ProcMsgVerInfo(MsgHdr hdr, char *msg_str)
+static int ProcMsgVerOther(MsgHdr hdr, char *msg_str)
 {
+/*
     int version	= hdr.version;
     int cell    = hdr.cell;
     int port    = hdr.port-1;
     int msg_no	= hdr.msg_no;
-    int packet  = msg.packet;
-    int flag 	= msg.flag;
+    int packet  = hdr.packet;
+    int flag 	= hdr.flag;
 
     int idMsgq  = KEY_TEST_MSGQ;
 
@@ -129,7 +141,7 @@ static int ProcMsgVerInfo(MsgHdr hdr, char *msg_str)
         printf(">> Info script is not exist!!\n");
         SendMsg(idMsgq, version, cell, port+1, MSG_DONE,	0, "SCRIPT NOT EXIST");
     }
-
+*/
     return 0;
 }
 
@@ -189,22 +201,22 @@ static int ProcMsgVerTest(MsgHdr hdr, char *msg_str)
         switch(CheckScriptFile(msg_str))
         {
         case SC_FILE_DEFAULT:
-            SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_DEFAULT, prog_version);
+            SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_DEFAULT, strProgVersion.c_str());
             SendMsg(idMsgq, version, cell, port+1, MSG_TEXT1,    0,	"MSG_INIT");
             SendMsg(idMsgq, version, cell, port+1, MSG_TEXT2,    0, "");
             SendMsg(idMsgq, version, cell, port+1, MSG_TEXT3,    0, "");
             SendMsg(idMsgq, version, cell, port+1, MSG_TEXT4,    0, "");
             break;
         case SC_FILE_PASS:
-            SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_PASS, prog_version);
+            SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_PASS, strProgVersion.c_str());
             SendMsg(idMsgq, version, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
             break;
         case SC_FILE_SIZE_ERR:
-            SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_SIZE_ERR, prog_version);
+            SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_SIZE_ERR, strProgVersion.c_str());
             SendMsg(idMsgq, version, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
             break;
         case SC_FILE_NONE_ERR:
-            SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_NONE_ERR, prog_version);
+            SendMsg(idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_NONE_ERR, strProgVersion.c_str());
             SendMsg(idMsgq, version, cell, port+1, MSG_TEXT1,	0, "MSG_INIT");
             break;
         case SC_FILE_OTHER_ERR:
@@ -256,7 +268,7 @@ static int CheckScriptFile(char *msg_str)
             long lScriptSize = atoi(szScriptSize);
 
             sprintf(szFileName, "%s/%s", g_szTestPath, szRealName);
-            printf(">. szFileName = %s\n", szFileName);
+            printf(">> szFileName = %s\n", szFileName);
             long lFileSize = GetFileSize(szFileName);
             lFileSize = lFileSize % 10000;
 

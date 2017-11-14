@@ -18,6 +18,8 @@
 #include "status.h"
 #include "callback.h"
 
+void    InitResource();
+void    DeleteResource();
 int		CheckProgRunning();
 void	ProcSignalStop(int sig_no);
 int		SetSignal();

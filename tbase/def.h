@@ -105,10 +105,10 @@
 //port index
 enum PORT_INDEX
 {
-    PORT_NONE   = 0,
-    PORT1       = 1,
-    PORT2       = 2,
-    PORT_MIN    = PORT_NONE,
+    PORT1       = 0,
+    PORT2,
+    PORT_CNT,
+    PORT_MIN    = PORT1,
     PORT_MAX    = PORT2
 };
 
@@ -154,10 +154,10 @@ typedef struct tOsStatus
 //monitor dps status
 typedef struct tDpsStatus
 {
-    float fDpsSetVoltage[DPS_CH_CNT];
-    float fDpsGetVoltage[DPS_CH_CNT];
-    float fDpsSetCurrent[DPS_CH_CNT];
-    float fDpsGetCurrent[DPS_CH_CNT];
+    char sDpsSetVoltage[DPS_CH_CNT][32];
+    char sDpsGetVoltage[DPS_CH_CNT][32];
+    char sDpsSetCurrent[DPS_CH_CNT][32];
+    char sDpsGetCurrent[DPS_CH_CNT][32];
     bool bDpsPower; //on, off
     bool bDpsOcp;
     bool bDpsOvp;
