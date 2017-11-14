@@ -21,8 +21,8 @@ public:
 	virtual ~CTestMng();
 
 public:
-	int				StartTest(string strPath, string strFileName);
-	int				StopTest();
+    int				StartTest(string strPath, string strFileName);
+    int				StopTest();
 	int				IsTestOn();
 	int				CheckScriptExt(string strFileName, string strCheckExt);
 

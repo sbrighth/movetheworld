@@ -23,8 +23,10 @@ void    DeleteResource();
 int		CheckProgRunning();
 void	ProcSignalStop(int sig_no);
 int		SetSignal();
+int     GetTpcId();
 int		CreateTestFolders();
 int		CreateFolder(char *path);
+int     NotifyProgReady();
 
 char	g_szTestPath[PATHNAME_SIZE];
 int		g_condTestDm;

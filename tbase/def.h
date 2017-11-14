@@ -43,6 +43,11 @@
 #define SYS_WORK_PATH			SYS_PATH "/work"
 #define SYS_UPDATE_PATH			SYS_PATH "/update"
 
+//info file name
+#define FILE_TPC_ID             SYS_DATA_PATH "/tpc_id.txt"
+#define FILE_BD_CONNECT         SYS_DATA_PATH "/bd_connect.txt"
+#define FILE_VERSION            SYS_DATA_PATH "/version.txt"
+
 //log name
 #define TEST_LOG_NAME			"port"
 #define EVENT_LOG_NAME			"event"
@@ -94,13 +99,14 @@
 
 #define PATHNAME_SIZE			256
 
-#define SC_FILE_DEFAULT		0x0
-#define SC_FILE_PASS		0x1
-#define SC_FILE_NAME_ERR	0x2
-#define SC_FILE_SIZE_ERR	0x3
-#define SC_FILE_NONE_ERR	0x4
-#define SC_FILE_OTHER_ERR	0x5
+#define SC_FILE_DEFAULT         0x0
+#define SC_FILE_PASS            0x1
+#define SC_FILE_NAME_ERR        0x2
+#define SC_FILE_SIZE_ERR        0x3
+#define SC_FILE_NONE_ERR        0x4
+#define SC_FILE_OTHER_ERR       0x5
 
+#define TPC_ID_DEBUG            200
 
 //port index
 enum PORT_INDEX

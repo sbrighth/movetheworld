@@ -37,13 +37,14 @@ int main(int argc, char *argv[])
         printf("%s start!!\n", strProgName.c_str());
 	}
 
+    //set stop signal
 	if(SetSignal() < 0)
 		return -1;
 
-	g_idTpc = 2;
-
+    GetTpcId();
     CreateTestFolders();
     InitResource();
+    NotifyProgReady();
 
     g_condTestDm = 1;
 	while( g_condTestDm )
@@ -85,17 +86,10 @@ void InitResource()
     g_pSocketClient->StartThread(&ProcRecvSock);
 
     //TestMng
-    g_ppTestMng = new CTestMng*[PORT_CNT];
+    g_ppTestMng = new CTestMng*[PORT_CNT+1];
 
-    for(int idx=0; idx<PORT_CNT; idx++)
+    for(int idx=0; idx<PORT_CNT+1; idx++)
     {
-        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_INIT,	0, strProgVersion.c_str());
-        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_INITCOLOR,0, "");
-        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT1, 	0, "EMPTY");
-        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT2, 	0, "");
-        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT3, 	0, strProgVersion.c_str());
-        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT4, 	0, "");
-
         g_ppTestMng[idx] = new CTestMng(g_idTpc, idx);
     }
 
@@ -125,7 +119,9 @@ void DeleteResource()
 
     if(g_ppTestMng != NULL)
     {
-        for(int idx=0; idx<PORT_CNT; idx++)
+        int cnt = sizeof(g_ppTestMng) / sizeof(g_ppTestMng[0]);
+        cout << "cnt = " << cnt << endl;
+        for(int idx=0; idx<cnt; idx++)
         {
             delete g_ppTestMng[idx];
         }
@@ -172,6 +168,21 @@ int SetSignal()
 		return-1;
 
 	return 0;
+}
+
+int GetTpcId()
+{
+    char buf[32] = {0,};
+    int cnt = ReadFileText((char*)FILE_TPC_ID, buf, 0, sizeof(buf));
+
+    if(cnt == 0)
+    {
+        g_idTpc = TPC_ID_DEBUG;
+        return -1;
+    }
+
+    g_idTpc = atoi(buf);
+    return 0;
 }
 
 void ProcSignalStop(int sig_no)
@@ -224,4 +235,25 @@ int CreateFolder(char *path)
 	system(cmd);
 
 	return 0;
+}
+
+int NotifyProgReady()
+{
+    if(g_pTestMsgq == NULL)
+        return -1;
+
+    if(g_pTestMsgq->idMsgq < 0)
+        return -2;
+
+    for(int idx=0; idx<PORT_CNT; idx++)
+    {
+        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_INIT,	0, strProgVersion.c_str());
+        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_INITCOLOR,0, "");
+        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT1, 	0, "EMPTY");
+        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT2, 	0, "");
+        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT3, 	0, strProgVersion.c_str());
+        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT4, 	0, "");
+    }
+
+    return 0;
 }

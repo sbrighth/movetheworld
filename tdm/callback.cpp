@@ -94,12 +94,12 @@ static int ProcMsgVerNone(MsgHdr hdr, char *msg_str)
     }
 
     string strScriptPathName = vectArg.at(0);
-    size_t posSplit = strScriptName.find_last_of('/');
+    size_t posSplit = strScriptPathName.find_last_of('/');
 
     string strPath = strScriptPathName.substr(0,posSplit);
     string strScriptName = strScriptPathName.substr(posSplit+1);
 
-    if(g_ppTestMng[0]->StartTest(strScriptName.substr(0,posSplit), strScriptName.substr(posSplit+1)) == 0)
+    if(g_ppTestMng[0]->StartTest(strPath, strScriptName) == 0)
     {
         printf(">> test is started!!\n");
     }
