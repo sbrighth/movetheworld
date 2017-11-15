@@ -21,20 +21,20 @@
 
 using namespace std;
 
-string strProgName = "tdm";
-string strProgVersion = "0.0.10";
+char szProgName[] = "tdm";
+char szProgVersion[] = "0.0.10";
 
 int main(int argc, char *argv[])
 {
 	//running check
 	if(CheckProgRunning() > 2)
 	{
-        printf("%s is runinning\n", strProgName.c_str());
+        printf("%s is runinning\n", szProgName);
 		return -1;
     }
 	else
 	{
-        printf("%s start!!\n", strProgName.c_str());
+        printf("%s start!!\n", szProgName);
 	}
 
     //set stop signal
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 	}
 
     DeleteResource();
-    printf("%s end!!\n", strProgName.c_str());
+    printf("%s end!!\n", szProgName);
 
 	return EXIT_SUCCESS;
 }
@@ -136,7 +136,7 @@ int CheckProgRunning()
 	char cmd[32] = {0,};
 	char buf[32] = {0,};
 
-    sprintf(cmd, "ps -a | grep %s | wc -l", strProgName.c_str());
+    sprintf(cmd, "ps -a | grep %s | wc -l", szProgName);
 	file = popen(cmd, "r");
 	if(file == NULL)
 		return -1;
@@ -247,11 +247,11 @@ int NotifyProgReady()
 
     for(int idx=0; idx<PORT_CNT; idx++)
     {
-        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_INIT,	0, strProgVersion.c_str());
+        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_INIT,	0, szProgVersion);
         SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_INITCOLOR,0, "");
         SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT1, 	0, "EMPTY");
         SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT2, 	0, "");
-        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT3, 	0, strProgVersion.c_str());
+        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT3, 	0, szProgVersion);
         SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT4, 	0, "");
     }
 

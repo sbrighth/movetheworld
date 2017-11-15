@@ -21,20 +21,21 @@ public:
 	virtual ~CTestMng();
 
 public:
-    int				StartTest(string strPath, string strFileName);
-    int				StopTest();
-	int				IsTestOn();
+    int             StartTest(int iMsgVer, string strPath, string strFileName, string strArg);
+    int				StopTest(int iMsgVer);
+    int				IsTestOn(int iMsgVer);
 	int				CheckScriptExt(string strFileName, string strCheckExt);
 
-	string			strRunFile;
-	int				iCell;
-	int				iPort;
-	pid_t			pidTestProcess;
-	int				iChildStatus;
-	int				condThread;
-	pthread_t		idThread;
-	pthread_cond_t	condSync;
-	pthread_mutex_t	mutexSync;
+    int             iVersion;
+    int				iCell;
+    int				iPort;
+
+    string			strRunFile[MSGVER_CNT];
+    pid_t			pidTestProcess[MSGVER_CNT];
+    int				iChildStatus[MSGVER_CNT];
+    pthread_t		idThread[MSGVER_CNT];
+    pthread_mutex_t syncMutex;
+    pthread_cond_t  syncCond;
 };
 
 #endif /* TESTMNG_H_ */
