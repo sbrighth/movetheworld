@@ -19,25 +19,168 @@
 #include "base.h"
 #include "socketclient.h"
 
+int CheckArg(int argc, char **argv, stringstream &ssArg);
+int CheckScriptExt(string strFileName, string strCheckExt);
+int ProcExec(int iMode, string strArg);
 
-
-#define PROG_VERSION    "0.1"
-#define PROG_NAME       "texec"
+char szProgName[] = "texec";
+char szProgVersion[] = "0.0.1";
 
 using namespace std;
 enum mode{mode_none=0, mode_run, mode_stop, mode_list};
 
 void help()
 {
-    printf("%s %s\n", PROG_NAME, PROG_VERSION);
-    printf("usage: %s -r [SCRIPT_NAME] [FLAG1] [FLAG2] ...\n", PROG_NAME);
-    printf("          -s [JOB_NUM]\n");
-    printf("          -l\n");
+    printf("%s %s\n", szProgName, szProgVersion);
+    printf("usage: %s -r [SCRIPT_NAME] [FLAG1] [FLAG2] ...\n", szProgName);
+//    printf("          -s [JOB_NUM]\n");
+//    printf("          -l\n");
     printf("\n");
     printf(" -r: run script\n");
-    printf(" -s: stop specific job\n");
-    printf(" -l: list job\n");
+//    printf(" -s: stop specific job\n");
+//    printf(" -l: list job\n");
     printf("\n");
+}
+
+
+
+int main(int argc, char **argv)
+{
+    if(argc <= 1)
+    {
+        help();
+        return -1;
+    }
+
+    stringstream ssArg;
+    int iExecMode;
+
+    iExecMode = CheckArg(argc, argv, ssArg);
+
+    if(iExecMode != mode_run)
+    {
+        help();
+        return -1;
+    }
+
+    if(ssArg.str().empty())
+        return -1;
+
+    vector<string> vectArg;
+    string strArg;
+
+    while(ssArg >> strArg)
+    {
+        vectArg.push_back(strArg);
+    }
+
+    string strScriptAbsName;
+    string strScriptArg;
+
+    for(int i=0; i<vectArg.size(); i++)
+    {
+        if(i==0)
+        {
+            strScriptAbsName = vectArg.at(i);
+        }
+        else
+        {
+            strScriptArg.append(vectArg.at(i));
+            strScriptArg.append(" ");
+        }
+    }
+
+    size_t posSplit = strScriptAbsName.find_last_of("/");
+    string strScriptPath = strScriptAbsName.substr(0, posSplit);
+    string strScriptName = strScriptAbsName.substr(posSplit+1);
+
+    //check script file extension
+    stringstream ss;
+    string strScriptProcFile;
+    string strScriptOnlyName;
+
+    int iExtPos;
+
+    if((iExtPos = CheckScriptExt(strScriptName.c_str(), TEST_SCRIPT_ORI_EXT)) > 0)
+    {
+        strScriptOnlyName = strScriptName.substr(0, iExtPos-1);
+
+        ss << SYS_WORK_PATH <<  "/" << strScriptOnlyName << "." << TEST_SCRIPT_RUN_EXT;
+        strScriptProcFile = ss.str();
+    }
+    else if((iExtPos = CheckScriptExt(strScriptName.c_str(), TEST_SCRIPT_RUN_EXT)) > 0)
+    {
+        strScriptOnlyName = strScriptName.substr(0, iExtPos-1);
+
+        ss << SYS_WORK_PATH <<  "/" << strScriptName;
+        strScriptProcFile = ss.str();
+    }
+    else
+    {
+        printf(">> '%s, %s' file is not eixst\n", TEST_SCRIPT_ORI_EXT, TEST_SCRIPT_RUN_EXT);
+        return -2;
+    }
+
+    //copy script to work folder
+    ss.str("");
+    ss << "cp -f " << strScriptAbsName << " " << strScriptProcFile;
+    string strCmd = ss.str();
+    int ret = system(strCmd.c_str());
+
+    //compile script
+    ss.str("");
+    ss << SYS_WORK_PATH << "/" << strScriptOnlyName << " ";
+    string strRunFile = ss.str();
+    unlink(strRunFile.c_str());
+
+    ss.str("");
+    ss << SYS_LOG_PATH << "/" << "compile.txt";
+    string strCompileLog;
+    strCompileLog = ss.str();
+
+    ss.str("");
+    ss << COMPILE_PROG << " " << COMPILE_INCPATH << " " << strScriptProcFile << " -o " << strRunFile << " " << COMPILE_LIBPATH << " " << COMPILE_LIB << " 2> " << strCompileLog;
+    strCmd = ss.str();
+
+    ret = system(strCmd.c_str());
+    if(ret != 0)
+    {
+        printf(">> compile error is happened!!\n");
+        char buf[256];
+        sprintf(buf, "cat %s > /dev/stdout", strCompileLog.c_str());
+        system(buf);
+        return -3;
+    }
+
+    //delete script file
+    unlink(strScriptProcFile.c_str());
+
+    //run script
+    string strRunCmd;
+    strRunCmd.append(strRunFile);
+    strRunCmd.append(" ");
+    strRunCmd.append(strScriptArg);
+    system(strRunCmd.c_str());
+
+    return 0;
+}
+
+int CheckScriptExt(string strFileName, string strCheckExt)
+{
+    string strExt;
+    string strName;
+
+    size_t pos = strFileName.find(".", 0);
+    if(pos == 0)
+        return -1;
+
+    strName = strFileName.substr(0, pos);
+    strExt = strFileName.substr(pos+1, -1);
+
+    if(strExt.compare(strCheckExt) == 0)
+        return pos+1;
+
+    return -2;
 }
 
 int CheckArg(int argc, char **argv, stringstream &ssArg)
@@ -181,8 +324,6 @@ int ProcExec(int iMode, string strArg)
     ssSocketPacket << 0 << ",";
     ssSocketPacket << strArg << SOCKET_END_MARK;
 
-    cout << "socket packet = " << ssSocketPacket.str() << endl;
-
     int iSocketPacketLen = ssSocketPacket.str().length();
     int iSendCnt = g_pSocketClient->Send((char*)ssSocketPacket.str().c_str(), iSocketPacketLen);
 
@@ -193,37 +334,6 @@ int ProcExec(int iMode, string strArg)
 
     g_pSocketClient->CloseSocket();
     delete g_pSocketClient;
-
-    return 0;
-}
-
-int main(int argc, char **argv)
-{
-    if(argc <= 1)
-    {
-        help();
-        return -1;
-    }
-
-    stringstream ssArg;
-    int iExecMode;
-
-    iExecMode = CheckArg(argc, argv, ssArg);
-
-    if(iExecMode < 0)
-    {
-        return -1;
-    }
-    else if(iExecMode == mode_none)
-    {
-        help();
-        return -1;
-    }
-
-    if(ProcExec(iExecMode, ssArg.str()) < 0)
-    {
-        printf("check tdm is running!\n");
-    }
 
     return 0;
 }
