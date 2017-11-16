@@ -19,7 +19,7 @@
 #define int64	long long
 
 //path
-#define SYS_PATH				"/exicon"
+#define SYS_PATH				"/tmp/exicon"
 
 #define SYS_CFG_PATH			SYS_PATH "/config"
 #define SYS_SHA_PATH			SYS_PATH "/share"
@@ -55,8 +55,8 @@
 #define SOCKET_LOG_NAME			"socket"
 
 //EXT name
-//#define TEST_SCRIPT_ORI_EXT		"stc"
-#define TEST_SCRIPT_ORI_EXT		"uts"
+//#define TEST_SCRIPT_ORI_EXT		"sct"
+#define TEST_SCRIPT_ORI_EXT		"c"
 #define	TEST_SCRIPT_RUN_EXT		"c"
 
 //compile option

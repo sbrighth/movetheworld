@@ -73,7 +73,8 @@ void InitResource()
     cout << "strTestMsgRecvFrom : " << szTestMsgRecvFrom << endl;
 
     //MsgqThread
-    g_pTestMsgq = new CMsgqThread(KEY_TEST_MSGQ, szTestMsgSendTo, szTestMsgRecvFrom);
+    g_idMsgq = KEY_TEST_MSGQ;
+    g_pTestMsgq = new CMsgqThread(g_idMsgq, szTestMsgSendTo, szTestMsgRecvFrom);
     g_pTestMsgq->StartThread(ProcRecvMsg);
 
     //Socket Server
@@ -119,15 +120,16 @@ void DeleteResource()
 
     if(g_ppTestMng != NULL)
     {
-        int cnt = sizeof(g_ppTestMng) / sizeof(g_ppTestMng[0]);
-        cout << "cnt = " << cnt << endl;
-        for(int idx=0; idx<cnt; idx++)
+        for(int idx=0; idx<PORT_CNT+1; idx++)
         {
             delete g_ppTestMng[idx];
         }
 
-        delete []g_ppTestMng;
+        delete [] g_ppTestMng;
     }
+
+    if(g_szTestPath)
+        delete [] g_szTestPath;
 }
 
 int CheckProgRunning()
@@ -193,9 +195,11 @@ void ProcSignalStop(int sig_no)
 
 int CreateTestFolders()
 {
+    g_szTestPath = new char[PATHNAME_SIZE];
+
     char szMakePath[PATHNAME_SIZE];
     sprintf(szMakePath, "%s/rack_001/tester%03d/exe", SYS_ATH_PATH, g_idTpc);
-    memcpy(g_szTestPath, szMakePath, sizeof(g_szTestPath));
+    memcpy(g_szTestPath, szMakePath, sizeof(szMakePath));
     CreateFolder(szMakePath);
 
     sprintf(szMakePath, "%s", SYS_DATA_PATH);

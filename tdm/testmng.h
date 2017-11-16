@@ -31,6 +31,7 @@ public:
     int				iPort;
 
     string			strRunFile[MSGVER_CNT];
+    string			strRunArg[MSGVER_CNT];
     pid_t			pidTestProcess[MSGVER_CNT];
     int				iChildStatus[MSGVER_CNT];
     pthread_t		idThread[MSGVER_CNT];

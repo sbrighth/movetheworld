@@ -16,6 +16,7 @@ compile
 	- compiler(tcc, gcc)
 	- compile option incpath
 	- compile option libpath
+	- compile lib
 
 log file
 	- test log filename
@@ -26,8 +27,8 @@ log file
 		- msg_file.txt
 	- socket log file
 		- sock_packet.txt
-        - error log file
-                - error.txt
+	- compile log file
+		- compile1.txt compile2.txt
 		
 status
     1) B'D status(time, mount, cpu/ram/storage usage)
@@ -41,7 +42,7 @@ cfg file
 	- dut cnt
 
 socket
-	- <version,cell,port,msg_no,packet,flag,"string">	version,cell,port,msg_no,packet,flag is int value
+	- <version,cell,port,msg_no,packet,flag,string>	version,cell,port,msg_no,packet,flag is int value
 	- version
 		1: bd info
 		2: bd diag

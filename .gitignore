@@ -10,8 +10,7 @@ RemoteSystemsTempFiles/
 #*.creator
 *.creator.user
 #*.files
-#*.includes
-
+#*.includes 
 #common
 *.o
 *~
@@ -21,4 +20,4 @@ RemoteSystemsTempFiles/
 
 #bin
 tdm/tdm
-test/test
+tdebug/tdebug

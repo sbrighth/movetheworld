@@ -349,7 +349,7 @@ static void *SocketProcThread( void *arg )
             pthis->ProcFunc(sockData);
 
             if(sockData.pstring)
-                delete sockData.pstring;
+                delete [] sockData.pstring;
         }
         else
         {

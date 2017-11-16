@@ -28,10 +28,11 @@ int		CreateTestFolders();
 int		CreateFolder(char *path);
 int     NotifyProgReady();
 
-char	g_szTestPath[PATHNAME_SIZE];
+char	*g_szTestPath;
 int		g_condTestDm;
 int		g_idTpc;
 int		g_idResShare;
+int     g_idMsgq;
 
 CMsgqThread     *g_pTestMsgq = NULL;
 CSocketServer   *g_pSocketServer = NULL;

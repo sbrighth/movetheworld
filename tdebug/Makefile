@@ -7,8 +7,8 @@ LDFLAGS		= $(LIBPATH) -ltbase -ltnet -lpthread
 
 CP_BINPATH	= ../output/bin
 
-TARGET		= test
-OBJS 		= test.o jsoncpp.o
+TARGET		= tdebug
+OBJS 		= test.o function.o jsoncpp.o
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) -o $@ -c $< 

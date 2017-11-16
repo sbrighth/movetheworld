@@ -5,6 +5,8 @@
  *      Author: shjeong
  */
 
+#include <sstream>
+#include <string>
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -14,7 +16,6 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <errno.h>
-#include <sstream>
 #include "def.h"
 #include "testmng.h"
 
@@ -37,6 +38,7 @@ void *TestThread(void *arg)
 {
     CTestMng *pthis = (CTestMng *)arg;
     pthread_mutex_lock(&pthis->syncMutex);
+
     int iVersion = pthis->iVersion;
     pthread_cond_signal(&pthis->syncCond);
     pthread_mutex_unlock(&pthis->syncMutex);
@@ -52,12 +54,16 @@ void *TestThread(void *arg)
 	}
 	else if(pid == 0)
 	{
-		char cCell[2];
-		char cPort[2];
-		sprintf(cCell, "%d", pthis->iCell);
-		sprintf(cPort, "%d", pthis->iPort);
+        char cCell[32];
+        char cPort[32];
 
-        pthis->iChildStatus[iVersion] = execl(pthis->strRunFile[iVersion].c_str(), pthis->strRunFile[iVersion].c_str(), cCell, cPort, NULL);
+        sprintf(cCell, "%d", pthis->iCell);
+        sprintf(cPort, "%d", pthis->iPort);
+
+        pthis->iChildStatus[iVersion] = exevp(pthis->strRunFile[iVersion].c_str(),
+                                              pthis->strRunFile[iVersion].c_str(),
+                                              pthis->strRunArg[iVersion].c_str(),
+                                              NULL);
 	}
 	else
 	{
@@ -91,18 +97,13 @@ int CTestMng::StartTest(int iMsgVer, string strPath, string strFileName, string 
 		string strScriptOnlyName;
         string strExtType;
 
-        if(MSGVER_PORT_TEST)
-            strExtType = TEST_SCRIPT_ORI_EXT;
-        else
-            strExtType = TEST_SCRIPT_RUN_EXT;
-
-        int iExtPos = CheckScriptExt(strFileName, strExtType);
+        int iExtPos = CheckScriptExt(strFileName, TEST_SCRIPT_RUN_EXT);
 		if(iExtPos > 0)
 		{
 			strScriptOnlyName = strFileName.substr(0, iExtPos-1);
 
 			ss.str("");
-			ss << SYS_WORK_PATH <<  "/" << strFileName.substr(0, iExtPos) << TEST_SCRIPT_RUN_EXT;
+            ss << SYS_WORK_PATH <<  "/" << strFileName;
 			strScriptProcFile = ss.str();
 		}
 		else
@@ -122,6 +123,9 @@ int CTestMng::StartTest(int iMsgVer, string strPath, string strFileName, string 
 
 		printf(">> cp cmd = %s\n", strCmd.c_str());
 		printf(">> ret = %d\n", ret);
+
+        //set argument
+        strRunArg[iMsgVer] = strArg;
 
 		//compile script
 		ss.str("");
@@ -143,7 +147,7 @@ int CTestMng::StartTest(int iMsgVer, string strPath, string strFileName, string 
 		printf(">> ret = %d\n", ret);
 
 		if(ret != 0)
-		{
+        {
 			printf(">> compile error is happened!!\n");
 			char buf[256];
 			sprintf(buf, "cat %s > /dev/stdout", strCompileLog.c_str());
@@ -156,8 +160,10 @@ int CTestMng::StartTest(int iMsgVer, string strPath, string strFileName, string 
 
 		//run script
         pthread_mutex_lock(&syncMutex);
+
         this->iVersion = iMsgVer;
         pthread_create(&idThread[iMsgVer], NULL, TestThread, (void*)this);
+
         pthread_cond_wait(&syncCond, &syncMutex);
         pthread_mutex_unlock(&syncMutex);
         pthread_detach(idThread[iMsgVer]);
@@ -195,7 +201,7 @@ int CTestMng::StopTest(int iMsgVer)
 
 int CTestMng::IsTestOn(int iMsgVer)
 {
-	if(idThread > 0)
+    if(idThread[iMsgVer] > 0)
 		return 1;
 	else
 		return 0;

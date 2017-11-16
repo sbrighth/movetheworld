@@ -77,7 +77,7 @@ int main(int argc, char **argv)
     string strScriptAbsName;
     string strScriptArg;
 
-    for(int i=0; i<vectArg.size(); i++)
+    for(size_t i=0; i<vectArg.size(); i++)
     {
         if(i==0)
         {
@@ -273,7 +273,7 @@ int CheckArg(int argc, char **argv, stringstream &ssArg)
 
 int ProcExec(int iMode, string strArg)
 {
-    int idTpc = 2;
+    int idTpc;
     char sTpc[32] = {0,};
 
     if(ReadFileText(SYS_DATA_PATH"/tpc_id.txt", sTpc, 0, sizeof(sTpc)) > 0)

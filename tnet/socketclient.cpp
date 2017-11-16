@@ -31,7 +31,7 @@ CSocketClient::CSocketClient(int iCell, char *szServerAddr, int iServerPort) {
 	memcpy(szServerSocketAddr, szServerAddr, sizeof(szServerSocketAddr));
 	iServerSocketPort = iServerPort;
 
-	memset( &tServerAddr , 0 , sizeof( tServerAddr ) );
+    memset( &tServerAddr , 0 , sizeof( tServerAddr ) );
 	tServerAddr.sin_family      = AF_INET;						//IPv4
 	tServerAddr.sin_port        = htons( iServerSocketPort );	//port
 	//tServerAddr.sin_addr.s_addr = htonl( INADDR_ANY );			//32bit IPv4 address
@@ -325,7 +325,7 @@ static void *SocketProcThread( void *arg )
             pthis->ProcFunc(sockData);
 
             if(sockData.pstring)
-                delete sockData.pstring;
+                delete [] sockData.pstring;
         }
         else
         {

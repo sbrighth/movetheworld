@@ -1,4 +1,4 @@
-DIRS = tbase tnet tdm texec test
+DIRS = tbase tnet tdm texec tdebug
 
 all: 
 	for dir in $(DIRS); do \
@@ -11,6 +11,7 @@ clean:
 	done
 
 copy:
-	cp -rf output/* /exicon/
+	mkdir -p /tmp/exicon
+	cp -rf output/* /tmp/exicon/
 
 .PONY: all clean copy
