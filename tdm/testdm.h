@@ -28,7 +28,10 @@ int		CreateTestFolders();
 int		CreateFolder(char *path);
 int     NotifyProgReady();
 
-char	*g_szTestPath;
+char	*g_szTesterPath;
+char    *g_szTesterPortPath[PORT_CNT];
+char	*g_szWorkPath;
+char    *g_szWorkPortPath[PORT_CNT];
 int		g_condTestDm;
 int		g_idTpc;
 int		g_idResShare;

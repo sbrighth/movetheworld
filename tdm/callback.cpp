@@ -16,11 +16,15 @@ using namespace std;
 
 static int ProcMsg(MsgHdr hdr, char *msg_str);
 static int ProcSock(MsgHdr hdr, char *msg_str);
-static int CheckScriptFile(char *msg_str);
+static int CheckScriptFile(char *path, char *msg_str);
+static int CheckScriptExt(string strFileName, string strCheckExt);
 
+extern char *g_szTesterPath;
+extern char **g_szTesterPortPath;
+extern char *g_szWorkPath;
+extern char **g_szWorkPortPath;
 extern int g_idMsgq;
 extern int g_idTpc;
-extern char *g_szTestPath;
 extern CTestMng **g_ppTestMng;
 extern char *szProgVersion;
 
@@ -41,7 +45,7 @@ void ProcRecvMsg(MsgPack msg)
 //msg sock process callback
 void ProcRecvSock(SockPack sockData)
 {
-    int cell    	= sockData.hdr.cell;
+    int cell = sockData.hdr.cell;
 
     if(cell != g_idTpc)
     {
@@ -56,12 +60,14 @@ static int ProcMsg(MsgHdr hdr, char *msg_str)
 {
     int version	= hdr.version;
     int cell    = hdr.cell;
-    int port    = hdr.port-1;     //1: port1, 2: port2
+    int port    = hdr.port;
     int msg_no	= hdr.msg_no;
     //int packet 		= msg.packet;
     //int flag 		= msg.flag;
 
-    if(port < PORT_MIN || port > PORT_MAX)
+    int iPortIdx = port-1;
+
+    if(iPortIdx < PORT_MIN || iPortIdx > PORT_MAX)
         return -1;
 
     if(msg_str == NULL)
@@ -69,105 +75,141 @@ static int ProcMsg(MsgHdr hdr, char *msg_str)
 
     if(msg_no == MSG_TEST_START)
     {
-        if( g_ppTestMng[port]->IsTestOn(version) == 0 )
+        if( g_ppTestMng[iPortIdx]->IsTestOn(version) == 0 )
         {
-            char szRealName[PATHNAME_SIZE] = {0,};
-
-            if( SearchFile(g_szTestPath, msg_str, szRealName) == 0 )
+            char szScriptName[PATHNAME_SIZE] = {0,};
+            if( SearchFile(g_szTesterPortPath[iPortIdx], msg_str, szScriptName) < 0 )
             {
-                if(g_ppTestMng[port]->StartTest(version, g_szTestPath, szRealName, "") == 0)
-                {
-                    printf(">> test is started!!\n");
-                    SendMsg(g_idMsgq, version, cell, port+1, MSG_TEST,	0, "");
-                    SendMsg(g_idMsgq, version, cell, port+1, MSG_TEXT1,	0, "TEST");
-                }
+                printf(">> port%d script is not exist!!\n", port);
+                SendMsg(g_idMsgq, version, cell, port, MSG_DONE,	0, "");
+                SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,	0, "SCRIPT NOT EXIST");
+
+                return -3;
+            }
+
+            //check script file extension
+            stringstream ss;
+            string strCmd;
+            string strScriptProcFile;
+            string strScriptRunFile;
+            string strScriptName(szScriptName);
+
+            int iExtPos = CheckScriptExt(strScriptName, TEST_SCRIPT_RUN_EXT);
+            if(iExtPos > 0)
+            {
+                ss.str("");
+                ss << g_szWorkPortPath[iPortIdx] <<  "/" << strScriptName;
+                strScriptProcFile = ss.str();
+
+                ss.str("");
+                ss << g_szWorkPortPath[iPortIdx] <<  "/" << strScriptName.substr(0, iExtPos-1);
+                strScriptRunFile = ss.str();
             }
             else
             {
-                printf(">> port%d script is not exist!!\n", port);
-                SendMsg(g_idMsgq, version, cell, port+1, MSG_DONE,	0, "");
-                SendMsg(g_idMsgq, version, cell, port+1, MSG_TEXT1,	0, "SCRIPT NOT EXIST");
+                printf(">> '%s' file is not eixst\n", TEST_SCRIPT_RUN_EXT);
+                return -4;
+            }
+
+            printf(">> strScriptProcFile = %s\n", strScriptProcFile.c_str());
+            printf(">> strScriptRunFile = %s\n", strScriptRunFile.c_str());
+
+            //copy script to work folder
+            ss.str("");
+            ss << "cp -f " << g_szTesterPortPath[iPortIdx] << "/* " << g_szWorkPortPath[iPortIdx];
+            strCmd = ss.str();
+            int ret = system(strCmd.c_str());
+
+            printf(">> cp cmd = %s\n", strCmd.c_str());
+            printf(">> ret = %d\n", ret);
+
+            //start test
+            if(g_ppTestMng[iPortIdx]->StartTest(version, strScriptProcFile, strScriptRunFile, "") == 0)
+            {
+                printf(">> test is started!!\n");
+                SendMsg(g_idMsgq, version, cell, port, MSG_TEST,	0, "");
+                SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,	0, "TEST");
             }
         }
         else
         {
-            printf(">> port%d is testing!!\n", port+1);
+            printf(">> port%d is testing!!\n", port);
         }
     }
     else if(msg_no == MSG_TEST_STOP)
     {
-        if(g_ppTestMng[port]->StopTest(version) == 0)
+        if(g_ppTestMng[iPortIdx]->StopTest(version) == 0)
         {
-            SendMsg(g_idMsgq, version, cell, port+1, MSG_FAIL,	0, "");
-            SendMsg(g_idMsgq, version, cell, port+1, MSG_TEXT1,	0, "ABORT OK");
+            SendMsg(g_idMsgq, version, cell, port, MSG_FAIL,	0, "");
+            SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,	0, "ABORT OK");
         }
         else
         {
-            SendMsg(g_idMsgq, version, cell, port+1, MSG_FAIL,	0, "");
-            SendMsg(g_idMsgq, version, cell, port+1, MSG_TEXT1,	0, "ABORT FAIL");
+            SendMsg(g_idMsgq, version, cell, port, MSG_FAIL,	0, "");
+            SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,	0, "ABORT FAIL");
         }
     }
+    /*
     else if(msg_no == MSG_INIT)
     {
-        SendMsg(g_idMsgq, version, cell, port+1, MSG_TEXT1,    0,	"MSG_INIT");
-        SendMsg(g_idMsgq, version, cell, port+1, MSG_TEXT2,    0, "");
-        SendMsg(g_idMsgq, version, cell, port+1, MSG_TEXT3,    0, "");
-        SendMsg(g_idMsgq, version, cell, port+1, MSG_TEXT4,    0, "");
+        SendMsg(g_idMsgq, version, cell, port, MSG_INITACK, 0,  szProgVersion);
+        SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,   0,  "MSG_INIT");
+        SendMsg(g_idMsgq, version, cell, port, MSG_TEXT2,   0,  "");
+        SendMsg(g_idMsgq, version, cell, port, MSG_TEXT3,   0,  "");
+        SendMsg(g_idMsgq, version, cell, port, MSG_TEXT4,   0,  "");
 
-        /*
-        switch(CheckScriptFile(msg_str))
+        switch(CheckScriptFile(g_szTesertPortPath[iPortIdx], msg_str))
         {
         case SC_FILE_DEFAULT:
-            SendMsg(g_idMsgq, version, cell, port+1, MSG_INITACK,   SC_FILE_DEFAULT, szProgVersion);
-            SendMsg(g_idMsgq, version, cell, port+1, MSG_TEXT1,    0,	"MSG_INIT");
-            SendMsg(g_idMsgq, version, cell, port+1, MSG_TEXT2,    0, "");
-            SendMsg(g_idMsgq, version, cell, port+1, MSG_TEXT3,    0, "");
-            SendMsg(g_idMsgq, version, cell, port+1, MSG_TEXT4,    0, "");
+            SendMsg(g_idMsgq, version, cell, port, MSG_INITACK,   SC_FILE_DEFAULT, szProgVersion);
+            SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,    0,	"MSG_INIT");
+            SendMsg(g_idMsgq, version, cell, port, MSG_TEXT2,    0, "");
+            SendMsg(g_idMsgq, version, cell, port, MSG_TEXT3,    0, "");
+            SendMsg(g_idMsgq, version, cell, port, MSG_TEXT4,    0, "");
             break;
         case SC_FILE_PASS:
-            SendMsg(g_idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_PASS, szProgVersion);
-            SendMsg(g_idMsgq, version, cell, port+1, MSG_TEXT1,     0, "MSG_INIT");
+            SendMsg(g_idMsgq, version, cell, port, MSG_INITACK,	SC_FILE_PASS, szProgVersion);
+            SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,     0, "MSG_INIT");
             break;
         case SC_FILE_SIZE_ERR:
-            SendMsg(g_idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_SIZE_ERR, szProgVersion);
-            SendMsg(g_idMsgq, version, cell, port+1, MSG_TEXT1,     0, "MSG_INIT");
+            SendMsg(g_idMsgq, version, cell, port, MSG_INITACK,	SC_FILE_SIZE_ERR, szProgVersion);
+            SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,     0, "MSG_INIT");
             break;
         case SC_FILE_NONE_ERR:
-            SendMsg(g_idMsgq, version, cell, port+1, MSG_INITACK,	SC_FILE_NONE_ERR, szProgVersion);
-            SendMsg(g_idMsgq, version, cell, port+1, MSG_TEXT1,     0, "MSG_INIT");
+            SendMsg(g_idMsgq, version, cell, port, MSG_INITACK,	SC_FILE_NONE_ERR, szProgVersion);
+            SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,     0, "MSG_INIT");
             break;
         case SC_FILE_OTHER_ERR:
             break;
         }
-        */
     }
     else if(msg_no == MSG_INITACK)
     {
         // do nothing
     }
-
+    */
     return 0;
 }
 
-//MSGVER_OTHER
 static int ProcSock(MsgHdr hdr, char *msg_str)
 {
     int version	= hdr.version;
     int cell    = hdr.cell;
-    int port    = hdr.port;     //0: all, 1: port1, 2: port2
+    int port    = hdr.port;
     int msg_no	= hdr.msg_no;
     //int packet  = hdr.packet;
     //int flag 	= hdr.flag;
 
-    //BD always port0
+    int iPortIdx = port-1;
+
     if(version == MSGVER_BD_INFO || version == MSGVER_BD_DIAG || version == MSGVER_BD_UPDATE)
     {
         port = 0;
+        iPortIdx = PORT_MIN;
     }
-    //1: port1, 2: port2
-    else if(version == MSGVER_PORT_DPS || version == MSGVER_PORT_DIAG)
+    else if(version == MSGVER_PORT_DPS || version == MSGVER_PORT_DIAG || version == MSGVER_PORT_TEST)
     {
-        if(port < PORT_MIN+1 || port > PORT_MAX+1)
+        if(iPortIdx < PORT_MIN || iPortIdx > PORT_MAX)
             return -1;
     }
     else
@@ -175,8 +217,9 @@ static int ProcSock(MsgHdr hdr, char *msg_str)
 
     if(msg_no == MSG_TEST_START)
     {
-        if( g_ppTestMng[port]->IsTestOn(version) == 0 )
+        if( g_ppTestMng[iPortIdx]->IsTestOn(version) == 0 )
         {
+            //check packet string part
             stringstream ssArg;
             ssArg << msg_str;
 
@@ -189,13 +232,15 @@ static int ProcSock(MsgHdr hdr, char *msg_str)
 
             vector<string> vectArg;
             string strArg;
-            string strScriptPathName;
-            string strScriptArg;
 
             while(ssArg >> strArg)
             {
                 vectArg.push_back(strArg);
             }
+
+            //get script name and argument
+            string strScriptPathName;
+            string strScriptArg;
 
             for(size_t i=0; i<vectArg.size(); i++)
             {
@@ -212,26 +257,72 @@ static int ProcSock(MsgHdr hdr, char *msg_str)
                 }
             }
 
+            //check script file
             if(!IsFileExist(strScriptPathName.c_str()))
             {
                 printf(">> port%d script is not exist!!\n", port);
                 SendMsg(g_idMsgq, version, cell, port, MSG_DONE,	0, "");
                 SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,	0, "SCRIPT NOT EXIST");
 
-                return -1;
+                return -3;
+            }
+
+            //get script path;
+            size_t posSplit = strScriptPathName.find_last_of('/');
+            string strScriptPath = strScriptPathName.substr(0, posSplit);
+            string strScriptName = strScriptPathName.substr(posSplit+1);
+
+            char buf[512] = {0,};
+            char szWorkFolder[256] = {0,};
+
+            if(version == MSGVER_PORT_TEST)
+            {
+                sprintf(buf, "cp -rf %s/* %s", g_szTesterPortPath[iPortIdx],  g_szWorkPortPath[iPortIdx]);
+                sprintf(szWorkFolder, "%s", g_szWorkPortPath[iPortIdx]);
+            }
+
+
+            //check script file extension
+            stringstream ss;
+            string strCmd;
+            string strScriptProcFile;
+            string strScriptRunFile;
+
+            int iExtPos = CheckScriptExt(strScriptName, TEST_SCRIPT_RUN_EXT);
+            if(iExtPos > 0)
+            {
+                ss.str("");
+                ss << g_szWorkPortPath[iPortIdx] <<  "/" << strScriptName;
+                strScriptProcFile = ss.str();
+
+                ss.str("");
+                ss << g_szWorkPortPath[iPortIdx] <<  "/" << strScriptName.substr(0, iExtPos-1);
+                strScriptRunFile = ss.str();
             }
             else
             {
-                size_t posSplit = strScriptPathName.find_last_of('/');
-                string strPath = strScriptPathName.substr(0,posSplit);
-                string strScriptName = strScriptPathName.substr(posSplit+1);
+                printf(">> '%s' file is not eixst\n", TEST_SCRIPT_RUN_EXT);
+                return -4;
+            }
 
-                if(g_ppTestMng[port]->StartTest(version, strPath, strScriptName, strScriptArg) == 0)
-                {
-                    printf(">> test is started!!\n");
-                    SendMsg(g_idMsgq, version, cell, port, MSG_TEST,	0, "");
-                    SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,	0, "TEST");
-                }
+            printf(">> strScriptProcFile = %s\n", strScriptProcFile.c_str());
+            printf(">> strScriptRunFile = %s\n", strScriptRunFile.c_str());
+
+            //copy script to work folder
+            ss.str("");
+            ss << "cp -f " << g_szTesterPortPath[iPortIdx] << "/* " << g_szWorkPortPath[iPortIdx];
+            strCmd = ss.str();
+            int ret = system(strCmd.c_str());
+
+            printf(">> cp cmd = %s\n", strCmd.c_str());
+            printf(">> ret = %d\n", ret);
+
+            //start test
+            if(g_ppTestMng[iPortIdx]->StartTest(version, strScriptProcFile, strScriptRunFile, strScriptArg) == 0)
+            {
+                printf(">> test is started!!\n");
+                SendMsg(g_idMsgq, version, cell, port, MSG_TEST,	0, "");
+                SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,	0, "TEST");
             }
         }
         else
@@ -241,9 +332,9 @@ static int ProcSock(MsgHdr hdr, char *msg_str)
     }
     else if(msg_no == MSG_TEST_STOP)
     {
-        if(g_ppTestMng[port]->IsTestOn(version) == 1)
+        if(g_ppTestMng[iPortIdx]->IsTestOn(version) == 1)
         {
-            if(g_ppTestMng[port]->StopTest(version) == 0)
+            if(g_ppTestMng[iPortIdx]->StopTest(version) == 0)
             {
                 SendMsg(g_idMsgq, version, cell, port, MSG_FAIL,	0, "");
                 SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,	0, "ABORT OK");
@@ -259,7 +350,7 @@ static int ProcSock(MsgHdr hdr, char *msg_str)
     return 0;
 }
 
-static int CheckScriptFile(char *msg_str)
+static int CheckScriptFile(char *path, char *msg_str)
 {
     int iSendMode = SC_FILE_DEFAULT;
     char szRealName[PATHNAME_SIZE] = {0,};
@@ -291,11 +382,11 @@ static int CheckScriptFile(char *msg_str)
         printf("scriptName= %s\n", szScriptName);
         printf("scriptSize= %s\n", szScriptSize);
 
-        if( SearchFile(g_szTestPath, szScriptName, szRealName) == 0 )
+        if( SearchFile(path, szScriptName, szRealName) == 0 )
         {
             long lScriptSize = atoi(szScriptSize);
 
-            sprintf(szFileName, "%s/%s", g_szTestPath, szRealName);
+            sprintf(szFileName, "%s/%s", path, szRealName);
             printf(">> szFileName = %s\n", szFileName);
             long lFileSize = GetFileSize(szFileName);
             lFileSize = lFileSize % 10000;
@@ -320,4 +411,26 @@ static int CheckScriptFile(char *msg_str)
     }
 
     return iSendMode;
+}
+
+
+static int CheckScriptExt(string strFileName, string strCheckExt)
+{
+    string strExt;
+    string strName;
+
+    size_t pos = strFileName.find(".", 0);
+    if(pos == 0)
+        return -1;
+
+    strName = strFileName.substr(0, pos);
+    strExt = strFileName.substr(pos+1, -1);
+
+    cout << "strName : " << strName << endl;
+    cout << "strSuffix : " << strExt << endl;
+
+    if(strExt.compare(strCheckExt) == 0)
+        return pos+1;
+
+    return -2;
 }

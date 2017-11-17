@@ -65,7 +65,7 @@ int CStatus::CheckOs()
     sprintf(statOs.sDiskUsage, "%s", buf);
 
     //mount
-    sprintf(cmd, "mountpoint -q %s; echo $?", SYS_ATH_PATH);
+    sprintf(cmd, "mountpoint -q %s; echo $?", SYS_SHA_PATH);
     GetStatusFromPipe((const char*)cmd, buf, sizeof(buf));
 
     if(strcmp(buf, "0") == 0)

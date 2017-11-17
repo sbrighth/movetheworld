@@ -10,6 +10,7 @@
 
 #include <pthread.h>
 #include <iostream>
+#include <vector>
 #include "def.h"
 
 using namespace std;
@@ -21,17 +22,19 @@ public:
 	virtual ~CTestMng();
 
 public:
-    int             StartTest(int iMsgVer, string strPath, string strFileName, string strArg);
+    int             StartTest(int iMsgVer, string strProcFile, string strRunFile, string strArg);
     int				StopTest(int iMsgVer);
     int				IsTestOn(int iMsgVer);
 	int				CheckScriptExt(string strFileName, string strCheckExt);
+    int             StrToArgv(string strArgs, vector<char*> &argv);
 
     int             iVersion;
     int				iCell;
     int				iPort;
 
-    string			strRunFile[MSGVER_CNT];
+    string			strRunProg[MSGVER_CNT];
     string			strRunArg[MSGVER_CNT];
+    vector<char*>   vectArgv[MSGVER_CNT];
     pid_t			pidTestProcess[MSGVER_CNT];
     int				iChildStatus[MSGVER_CNT];
     pthread_t		idThread[MSGVER_CNT];

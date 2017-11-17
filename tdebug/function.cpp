@@ -94,7 +94,7 @@ int CTestFunc::make_msg_packet(MsgPack &msg)
     cout << "msg_no  : "; cin >> msg_no;
     cout << "packet  : "; cin >> packet;
     cout << "flag    : "; cin >> flag;
-    cout << "string  : "; cin >> strtext;
+    cout << "string  : "; cin.ignore();getline(cin, strtext);
     cout << "----------------------------" << endl;
 
     memset(&msg, 0, sizeof(SockPack));
@@ -127,7 +127,7 @@ int CTestFunc::make_sock_packet(SockPack &msg)
     cout << "msg_no  : "; cin >> msg_no;
     cout << "packet  : "; cin >> packet;
     cout << "flag    : "; cin >> flag;
-    cout << "string  : "; cin >> strtext;
+    cout << "string  : "; cin.ignore(); getline(cin, strtext);
     cout << "----------------------------" << endl;
 
     memset(&msg, 0, sizeof(SockPack));

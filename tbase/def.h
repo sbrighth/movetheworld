@@ -21,17 +21,6 @@
 //path
 #define SYS_PATH				"/tmp/exicon"
 
-#define SYS_CFG_PATH			SYS_PATH "/config"
-#define SYS_SHA_PATH			SYS_PATH "/share"
-#define SYS_TMP_PATH			SYS_PATH "/temp"
-#define SYS_SRC_PATH			SYS_PATH "/src"
-#define SYS_DATA_PATH 			SYS_PATH "/data"
-#define SYS_FIRM_PATH 			SYS_PATH "/firm"
-#define SYS_UTIL_PATH 			SYS_PATH "/util"
-#define SYS_DIAG_PATH 			SYS_PATH "/diag"
-#define SYS_DEBUG_PATH 			SYS_PATH "/debug"
-
-#define SYS_ATH_PATH			SYS_PATH "/athost"
 #define SYS_BIN_PATH			SYS_PATH "/bin"
 #define SYS_DATA_PATH 			SYS_PATH "/data"
 #define SYS_LIB_PATH			SYS_PATH "/lib"
@@ -39,9 +28,13 @@
 #define SYS_LOG_PATH			SYS_PATH "/log"
 #define SYS_EXEC_PATH			SYS_PATH "/exec"
 #define SYS_SCRIPT_PATH			SYS_PATH "/script"
+#define SYS_SHA_PATH			SYS_PATH "/share"
 #define SYS_SHE_PATH			SYS_PATH "/shell"
 #define SYS_WORK_PATH			SYS_PATH "/work"
 #define SYS_UPDATE_PATH			SYS_PATH "/update"
+
+#define SYS_SHA_EXEC_PATH       SYS_SHA_PATH "/exec"
+#define SYS_SHA_TESTER_PATH     SYS_SHA_PATH "/tester"
 
 //info file name
 #define FILE_TPC_ID             SYS_DATA_PATH "/tpc_id.txt"
