@@ -41,6 +41,7 @@ public:
 
     int				condCheckThread;
     pthread_t		idCheckThread;
+    int             iConnecTimeout;
 
     int             condProcThread;
     pthread_t       idProcThread;
@@ -52,7 +53,7 @@ public:
 	sockaddr_in		tClientAddr;
 
 	char			szServerSocketAddr[16];
-	int				iServerSocketPort;
+	int				iServerSocketPort;  
 
     queue<SockPack> qRecv;
     queue<SockPack> qSend;

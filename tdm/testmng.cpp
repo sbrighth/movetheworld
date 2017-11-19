@@ -141,6 +141,8 @@ int CTestMng::StartTest(int iMsgVer, string strProcFile, string strRunFile, stri
             return -2;
 		}
 
+        unlink(strProcFile.c_str());
+
 		//run script
         pthread_mutex_lock(&syncMutex);
 

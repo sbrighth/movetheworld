@@ -7,11 +7,12 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "status.h"
 #include "iostream"
 #include "base.h"
 
-CStatus::CStatus() {
+CStatus::CStatus(CTestMng *mng[]) {
 	// TODO Auto-generated constructor stub
     memset(&statOs, 0, sizeof(statOs));
 
@@ -19,6 +20,11 @@ CStatus::CStatus() {
     {
         memset(&statDps[iPortIdx], 0, sizeof(statDps[iPortIdx]));
         memset(&statPerf[iPortIdx], 0, sizeof(statPerf[iPortIdx]));
+
+        if(mng[iPortIdx] != NULL)
+            pTestMng[iPortIdx] = mng[iPortIdx];
+        else
+            pTestMng[iPortIdx] = NULL;
     }
 
     idDpsShmem = CreateShmem(KEY_DPS_SHARE, sizeof(statDps));
@@ -33,12 +39,14 @@ int CStatus::CheckAll()
 {
     CheckOs();
 
-    for(int iPortIdx=PORT_MIN; iPortIdx<PORT_MAX; iPortIdx++)
+    cout << "----------------------" << endl;
+    for(int iPortIdx=0; iPortIdx<PORT_CNT; iPortIdx++)
     {
+        cout << "<PORT" << iPortIdx+1 << ">" << endl;
         CheckDps(iPortIdx);
+        CheckTest(iPortIdx);
+        cout << endl;
     }
-
-    MakeJsonString();
 
     return 0;
 }
@@ -70,25 +78,45 @@ int CStatus::CheckOs()
 
     if(strcmp(buf, "0") == 0)
     {
-        sprintf(statOs.sMount, "ok");
+        statOs.bMount = true;
     }
     else
     {
-        sprintf(statOs.sMount, "none");
+        statOs.bMount = false;
     }
 
     //bd connect
     sprintf(cmd, "%s/bd_connect.txt", SYS_DATA_PATH);
     GetStatusFromFile((const char*)cmd, buf, sizeof(buf));
-    sprintf(statOs.sBdConnect, "%s", buf);
+    if(strcmp(buf, "1") == 0 || strcmp(buf, "0") == 0)
+        statOs.bBdConnect= atoi(buf);
 /*
     cout << "time = " << statOs.sTime << endl;
     cout << "cpu = " << statOs.sCpuUsage << endl;
     cout << "mem = " << statOs.sMemUsage << endl;
     cout << "disk = " << statOs.sDiskUsage << endl;
-    cout << "mount = " << statOs.sMount << endl;
-    cout << "bd connect = " << statOs.sBdConnect << endl;
+    cout << "mount = " << statOs.bMount << endl;
+    cout << "bd connect = " << statOs.bBdConnect << endl;
 */
+    return 0;
+}
+
+int CStatus::CheckTest(int port)
+{
+    int tmp;
+
+    for(int idx=MSGVER_NONE; idx<MSGVER_CNT; idx++)
+    {
+        if(pTestMng[port] != NULL)
+        {
+            tmp = pTestMng[port]->IsTestOn(idx);
+            if(tmp >= 0)
+                statTest[port].bRun[idx] = tmp;
+
+            cout << "TEST[" << idx << "] = " << tmp << endl;
+        }
+    }
+
     return 0;
 }
 
@@ -141,64 +169,6 @@ int CStatus::GetStatusFromFile(const char *szCmd, char *sBuf, int iBufSize)
 
     fread(sBuf, iBufSize, 1, file);
     fclose(file);
-
-    return 0;
-}
-
-int CStatus::MakeJsonString()
-{
-    Json::Value jsonOs;
-    jsonOs["time"] = statOs.sTime;
-    jsonOs["cpu"] = statOs.sCpuUsage;
-    jsonOs["mem"] = statOs.sMemUsage;
-    jsonOs["disk"] = statOs.sDiskUsage;
-    jsonOs["mount"] = statOs.sMount;
-    jsonOs["bdcon"] = statOs.sBdConnect;
-/*
-    port1["port"] = "1";
-    port1["testmode"] = "SAS";
-    port1["script"] = "script1.uts";
-    port1["status"] = "running";
-*/
-
-    Json::Value jsonDpsAll;
-
-    for(int iPortIdx=0; iPortIdx<PORT_CNT; iPortIdx++)
-    {
-        Json::Value jsonDpsSetV;
-        Json::Value jsonDpsGetV;
-        Json::Value jsonDpsVoltage;
-        jsonDpsSetV["set"] = statDps[iPortIdx].sDpsSetVoltage;
-        jsonDpsGetV["get"] = statDps[iPortIdx].sDpsGetVoltage;
-        jsonDpsVoltage.append(jsonDpsSetV);
-        jsonDpsVoltage.append(jsonDpsGetV);
-
-        Json::Value jsonDpsSetA;
-        Json::Value jsonDpsGetA;
-        Json::Value jsonDpsCurrent;
-        jsonDpsSetA["set"] = statDps[iPortIdx].sDpsSetCurrent;
-        jsonDpsGetA["get"] = statDps[iPortIdx].sDpsGetCurrent;
-        jsonDpsCurrent.append(jsonDpsSetA);
-        jsonDpsCurrent.append(jsonDpsGetA);
-
-        Json::Value jsonDps;
-        jsonDps["port"] = iPortIdx+1;
-        jsonDps["voltage"] = jsonDpsVoltage;
-        jsonDps["current"]= jsonDpsCurrent;
-        jsonDps["power"] = statDps[iPortIdx].bDpsPower;
-        jsonDps["ocp"] = statDps[iPortIdx].bDpsOcp;
-        jsonDps["ovp"] = statDps[iPortIdx].bDpsOvp;
-
-        jsonDpsAll.append(jsonDps);
-    }
-
-    Json::Value root;
-    root["os"] = jsonOs;
-    root["dps"] = jsonDpsAll;
-
-    Json::StyledWriter writer;
-    string str = writer.write(root);
-   // cout << str << endl;
 
     return 0;
 }

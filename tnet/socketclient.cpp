@@ -45,6 +45,8 @@ CSocketClient::CSocketClient(int iCell, char *szServerAddr, int iServerPort) {
 	this->iCell = iCell;
 	this->iClientSocket = -1;
 	this->bConnect = false;
+
+    this->iConnecTimeout = 10;   //default 10sec
 }
 
 CSocketClient::~CSocketClient() {
@@ -131,35 +133,42 @@ int CSocketClient::ConnectServer()
         if(errno == EINPROGRESS)
 		{
 			struct timeval tv;
-            tv.tv_sec = 10;
+            tv.tv_sec = 1;
 			tv.tv_usec = 0;
 
 			fd_set myset;
             FD_ZERO(&myset);
 			FD_SET(iClientSocket, &myset);
 
-            if(select(iClientSocket+1, NULL, &myset, NULL, &tv) > 0)
-			{
-				int iGetSocketErr = 0;
-				socklen_t len = sizeof(iGetSocketErr);
+            for(int iLoop=0; iLoop<iConnecTimeout; iLoop++)
+            {
+                if(condCheckThread != 1)            //check program exit each 1sec
+                    break;
 
-				getsockopt(iClientSocket , SOL_SOCKET , SO_ERROR , &iGetSocketErr , &len);
-				if(iGetSocketErr)
-				{
-                    //printf("getsockopt connect() error %d\n", iGetSocketErr);
-					bConnect = false;
-				}
-				else
-				{
-                    //printf("getsockopt connect() ok!\n");
-                    bConnect = true;
-				}
-			}
-			else
-			{
-                //printf("connect() timeout error\n");
-				bConnect = false;
-			}
+                if(select(iClientSocket+1, NULL, &myset, NULL, &tv) > 0)
+                {
+                    int iGetSocketErr = 0;
+                    socklen_t len = sizeof(iGetSocketErr);
+
+                    getsockopt(iClientSocket , SOL_SOCKET , SO_ERROR , &iGetSocketErr , &len);
+                    if(iGetSocketErr)
+                    {
+                        //printf("getsockopt connect() error %d\n", iGetSocketErr);
+                        bConnect = false;
+                    }
+                    else
+                    {
+                        //printf("getsockopt connect() ok!\n");
+                        bConnect = true;
+                        break;
+                    }
+                }
+                else
+                {
+                    //printf("connect() timeout error\n");
+                    bConnect = false;
+                }
+            }
 		}
 		else
 		{
@@ -268,6 +277,7 @@ static void *SocketCheckThread( void *arg )
 				if( iCnt <= 0 )
 				{
 					printf( "socket recv() Error! errno=%d\n" , errno );
+                    pthis->CloseSocket();
                     continue;
 				}
 

@@ -22,7 +22,7 @@
 using namespace std;
 
 char szProgName[] = "tdm";
-char szProgVersion[] = "0.0.10";
+char szProgVersion[] = "0.0.11";
 
 int main(int argc, char *argv[])
 {
@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 	{
 		//this is for monitoring job
         //msleep(100);
-       // g_pStatusMon->CheckAll();
+        g_pStatusMon->CheckAll();
         sleep(1);
 	}
 
@@ -66,8 +66,8 @@ void InitResource()
     //msg read/write file
     char szTestMsgSendTo[PATHNAME_SIZE];
     char szTestMsgRecvFrom[PATHNAME_SIZE];
-    sprintf(szTestMsgSendTo, "%s/tester/%03d/%s", SYS_SHA_TESTER_PATH, g_idTpc, MSGBOX_SEND_TO);
-    sprintf(szTestMsgRecvFrom, "%s/tester/%03d/%s", SYS_SHA_TESTER_PATH, g_idTpc, MSGBOX_RECV_FROM);
+    sprintf(szTestMsgSendTo, "%s/%s", g_szTesterPath, MSGBOX_SEND_TO);
+    sprintf(szTestMsgRecvFrom, "%s/%s", g_szTesterPath, MSGBOX_RECV_FROM);
 
     cout << "strTestMsgSendTo : " << szTestMsgSendTo << endl;
     cout << "strTestMsgRecvFrom : " << szTestMsgRecvFrom << endl;
@@ -87,15 +87,13 @@ void InitResource()
     g_pSocketClient->StartThread(&ProcRecvSock);
 
     //TestMng
-    g_ppTestMng = new CTestMng*[PORT_CNT];
-
     for(int idx=0; idx<PORT_CNT; idx++)
     {
-        g_ppTestMng[idx] = new CTestMng(g_idTpc, idx);
+        g_pTestMng[idx] = new CTestMng(g_idTpc, idx);
     }
 
     //Status
-    g_pStatusMon = new CStatus();
+    g_pStatusMon = new CStatus(g_pTestMng);
 }
 
 
@@ -118,31 +116,23 @@ void DeleteResource()
         delete g_pSocketClient;
     }
 
-    if(g_ppTestMng != NULL)
+    for(int idx=0; idx<PORT_CNT; idx++)
     {
-        for(int idx=0; idx<PORT_CNT; idx++)
-        {
-            if(g_ppTestMng[idx])
-                delete g_ppTestMng[idx];
-        }
-
-        delete [] g_ppTestMng;
+        if(g_pTestMng[idx])
+            delete g_pTestMng[idx];
     }
 
     if(g_szTesterPath)
         delete []g_szTesterPath;
 
+    if(g_szWorkExecPath)
+        delete []g_szWorkExecPath;
+
     for(int idx=0; idx<PORT_CNT; idx++)
     {
         if(g_szTesterPortPath[idx])
             delete []g_szTesterPortPath[idx];
-    }
 
-    if(g_szWorkPath)
-        delete []g_szWorkPath;
-
-    for(int idx=0; idx<PORT_CNT; idx++)
-    {
         if(g_szWorkPortPath[idx])
             delete []g_szWorkPortPath[idx];
     }
@@ -213,16 +203,6 @@ int CreateTestFolders()
 {
     char szMakePath[PATHNAME_SIZE];
 
-    g_szTesterPath = new char[PATHNAME_SIZE];
-    sprintf(g_szTesterPath, "%s/tester/%03d", SYS_SHA_TESTER_PATH, g_idTpc);
-
-    for(int iPortIdx=PORT_MIN; iPortIdx<PORT_CNT; iPortIdx++)
-    {
-        g_szTesterPortPath[iPortIdx] = new char[PATHNAME_SIZE];
-        sprintf(g_szTesterPortPath[iPortIdx], "%s/%02d", g_szTesterPath, iPortIdx+1);
-        CreateFolder(g_szTesterPortPath[iPortIdx]);
-    }
-
     sprintf(szMakePath, "%s", SYS_DATA_PATH);
     CreateFolder(szMakePath);
 
@@ -241,20 +221,37 @@ int CreateTestFolders()
     sprintf(szMakePath, "%s", SYS_SCRIPT_PATH);
     CreateFolder(szMakePath);
 
+    sprintf(szMakePath, "%s", SYS_SHA_PATH);
+    CreateFolder(szMakePath);
+
     sprintf(szMakePath, "%s", SYS_WORK_PATH);
     CreateFolder(szMakePath);
 
-    sprintf(g_szWorkPath, "%s/tester/%03d", SYS_WORK_PATH, g_idTpc);
+    sprintf(szMakePath, "%s", SYS_UPDATE_PATH);
+    CreateFolder(szMakePath);
+
+    //for share folder
+    g_szTesterPath = new char[PATHNAME_SIZE];
+    sprintf(g_szTesterPath, "%s/%03d", SYS_SHA_TESTER_PATH, g_idTpc);
+
+    for(int iPortIdx=PORT_MIN; iPortIdx<PORT_CNT; iPortIdx++)
+    {
+        g_szTesterPortPath[iPortIdx] = new char[PATHNAME_SIZE];
+        sprintf(g_szTesterPortPath[iPortIdx], "%s/%02d", g_szTesterPath, iPortIdx+1);
+        CreateFolder(g_szTesterPortPath[iPortIdx]);
+    }
+
+    //for work folder
+    g_szWorkExecPath = new char[PATHNAME_SIZE];
+    sprintf(g_szWorkExecPath, "%s/exec", SYS_WORK_PATH);
+    CreateFolder(g_szWorkExecPath);
 
     for(int iPortIdx=PORT_MIN; iPortIdx<PORT_CNT; iPortIdx++)
     {
         g_szWorkPortPath[iPortIdx] = new char[PATHNAME_SIZE];
-        sprintf(g_szWorkPortPath[iPortIdx], "%s/%02d", g_szWorkPath, iPortIdx+1);
+        sprintf(g_szWorkPortPath[iPortIdx], "%s/%02d", SYS_WORK_PATH, iPortIdx+1);
         CreateFolder(g_szWorkPortPath[iPortIdx]);
     }
-
-    sprintf(szMakePath, "%s", SYS_UPDATE_PATH);
-    CreateFolder(szMakePath);
 
     return 0;
 }

@@ -2,11 +2,11 @@
 #include <sstream>
 #include <vector>
 #include <iterator>
+#include <iomanip>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <libgen.h>
 #include "callback.h"
 #include "base.h"
 #include "msgsend.h"
@@ -20,12 +20,12 @@ static int CheckScriptFile(char *path, char *msg_str);
 static int CheckScriptExt(string strFileName, string strCheckExt);
 
 extern char *g_szTesterPath;
-extern char **g_szTesterPortPath;
-extern char *g_szWorkPath;
-extern char **g_szWorkPortPath;
+extern char *g_szTesterPortPath[PORT_CNT];
+extern char *g_szWorkExecPath;
+extern char *g_szWorkPortPath[PORT_CNT];
 extern int g_idMsgq;
 extern int g_idTpc;
-extern CTestMng **g_ppTestMng;
+extern CTestMng *g_pTestMng[PORT_CNT];
 extern char *szProgVersion;
 
 //msg file process callback
@@ -75,7 +75,7 @@ static int ProcMsg(MsgHdr hdr, char *msg_str)
 
     if(msg_no == MSG_TEST_START)
     {
-        if( g_ppTestMng[iPortIdx]->IsTestOn(version) == 0 )
+        if( g_pTestMng[iPortIdx]->IsTestOn(version) == 0 )
         {
             char szScriptName[PATHNAME_SIZE] = {0,};
             if( SearchFile(g_szTesterPortPath[iPortIdx], msg_str, szScriptName) < 0 )
@@ -108,6 +108,9 @@ static int ProcMsg(MsgHdr hdr, char *msg_str)
             else
             {
                 printf(">> '%s' file is not eixst\n", TEST_SCRIPT_RUN_EXT);
+                SendMsg(g_idMsgq, version, cell, port, MSG_DONE,	0, "");
+                SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,	0, "EXT NOT EXIST");
+
                 return -4;
             }
 
@@ -124,7 +127,7 @@ static int ProcMsg(MsgHdr hdr, char *msg_str)
             printf(">> ret = %d\n", ret);
 
             //start test
-            if(g_ppTestMng[iPortIdx]->StartTest(version, strScriptProcFile, strScriptRunFile, "") == 0)
+            if(g_pTestMng[iPortIdx]->StartTest(version, strScriptProcFile, strScriptRunFile, "") == 0)
             {
                 printf(">> test is started!!\n");
                 SendMsg(g_idMsgq, version, cell, port, MSG_TEST,	0, "");
@@ -138,7 +141,7 @@ static int ProcMsg(MsgHdr hdr, char *msg_str)
     }
     else if(msg_no == MSG_TEST_STOP)
     {
-        if(g_ppTestMng[iPortIdx]->StopTest(version) == 0)
+        if(g_pTestMng[iPortIdx]->StopTest(version) == 0)
         {
             SendMsg(g_idMsgq, version, cell, port, MSG_FAIL,	0, "");
             SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,	0, "ABORT OK");
@@ -217,7 +220,7 @@ static int ProcSock(MsgHdr hdr, char *msg_str)
 
     if(msg_no == MSG_TEST_START)
     {
-        if( g_ppTestMng[iPortIdx]->IsTestOn(version) == 0 )
+        if( g_pTestMng[iPortIdx]->IsTestOn(version) == 0 )
         {
             //check packet string part
             stringstream ssArg;
@@ -267,20 +270,20 @@ static int ProcSock(MsgHdr hdr, char *msg_str)
                 return -3;
             }
 
-            //get script path;
+            //get path;
             size_t posSplit = strScriptPathName.find_last_of('/');
             string strScriptPath = strScriptPathName.substr(0, posSplit);
             string strScriptName = strScriptPathName.substr(posSplit+1);
-
-            char buf[512] = {0,};
-            char szWorkFolder[256] = {0,};
+            string strWorkPath;
 
             if(version == MSGVER_PORT_TEST)
             {
-                sprintf(buf, "cp -rf %s/* %s", g_szTesterPortPath[iPortIdx],  g_szWorkPortPath[iPortIdx]);
-                sprintf(szWorkFolder, "%s", g_szWorkPortPath[iPortIdx]);
+                strWorkPath = g_szWorkPortPath[iPortIdx];
             }
-
+            else
+            {
+                strWorkPath = g_szWorkExecPath;
+            }
 
             //check script file extension
             stringstream ss;
@@ -292,16 +295,19 @@ static int ProcSock(MsgHdr hdr, char *msg_str)
             if(iExtPos > 0)
             {
                 ss.str("");
-                ss << g_szWorkPortPath[iPortIdx] <<  "/" << strScriptName;
+                ss << strWorkPath <<  "/" << strScriptName;
                 strScriptProcFile = ss.str();
 
                 ss.str("");
-                ss << g_szWorkPortPath[iPortIdx] <<  "/" << strScriptName.substr(0, iExtPos-1);
+                ss << strWorkPath <<  "/" << strScriptName.substr(0, iExtPos-1);
                 strScriptRunFile = ss.str();
             }
             else
             {
                 printf(">> '%s' file is not eixst\n", TEST_SCRIPT_RUN_EXT);
+                SendMsg(g_idMsgq, version, cell, port, MSG_DONE,	0, "");
+                SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,	0, "EXT NOT EXIST");
+
                 return -4;
             }
 
@@ -310,15 +316,25 @@ static int ProcSock(MsgHdr hdr, char *msg_str)
 
             //copy script to work folder
             ss.str("");
-            ss << "cp -f " << g_szTesterPortPath[iPortIdx] << "/* " << g_szWorkPortPath[iPortIdx];
-            strCmd = ss.str();
+
+            if(version == MSGVER_PORT_TEST)
+            {
+                ss << "cp -f " << strScriptPath << "/* " << strWorkPath;
+                strCmd = ss.str();
+            }
+            else
+            {
+                ss << "cp -f " << strScriptPathName << " " << strWorkPath;
+                strCmd = ss.str();
+            }
+
             int ret = system(strCmd.c_str());
 
             printf(">> cp cmd = %s\n", strCmd.c_str());
             printf(">> ret = %d\n", ret);
 
             //start test
-            if(g_ppTestMng[iPortIdx]->StartTest(version, strScriptProcFile, strScriptRunFile, strScriptArg) == 0)
+            if(g_pTestMng[iPortIdx]->StartTest(version, strScriptProcFile, strScriptRunFile, strScriptArg) == 0)
             {
                 printf(">> test is started!!\n");
                 SendMsg(g_idMsgq, version, cell, port, MSG_TEST,	0, "");
@@ -332,9 +348,9 @@ static int ProcSock(MsgHdr hdr, char *msg_str)
     }
     else if(msg_no == MSG_TEST_STOP)
     {
-        if(g_ppTestMng[iPortIdx]->IsTestOn(version) == 1)
+        if(g_pTestMng[iPortIdx]->IsTestOn(version) == 1)
         {
-            if(g_ppTestMng[iPortIdx]->StopTest(version) == 0)
+            if(g_pTestMng[iPortIdx]->StopTest(version) == 0)
             {
                 SendMsg(g_idMsgq, version, cell, port, MSG_FAIL,	0, "");
                 SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,	0, "ABORT OK");

@@ -1,6 +1,3 @@
-json/json-forwards.h
-json/json.h
-jsoncpp.cpp
 Makefile
 status.cpp
 status.h

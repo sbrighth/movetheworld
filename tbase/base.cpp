@@ -575,7 +575,7 @@ int	EventLog(const char *fmt, ...)
 	time_t t = time(NULL);
 	struct tm *tp = localtime(&t);
 
-	strftime(dt, sizeof(dt), "%Y-%m-%d %H:%M:%S", tp);
+    strftime(dt, sizeof(dt), "%Y-%m-%d %H:%M:%S", tp);
 
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf)-1, fmt, ap);

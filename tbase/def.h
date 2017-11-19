@@ -139,36 +139,6 @@ enum DPS_CUR_CAL_INDEX
     CUR_CAL_CNT
 };
 
-//monitor os status
-typedef struct tOsStatus
-{
-    char sTime[32];
-    char sCpuUsage[32];
-    char sMemUsage[32];
-    char sDiskUsage[32];
-    char sMount[32];
-    char sBdConnect[32];
-}OsStatus;
-
-//monitor dps status
-typedef struct tDpsStatus
-{
-    char sDpsSetVoltage[DPS_CH_CNT][32];
-    char sDpsGetVoltage[DPS_CH_CNT][32];
-    char sDpsSetCurrent[DPS_CH_CNT][32];
-    char sDpsGetCurrent[DPS_CH_CNT][32];
-    bool bDpsPower; //on, off
-    bool bDpsOcp;
-    bool bDpsOvp;
-}DpsStatus;
-
-//monitor perf status
-typedef struct tPerfStatus
-{
-    char sWrite[32];
-    char sRead[32];
-}PerfStatus;
-
 //msg header
 typedef struct tMsgHdr
 {
@@ -298,5 +268,41 @@ enum MSG_NUMBER
 
     MSG_ENDMARKER = 0xFFFF
 };
+
+
+//monitor os status
+typedef struct tOsStatus
+{
+    char sTime[32];
+    char sCpuUsage[32];
+    char sMemUsage[32];
+    char sDiskUsage[32];
+    bool bMount;
+    bool bBdConnect;
+}OsStatus;
+
+typedef struct tTestStatus
+{
+    bool bRun[MSGVER_CNT];
+    int iResult;   //pass, fail, ...
+}TestStatus;
+
+//monitor dps status
+typedef struct tDpsStatus
+{
+    float sDpsSetVoltage[DPS_CH_CNT];
+    float sDpsGetVoltage[DPS_CH_CNT];
+    float sDpsCurrent[DPS_CH_CNT];
+    bool bDpsPower; //on, off
+    bool bDpsOcp;
+    bool bDpsOvp;
+}DpsStatus;
+
+//monitor perf status
+typedef struct tPerfStatus
+{
+    char sWrite[32];
+    char sRead[32];
+}PerfStatus;
 
 #endif /* DEF_H_ */

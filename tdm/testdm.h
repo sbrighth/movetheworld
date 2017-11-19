@@ -30,8 +30,9 @@ int     NotifyProgReady();
 
 char	*g_szTesterPath;
 char    *g_szTesterPortPath[PORT_CNT];
-char	*g_szWorkPath;
+char	*g_szWorkExecPath;
 char    *g_szWorkPortPath[PORT_CNT];
+
 int		g_condTestDm;
 int		g_idTpc;
 int		g_idResShare;
@@ -40,7 +41,7 @@ int     g_idMsgq;
 CMsgqThread     *g_pTestMsgq = NULL;
 CSocketServer   *g_pSocketServer = NULL;
 CSocketClient   *g_pSocketClient = NULL;
-CTestMng        **g_ppTestMng = NULL;
+CTestMng        *g_pTestMng[PORT_CNT];
 CStatus         *g_pStatusMon = NULL;
 
 #endif /* TESTDM_H_ */
