@@ -54,16 +54,10 @@ void *TestThread(void *arg)
 	}
 	else if(pid == 0)
 	{
-        char cCell[32];
-        char cPort[32];
 
-        sprintf(cCell, "%d", pthis->iCell);
-        sprintf(cPort, "%d", pthis->iPort);
-
-        pthis->iChildStatus[iVersion] = exevp(pthis->strRunFile[iVersion].c_str(),
-                                              pthis->strRunFile[iVersion].c_str(),
-                                              pthis->strRunArg[iVersion].c_str(),
-                                              NULL);
+        //pthis->iChildStatus[iVersion] = execvp( pthis->strRunFile[iVersion].c_str(),
+        //                                        (char*)pthis->strRunFile[iVersion].c_str());
+        pthis->iChildStatus[iVersion] = execl("/bin/bash", "/bin/bash", "-c", pthis->strRunFile[iVersion].c_str(), (char*)pthis->strRunFile[iVersion].c_str(), NULL);
 	}
 	else
 	{
@@ -90,13 +84,13 @@ int CTestMng::StartTest(int iMsgVer, string strPath, string strFileName, string 
 
     if(idThread[iMsgVer] == 0)
 	{
-		//check script file extension
 		stringstream ss;
 		string strCmd;
 		string strScriptProcFile;
 		string strScriptOnlyName;
         string strExtType;
 
+        //check script file extension
         int iExtPos = CheckScriptExt(strFileName, TEST_SCRIPT_RUN_EXT);
 		if(iExtPos > 0)
 		{
