@@ -128,7 +128,7 @@ int CSocketClient::ConnectServer()
 
 	if(connect( iClientSocket , (struct sockaddr *)&tServerAddr, sizeof( tServerAddr ) ) < 0)
 	{
-       // printf( "connect() Error! errno=%d\n" , errno );
+        //printf( "connect() Error! errno=%d\n" , errno );
 
         if(errno == EINPROGRESS)
 		{
@@ -145,29 +145,21 @@ int CSocketClient::ConnectServer()
                 if(condCheckThread != 1)            //check program exit each 1sec
                     break;
 
-                if(select(iClientSocket+1, NULL, &myset, NULL, &tv) > 0)
+               // if(select(iClientSocket+1, NULL, &myset, NULL, &tv) > 0)
                 {
                     int iGetSocketErr = 0;
                     socklen_t len = sizeof(iGetSocketErr);
 
                     getsockopt(iClientSocket , SOL_SOCKET , SO_ERROR , &iGetSocketErr , &len);
-                    if(iGetSocketErr)
-                    {
-                        //printf("getsockopt connect() error %d\n", iGetSocketErr);
-                        bConnect = false;
-                    }
-                    else
+                    if(iGetSocketErr == 0)
                     {
                         //printf("getsockopt connect() ok!\n");
                         bConnect = true;
                         break;
                     }
                 }
-                else
-                {
-                    //printf("connect() timeout error\n");
-                    bConnect = false;
-                }
+
+                sleep(1);
             }
 		}
 		else

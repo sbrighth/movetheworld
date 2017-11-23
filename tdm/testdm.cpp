@@ -52,6 +52,8 @@ int main(int argc, char *argv[])
 		//this is for monitoring job
         //msleep(100);
         g_pStatusMon->CheckAll();
+        g_pLog->CopyLogFile();
+
         sleep(1);
 	}
 
@@ -99,6 +101,11 @@ void InitResource()
 
 void DeleteResource()
 {
+    if(g_pLog != NULL)
+    {
+        delete g_pLog;
+    }
+
     if(g_pStatusMon != NULL)
     {
         delete g_pStatusMon;

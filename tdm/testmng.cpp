@@ -143,6 +143,10 @@ int CTestMng::StartTest(int iMsgVer, string strProcFile, string strRunFile, stri
 
         unlink(strProcFile.c_str());
 
+        //set log file
+        mngLog.AddLogFile()
+
+
 		//run script
         pthread_mutex_lock(&syncMutex);
 

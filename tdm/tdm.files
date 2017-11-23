@@ -7,3 +7,5 @@ testmng.cpp
 testmng.h
 callback.cpp
 callback.h
+log.h
+log.cpp

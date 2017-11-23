@@ -2,3 +2,4 @@ base.cpp
 base.h
 def.h
 Makefile
+script.h

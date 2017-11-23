@@ -42,10 +42,10 @@ int CStatus::CheckAll()
     cout << "----------------------" << endl;
     for(int iPortIdx=0; iPortIdx<PORT_CNT; iPortIdx++)
     {
-        cout << "<PORT" << iPortIdx+1 << ">" << endl;
+        //cout << "<PORT" << iPortIdx+1 << ">" << endl;
         CheckDps(iPortIdx);
         CheckTest(iPortIdx);
-        cout << endl;
+        //cout << endl;
     }
 
     return 0;
@@ -78,10 +78,14 @@ int CStatus::CheckOs()
 
     if(strcmp(buf, "0") == 0)
     {
+        printf(">> buf=%s\n", buf);
+        printf(">> mount ok!\n");
         statOs.bMount = true;
     }
     else
     {
+        printf(">> buf=%s\n", buf);
+        printf(">> mount no!\n");
         statOs.bMount = false;
     }
 
@@ -111,9 +115,11 @@ int CStatus::CheckTest(int port)
         {
             tmp = pTestMng[port]->IsTestOn(idx);
             if(tmp >= 0)
-                statTest[port].bRun[idx] = tmp;
+                statTest[port].bRun[idx] = true;
+            else
+                statTest[port].bRun[idx] = false;
 
-            cout << "TEST[" << idx << "] = " << tmp << endl;
+            //cout << "TEST[" << idx << "] = " << tmp << endl;
         }
     }
 
@@ -152,6 +158,10 @@ int CStatus::GetStatusFromPipe(const char *szCmd, char *sBuf, int iBufSize)
     fread(sBuf, iBufSize, 1, file);
     pclose(file);
 
+    int size = strlen(sBuf);
+    if(sBuf[size-1]=='\n' && size>0)
+        sBuf[size-1] = '\0';
+
     return 0;
 }
 
@@ -169,6 +179,10 @@ int CStatus::GetStatusFromFile(const char *szCmd, char *sBuf, int iBufSize)
 
     fread(sBuf, iBufSize, 1, file);
     fclose(file);
+
+    int size = strlen(sBuf);
+    if(sBuf[size-1]=='\n' && size>0)
+        sBuf[size-1] = '\0';
 
     return 0;
 }

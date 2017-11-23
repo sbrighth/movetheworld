@@ -12,6 +12,7 @@
 #include <iostream>
 #include <vector>
 #include "def.h"
+#include "log.h"
 
 using namespace std;
 
@@ -40,6 +41,9 @@ public:
     pthread_t		idThread[MSGVER_CNT];
     pthread_mutex_t syncMutex;
     pthread_cond_t  syncCond;
+
+    //Log Send
+    CLog            mngLog;
 };
 
 #endif /* TESTMNG_H_ */

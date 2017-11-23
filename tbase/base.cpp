@@ -586,7 +586,7 @@ int	EventLog(const char *fmt, ...)
 	fflush(stdout);
 
 	char report[128] = {0,};
-	sprintf(report, "%s/%s.txt", SYS_PATH, EVENT_LOG_NAME);
+    sprintf(report, "%s/%s.txt", SYS_LOG_PATH, EVENT_LOG_NAME);
 
 	FILE* fp;
 	fp = fopen( report, "a" );
