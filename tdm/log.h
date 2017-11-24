@@ -3,42 +3,32 @@
 
 #include <list>
 #include <string>
-#include "status.h"
+#include <pthread.h>
 
 using namespace std;
 
 class CLogPath
 {
 public:
-    CLogPath(string source, string target):strSource(source),strTarget(target){ };
+    CLogPath(string source, string folder):strSource(source),strFolder(folder){ };
 
     string strSource;
-    string strTarget;
+    string strFolder;
 };
-/*
-class CDescriptorNotify
-{
-public:
-    CDescriptorNotify(int file, int whach):file(file),watch(watch){ };
 
-    int file;
-    int watch;
-};
-*/
 class CLog
 {
 public:
     CLog();
+    ~CLog();
 
-    int     AddLogFile(string strSourceFile, string strTargetFile);
-    int     DelLogFile(string strSourceFile);
-    bool    CheckShareMount();
+    int     AddLogFileList(string strSourceFile, string strTargetFolder);
+    int     DelLogFileList(string strSourceFile);
     int     CopyLogFile();
 
 public:
-    list<CLogPath>          listLogFile;
-    //list<CDescriptorNotify> listDescriptor;
-
+    list<CLogPath>      listLogFile;
+    pthread_mutex_t     mutexLog;
 };
 
 #endif // LOG_H

@@ -139,7 +139,13 @@ int main(int argc, char **argv)
     strCompileLog = ss.str();
 
     ss.str("");
-    ss << COMPILE_PROG << " " << COMPILE_INCPATH << " " << strScriptProcFile << " -o " << strRunFile << " " << COMPILE_LIBPATH << " " << COMPILE_LIB << " 2> " << strCompileLog;
+    ss << COMPILE_PROG << " "
+       << COMPILE_INCPATH << " "
+       << strScriptProcFile << " "
+       << "-o " << strRunFile << " "
+       << COMPILE_LIBPATH << " "
+       << COMPILE_LIB << " "
+       << "2> " << strCompileLog;
     strCmd = ss.str();
 
     ret = system(strCmd.c_str());

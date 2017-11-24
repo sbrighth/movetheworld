@@ -8,41 +8,40 @@
 
 CLog::CLog()
 {
+    pthread_mutex_init(&mutexLog, NULL);
 }
 
-int CLog::AddLogFile(string strSourceFile, string strTargetFile)
+CLog::~CLog()
 {
+    pthread_mutex_destroy(&mutexLog);
+}
+
+int CLog::AddLogFileList(string strSourceFile, string strTargetFolder)
+{
+    pthread_mutex_lock(&mutexLog);
+
     for(list<CLogPath>::iterator it = listLogFile.begin(); it != listLogFile.end(); it++)
     {
         CLogPath temp = *it;
         if(temp.strSource == strSourceFile)
         {
             printf("%s is already addded\n", strSourceFile.c_str());
+            pthread_mutex_unlock(&mutexLog);
             return -1;
         }
     }
 
-    CLogPath logPath(strSourceFile, strTargetFile);
+    CLogPath logPath(strSourceFile, strTargetFolder);
     listLogFile.push_back(logPath);
-/*
-    int fd, wd;
 
-    fd = inotify_init();
-    if(fd < 0)
-    {
-        printf("%s inotify_init() error\n");
-        return -1;
-    }
-
-    wd = inotify_add_watch(fd, strSourceFile.c_str(), IN_MODIFY)
-*/
-
+    pthread_mutex_unlock(&mutexLog);
     return 0;
 }
 
-int CLog::DelLogFile(string strSourceFile)
+int CLog::DelLogFileList(string strSourceFile)
 {
     int iRet = -1;
+    pthread_mutex_lock(&mutexLog);
 
     for(list<CLogPath>::iterator it = listLogFile.begin(); it != listLogFile.end(); it++)
     {
@@ -55,17 +54,22 @@ int CLog::DelLogFile(string strSourceFile)
         }
     }
 
+    pthread_mutex_unlock(&mutexLog);
     return iRet;
 }
 
 int CLog::CopyLogFile()
 {
+    pthread_mutex_lock(&mutexLog);
+
     for(list<CLogPath>::iterator it = listLogFile.begin(); it != listLogFile.end(); it++)
     {
         CLogPath temp = *it;
         if(IsFileExist(temp.strSource.c_str()) == true)
-            CopyFile(temp.strTarget.c_str(), temp.strSource.c_str());
+            CopyFile(temp.strFolder.c_str(), temp.strSource.c_str());
     }
+
+    pthread_mutex_unlock(&mutexLog);
 
     return 0;
 }

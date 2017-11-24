@@ -6,6 +6,7 @@ CXXFLAGS 	= -O2 -g -Wall -fmessage-length=0 -Wno-unused-result -Wno-sizeof-point
 LDFLAGS  	= $(LIBPATH) -ltbase -ltnet -lpthread
 
 CP_BINPATH	= ../output/bin
+CP_INCPATH  = ../output/include
 
 TARGET		= texec
 OBJS		= scriptexec.o
@@ -18,6 +19,7 @@ $(TARGET):	$(OBJS)
 
 all:	$(TARGET)
 	@[ -d $(CP_BINPATH) ] || mkdir -p $(CP_BINPATH)
+	cp -f *.h $(CP_INCPATH)
 	cp -f $(TARGET) $(CP_BINPATH)
 
 clean:

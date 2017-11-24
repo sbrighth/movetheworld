@@ -541,64 +541,38 @@ long AddFileText( const char* p, char* info, long size )
 	return len;
 }
 
-int	Print(int port, const char *fmt, ...)
-{
-	va_list	ap;
-	char buf[1024]={0};
-
-	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf)-1, fmt, ap);
-	va_end(ap);
-
-	printf( "%s",  buf);
-	fflush(stdout);
-
-	char report[128] = {0,};
-	sprintf(report, "%s/%s%d.txt", SYS_WORK_PATH, TEST_LOG_NAME, port);
-
-	FILE* fp;
-	fp = fopen( report, "a" );
-	if( fp )
-	{
-		fwrite( buf, strlen(buf), 1, fp );
-		fclose( fp );
-	}
-
-	return 0;
-}
 
 int	EventLog(const char *fmt, ...)
 {
-	va_list	ap;
-	char dt[20], buf[1024]={0};
-	char fbuf[1032]={0};
-	time_t t = time(NULL);
-	struct tm *tp = localtime(&t);
+    va_list	ap;
+    char dt[20], buf[1024]={0};
+    char fbuf[1032]={0};
+    time_t t = time(NULL);
+    struct tm *tp = localtime(&t);
 
-    strftime(dt, sizeof(dt), "%Y-%m-%d %H:%M:%S", tp);
+    strftime(dt, sizeof(dt), "%Y%m%d %H%M%S", tp);
 
-	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf)-1, fmt, ap);
-	va_end(ap);
+    va_start(ap, fmt);
+    vsnprintf(buf, sizeof(buf)-1, fmt, ap);
+    va_end(ap);
 
-	sprintf( fbuf, "[%s] %s", dt, buf );
-	printf( "%s",  fbuf);
-	fflush(stdout);
+    sprintf( fbuf, "[%s] %s", dt, buf );
+    printf( "%s",  fbuf);
+    fflush(stdout);
 
-	char report[128] = {0,};
+    char report[128] = {0,};
     sprintf(report, "%s/%s.txt", SYS_LOG_PATH, EVENT_LOG_NAME);
 
-	FILE* fp;
-	fp = fopen( report, "a" );
-	if( fp )
-	{
-		fwrite( fbuf, strlen(fbuf), 1, fp );
-		fclose( fp );
-	}
+    FILE* fp;
+    fp = fopen( report, "a" );
+    if( fp )
+    {
+        fwrite( fbuf, strlen(fbuf), 1, fp );
+        fclose( fp );
+    }
 
-	return 0;
+    return 0;
 }
-
 
 #ifdef __cplusplus
 }

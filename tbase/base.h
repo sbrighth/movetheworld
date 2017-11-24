@@ -60,8 +60,9 @@ long        WriteFileText( const char* p, char* info, long size );
 long        ReadFileText( const char* p, char* info, long offset, long size );
 long        AddFileText( const char* p, char* info, long size );
 
-int			Print(int port, const char *fmt, ...);
 int			EventLog(const char *fmt, ...);
+
+//bit
 
 #ifdef __cplusplus
 }

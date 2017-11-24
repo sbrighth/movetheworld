@@ -19,7 +19,7 @@ using namespace std;
 class CTestMng
 {
 public:
-	CTestMng(int iCell, int iPort);
+    CTestMng(int iCell, int iPort);
 	virtual ~CTestMng();
 
 public:
@@ -39,8 +39,8 @@ public:
     pid_t			pidTestProcess[MSGVER_CNT];
     int				iChildStatus[MSGVER_CNT];
     pthread_t		idThread[MSGVER_CNT];
-    pthread_mutex_t syncMutex;
-    pthread_cond_t  syncCond;
+    pthread_mutex_t mutexSync;
+    pthread_cond_t  condSync;
 
     //Log Send
     CLog            mngLog;

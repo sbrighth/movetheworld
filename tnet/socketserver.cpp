@@ -265,7 +265,7 @@ static void *SocketCheckThread( void *arg )
 				}
 				else
 				{
-                    //printf( "accept() done\n" );
+                    printf( "accept() done\n" );
 
                     m_tPollEvent[1].fd = pthis->iClientSocket;
 					m_tPollEvent[1].events = POLLIN;

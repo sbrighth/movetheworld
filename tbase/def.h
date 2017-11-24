@@ -8,6 +8,15 @@
 #ifndef DEF_H_
 #define DEF_H_
 
+//bit
+#define SET_BIT(x,n)		((x) |= (1 << (n)))
+#define CLR_BIT(x,n)		((x) &= ~(1 << (n)))
+#define GET_BIT(x,n)		(((x) >> (n)) & 1)
+
+#define SET_BITS(x,n,w)		((x) |= ((w) << (n)))
+#define CLR_BITS(x,n,w)		((x) &= ~((w) << (n)))
+#define GET_BITS(x,n,w)		(((x) >> (n)) & (w))
+
 //data type
 #define uint8	unsigned char
 #define uint16	unsigned short
@@ -270,33 +279,49 @@ enum MSG_NUMBER
 };
 
 
+
+enum OS_BIT_STATUS
+{
+    bMOUNT = 0,
+    bBDCONNECT
+};
+
+enum TEST_BIT_STATUS
+{
+    bRESULT = 0    //pass, fail
+};
+
+enum DPS_BIT_STATUS
+{
+    bPOWER = 0,
+    bOCP,
+    bOVP
+};
+
 //monitor os status
 typedef struct tOsStatus
 {
-    char sTime[32];
-    char sCpuUsage[32];
-    char sMemUsage[32];
-    char sDiskUsage[32];
-    bool bMount;
-    bool bBdConnect;
-}OsStatus;
+    char    sTime[32];
+    char    sCpuUsage[32];
+    char    sMemUsage[32];
+    char    sDiskUsage[32];
+    int     iBitStatus;
+}__attribute__ ((packed)) OsStatus;
 
 typedef struct tTestStatus
 {
-    bool bRun[MSGVER_CNT];
-    int iResult;   //pass, fail, ...
-}TestStatus;
+    int     iBitRun;        //MSGVER
+    int     iBitStatus;     //pass, fail
+}__attribute__ ((packed)) TestStatus;
 
 //monitor dps status
 typedef struct tDpsStatus
 {
-    float sDpsSetVoltage[DPS_CH_CNT];
-    float sDpsGetVoltage[DPS_CH_CNT];
-    float sDpsCurrent[DPS_CH_CNT];
-    bool bDpsPower; //on, off
-    bool bDpsOcp;
-    bool bDpsOvp;
-}DpsStatus;
+    float   sDpsSetVoltage[DPS_CH_CNT];
+    float   sDpsGetVoltage[DPS_CH_CNT];
+    float   sDpsCurrent[DPS_CH_CNT];
+    int     iBitStatus;         //power, ocp, ovp
+}__attribute__ ((packed)) DpsStatus;
 
 //monitor perf status
 typedef struct tPerfStatus

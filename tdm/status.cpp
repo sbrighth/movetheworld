@@ -80,20 +80,27 @@ int CStatus::CheckOs()
     {
         printf(">> buf=%s\n", buf);
         printf(">> mount ok!\n");
-        statOs.bMount = true;
+        SET_BIT(statOs.iBitStatus, bMOUNT);
     }
     else
     {
         printf(">> buf=%s\n", buf);
         printf(">> mount no!\n");
-        statOs.bMount = false;
+        CLR_BIT(statOs.iBitStatus, bMOUNT);
     }
 
     //bd connect
     sprintf(cmd, "%s/bd_connect.txt", SYS_DATA_PATH);
     GetStatusFromFile((const char*)cmd, buf, sizeof(buf));
-    if(strcmp(buf, "1") == 0 || strcmp(buf, "0") == 0)
-        statOs.bBdConnect= atoi(buf);
+    if(strcmp(buf, "1") == 0)
+    {
+        SET_BIT(statOs.iBitStatus, bBDCONNECT);
+    }
+    else
+    {
+        CLR_BIT(statOs.iBitStatus, bBDCONNECT);
+    }
+
 /*
     cout << "time = " << statOs.sTime << endl;
     cout << "cpu = " << statOs.sCpuUsage << endl;
@@ -115,9 +122,9 @@ int CStatus::CheckTest(int port)
         {
             tmp = pTestMng[port]->IsTestOn(idx);
             if(tmp >= 0)
-                statTest[port].bRun[idx] = true;
+                SET_BIT(statTest[port].iBitRun, idx);
             else
-                statTest[port].bRun[idx] = false;
+                CLR_BIT(statTest[port].iBitRun, idx);
 
             //cout << "TEST[" << idx << "] = " << tmp << endl;
         }

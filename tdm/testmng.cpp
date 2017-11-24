@@ -25,24 +25,24 @@ CTestMng::CTestMng(int iCell, int iPort):iCell(iCell),iPort(iPort)
 {
     memset(idThread, 0, sizeof(idThread));
 
-    pthread_mutex_init(&syncMutex, NULL);
-    pthread_cond_init(&syncCond, NULL);
+    pthread_mutex_init(&mutexSync, NULL);
+    pthread_cond_init(&condSync, NULL);
 }
 
 CTestMng::~CTestMng()
 {
-    pthread_cond_destroy(&syncCond);
-    pthread_mutex_destroy(&syncMutex);
+    pthread_cond_destroy(&condSync);
+    pthread_mutex_destroy(&mutexSync);
 }
 
 void *TestThread(void *arg)
 {
     CTestMng *pthis = (CTestMng *)arg;
-    pthread_mutex_lock(&pthis->syncMutex);
+    pthread_mutex_lock(&pthis->mutexSync);
 
     int iVersion = pthis->iVersion;
-    pthread_cond_signal(&pthis->syncCond);
-    pthread_mutex_unlock(&pthis->syncMutex);
+    pthread_cond_signal(&pthis->condSync);
+    pthread_mutex_unlock(&pthis->mutexSync);
 
     int iStatus = 0;
 
@@ -81,6 +81,7 @@ void *TestThread(void *arg)
             delete [] pthis->vectArgv[iVersion][i];
         }
 
+        pthis->mngLog.DelLogFileList("port1.txt");
         printf(">> child status = %d\n", pthis->iChildStatus[iVersion]);
 	}
 
@@ -112,9 +113,30 @@ int CTestMng::StartTest(int iMsgVer, string strProcFile, string strRunFile, stri
 
     if(idThread[iMsgVer] == 0)
     {
+        //flag, strLogFile
+        //????
         //set run argument
         strRunProg[iMsgVer] = strRunFile;
         strRunArg[iMsgVer] = strArg;
+
+
+        //set log file
+        char szLogFile[256];
+        char szTargetPath[256];
+
+        if(iMsgVer == MSGVER_PORT_TEST)
+        {
+            sprintf(szLogFile, "%s/%03d/%02d/port.txt", SYS_WORK_PATH, iCell, iPort+1);
+            sprintf(szTargetPath, "%s/%03d/%02d", SYS_SHA_TESTER_PATH, iCell, iPort+1);
+            mngLog.AddLogFileList(szLogFile, szTargetPath);
+        }
+        else
+        {
+            sprintf(szLogFile, "%s/exec/log-%d-%d.txt", SYS_WORK_PATH, iCell, iPort+1);
+            sprintf(szTargetPath, "%s/exec", SYS_SHA_EXEC_PATH);
+            mngLog.AddLogFileList(szLogFile, szTargetPath);
+        }
+
 
 		//compile script
         unlink(strRunFile.c_str());
@@ -125,7 +147,20 @@ int CTestMng::StartTest(int iMsgVer, string strProcFile, string strRunFile, stri
 		strCompileLog = ss.str();
 
 		ss.str("");
-        ss << COMPILE_PROG << " " << COMPILE_INCPATH << " " << strProcFile << " -o " << strRunFile << " " << COMPILE_LIBPATH << " " << COMPILE_LIB << " 2> " << strCompileLog;
+        ss << COMPILE_PROG << " "
+           << COMPILE_INCPATH << " "
+           << strProcFile
+           << " -D MSG_VER=" << iMsgVer
+           << " -D TPC_ID=" << iCell
+           << " -D PORT_NUM=" << iPort+1
+           << " -D TEST_FLAG=" << 2
+           << " -D LOG_FILE=\"" << szLogFile << "\""
+           << " -include sctbasic.h "
+           << " -o " << strRunFile << " "
+           << COMPILE_LIBPATH << " "
+           << COMPILE_LIB << " "
+           << "2> " << strCompileLog;
+
         string strCmd = ss.str();
 
 		printf(">> strCmd = %s\n", strCmd.c_str());
@@ -143,18 +178,14 @@ int CTestMng::StartTest(int iMsgVer, string strProcFile, string strRunFile, stri
 
         unlink(strProcFile.c_str());
 
-        //set log file
-        mngLog.AddLogFile()
-
-
 		//run script
-        pthread_mutex_lock(&syncMutex);
+        pthread_mutex_lock(&mutexSync);
 
         this->iVersion = iMsgVer;
         pthread_create(&idThread[iMsgVer], NULL, TestThread, (void*)this);
 
-        pthread_cond_wait(&syncCond, &syncMutex);
-        pthread_mutex_unlock(&syncMutex);
+        pthread_cond_wait(&condSync, &mutexSync);
+        pthread_mutex_unlock(&mutexSync);
         pthread_detach(idThread[iMsgVer]);
 	}
 	else
@@ -186,6 +217,8 @@ int CTestMng::StopTest(int iMsgVer)
 
         if(idThread[iMsgVer] > 0)
 			return -1;
+
+        mngLog.DelLogFileList("abc");
 	}
 
 	return 0;
