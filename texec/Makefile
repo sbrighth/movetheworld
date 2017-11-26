@@ -19,7 +19,6 @@ $(TARGET):	$(OBJS)
 
 all:	$(TARGET)
 	@[ -d $(CP_BINPATH) ] || mkdir -p $(CP_BINPATH)
-	cp -f *.h $(CP_INCPATH)
 	cp -f $(TARGET) $(CP_BINPATH)
 
 clean:

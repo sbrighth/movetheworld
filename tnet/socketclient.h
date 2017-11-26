@@ -39,11 +39,11 @@ public:
 	int				iCell;
     void			(*ProcFunc)(SockPack sockData);
 
+    bool            bUseThread;
     int				condCheckThread;
-    pthread_t		idCheckThread;
-    int             iConnecTimeout;
-
     int             condProcThread;
+    int             iConnecTimeout;
+    pthread_t		idCheckThread;
     pthread_t       idProcThread;
 
 	bool			bConnect;

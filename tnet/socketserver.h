@@ -42,9 +42,8 @@ public:
     void			(*ProcFunc)(SockPack sockData);
 
     int				condCheckThread;
-    pthread_t		idCheckThread;
-
     int             condProcThread;
+    pthread_t		idCheckThread;
     pthread_t       idProcThread;
 
 	bool			bAccept;

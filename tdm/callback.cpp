@@ -16,7 +16,7 @@ using namespace std;
 
 static int ProcMsg(MsgHdr hdr, char *msg_str);
 static int ProcSock(MsgHdr hdr, char *msg_str);
-static int CheckScriptFile(char *path, char *msg_str);
+//static int CheckScriptFile(char *path, char *msg_str);
 static int CheckScriptExt(string strFileName, string strCheckExt);
 
 extern char *g_szTesterPath;
@@ -365,7 +365,7 @@ static int ProcSock(MsgHdr hdr, char *msg_str)
 
     return 0;
 }
-
+/*
 static int CheckScriptFile(char *path, char *msg_str)
 {
     int iSendMode = SC_FILE_DEFAULT;
@@ -428,7 +428,7 @@ static int CheckScriptFile(char *path, char *msg_str)
 
     return iSendMode;
 }
-
+*/
 
 static int CheckScriptExt(string strFileName, string strCheckExt)
 {

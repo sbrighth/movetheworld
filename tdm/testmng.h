@@ -33,6 +33,7 @@ public:
     int				iCell;
     int				iPort;
 
+    string          strLogFile[MSGVER_CNT];
     string			strRunProg[MSGVER_CNT];
     string			strRunArg[MSGVER_CNT];
     vector<char*>   vectArgv[MSGVER_CNT];

@@ -282,20 +282,20 @@ enum MSG_NUMBER
 
 enum OS_BIT_STATUS
 {
-    bMOUNT = 0,
-    bBDCONNECT
+    BIT_MOUNT = 0,
+    BIT_BDCONNECT
 };
 
 enum TEST_BIT_STATUS
 {
-    bRESULT = 0    //pass, fail
+    BIT_RESULT = 0    //pass, fail
 };
 
 enum DPS_BIT_STATUS
 {
-    bPOWER = 0,
-    bOCP,
-    bOVP
+    BIT_POWER = 0,
+    BIT_OCP,
+    BIT_OVP
 };
 
 //monitor os status

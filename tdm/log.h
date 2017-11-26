@@ -25,6 +25,7 @@ public:
     int     AddLogFileList(string strSourceFile, string strTargetFolder);
     int     DelLogFileList(string strSourceFile);
     int     CopyLogFile();
+    int     CopyLogFile(string strSourceFile);
 
 public:
     list<CLogPath>      listLogFile;

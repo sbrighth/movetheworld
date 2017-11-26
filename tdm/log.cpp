@@ -18,6 +18,7 @@ CLog::~CLog()
 
 int CLog::AddLogFileList(string strSourceFile, string strTargetFolder)
 {
+    int iListIdx = 0;
     pthread_mutex_lock(&mutexLog);
 
     for(list<CLogPath>::iterator it = listLogFile.begin(); it != listLogFile.end(); it++)
@@ -33,9 +34,10 @@ int CLog::AddLogFileList(string strSourceFile, string strTargetFolder)
 
     CLogPath logPath(strSourceFile, strTargetFolder);
     listLogFile.push_back(logPath);
+    iListIdx = listLogFile.size() - 1;
 
     pthread_mutex_unlock(&mutexLog);
-    return 0;
+    return iListIdx;
 }
 
 int CLog::DelLogFileList(string strSourceFile)
@@ -66,6 +68,22 @@ int CLog::CopyLogFile()
     {
         CLogPath temp = *it;
         if(IsFileExist(temp.strSource.c_str()) == true)
+            CopyFile(temp.strFolder.c_str(), temp.strSource.c_str());
+    }
+
+    pthread_mutex_unlock(&mutexLog);
+
+    return 0;
+}
+
+int CLog::CopyLogFile(string strSourceFile)
+{
+    pthread_mutex_lock(&mutexLog);
+
+    for(list<CLogPath>::iterator it = listLogFile.begin(); it != listLogFile.end(); it++)
+    {
+        CLogPath temp = *it;
+        if((IsFileExist(temp.strSource.c_str()) == true) && (temp.strSource == strSourceFile))
             CopyFile(temp.strFolder.c_str(), temp.strSource.c_str());
     }
 

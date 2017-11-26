@@ -39,13 +39,10 @@ int CStatus::CheckAll()
 {
     CheckOs();
 
-    cout << "----------------------" << endl;
     for(int iPortIdx=0; iPortIdx<PORT_CNT; iPortIdx++)
     {
-        //cout << "<PORT" << iPortIdx+1 << ">" << endl;
         CheckDps(iPortIdx);
         CheckTest(iPortIdx);
-        //cout << endl;
     }
 
     return 0;
@@ -78,15 +75,11 @@ int CStatus::CheckOs()
 
     if(strcmp(buf, "0") == 0)
     {
-        printf(">> buf=%s\n", buf);
-        printf(">> mount ok!\n");
-        SET_BIT(statOs.iBitStatus, bMOUNT);
+        SET_BIT(statOs.iBitStatus, BIT_MOUNT);
     }
     else
     {
-        printf(">> buf=%s\n", buf);
-        printf(">> mount no!\n");
-        CLR_BIT(statOs.iBitStatus, bMOUNT);
+        CLR_BIT(statOs.iBitStatus, BIT_MOUNT);
     }
 
     //bd connect
@@ -94,11 +87,11 @@ int CStatus::CheckOs()
     GetStatusFromFile((const char*)cmd, buf, sizeof(buf));
     if(strcmp(buf, "1") == 0)
     {
-        SET_BIT(statOs.iBitStatus, bBDCONNECT);
+        SET_BIT(statOs.iBitStatus, BIT_BDCONNECT);
     }
     else
     {
-        CLR_BIT(statOs.iBitStatus, bBDCONNECT);
+        CLR_BIT(statOs.iBitStatus, BIT_BDCONNECT);
     }
 
 /*

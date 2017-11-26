@@ -51,12 +51,12 @@ int main(int argc, char *argv[])
 	{
 		//this is for monitoring job
         //msleep(100);
-/*
-        g_pStatusMon->CheckAll();
+
+        //g_pStatusMon->CheckAll();
 
         for(int iPortIdx=PORT_MIN; iPortIdx<PORT_MAX; iPortIdx++)
             g_pTestMng[iPortIdx]->mngLog.CopyLogFile();
-*/
+
         sleep(1);
 	}
 
@@ -236,6 +236,9 @@ int CreateTestFolders()
     CreateFolder(szMakePath);
 
     //for share folder
+    sprintf(szMakePath, "%s/exec", SYS_SHA_TESTER_PATH);
+    CreateFolder(szMakePath);
+
     g_szTesterPath = new char[PATHNAME_SIZE];
     sprintf(g_szTesterPath, "%s/%03d", SYS_SHA_TESTER_PATH, g_idTpc);
 

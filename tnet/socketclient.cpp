@@ -47,6 +47,7 @@ CSocketClient::CSocketClient(int iCell, char *szServerAddr, int iServerPort) {
 	this->bConnect = false;
 
     this->iConnecTimeout = 10;   //default 10sec
+    this->bUseThread = false;
 }
 
 CSocketClient::~CSocketClient() {
@@ -129,23 +130,23 @@ int CSocketClient::ConnectServer()
 	if(connect( iClientSocket , (struct sockaddr *)&tServerAddr, sizeof( tServerAddr ) ) < 0)
 	{
         //printf( "connect() Error! errno=%d\n" , errno );
-
         if(errno == EINPROGRESS)
 		{
-			struct timeval tv;
-            tv.tv_sec = 1;
-			tv.tv_usec = 0;
-
-			fd_set myset;
-            FD_ZERO(&myset);
-			FD_SET(iClientSocket, &myset);
-
             for(int iLoop=0; iLoop<iConnecTimeout; iLoop++)
             {
-                if(condCheckThread != 1)            //check program exit each 1sec
+                if(condCheckThread == OFF && bUseThread == true)            //check program exit each 1sec
                     break;
 
-               // if(select(iClientSocket+1, NULL, &myset, NULL, &tv) > 0)
+                struct timeval tv;
+                tv.tv_sec = 1;
+                tv.tv_usec = 0;
+
+                fd_set myset;
+                FD_ZERO(&myset);
+                FD_SET(iClientSocket, &myset);
+
+                //printf("select (%d/%d) \n", iLoop+1, iConnecTimeout);
+                if(select(iClientSocket+1, NULL, &myset, NULL, &tv) > 0)
                 {
                     int iGetSocketErr = 0;
                     socklen_t len = sizeof(iGetSocketErr);
@@ -158,14 +159,7 @@ int CSocketClient::ConnectServer()
                         break;
                     }
                 }
-
-                sleep(1);
             }
-		}
-		else
-		{
-            //printf("connect() error!!\n");
-			bConnect = false;;
 		}
     }
 	else
@@ -266,9 +260,12 @@ static void *SocketCheckThread( void *arg )
 				memset( cRecvBuf , 0 , sizeof( cRecvBuf ) );
 
 				int iCnt = pthis->Recv(cRecvBuf, sizeof(cRecvBuf));
-				if( iCnt <= 0 )
+                if( iCnt <= 0 )
 				{
-					printf( "socket recv() Error! errno=%d\n" , errno );
+                    if(errno == EAGAIN || errno == EWOULDBLOCK)
+                        continue;
+
+                    //printf( "socket recv() Error! errno=%d\n" , errno );
                     pthis->CloseSocket();
                     continue;
 				}
@@ -423,6 +420,7 @@ void CSocketClient::StartThread(void (*SetFunc)(SockPack sockData))
 {
     ProcFunc = SetFunc;
     InitSockData();
+    bUseThread = true;
 
     if(idCheckThread == 0)
         pthread_create(&idCheckThread, NULL, &SocketCheckThread, (void*)this);
@@ -449,4 +447,5 @@ void CSocketClient::StopThread()
 	}
 
     InitSockData();
+    bUseThread = false;
 }

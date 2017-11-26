@@ -81,7 +81,8 @@ void *TestThread(void *arg)
             delete [] pthis->vectArgv[iVersion][i];
         }
 
-        pthis->mngLog.DelLogFileList("port1.txt");
+        pthis->mngLog.CopyLogFile(pthis->strLogFile[iVersion]);
+        pthis->mngLog.DelLogFileList(pthis->strLogFile[iVersion]);
         printf(">> child status = %d\n", pthis->iChildStatus[iVersion]);
 	}
 
@@ -113,8 +114,7 @@ int CTestMng::StartTest(int iMsgVer, string strProcFile, string strRunFile, stri
 
     if(idThread[iMsgVer] == 0)
     {
-        //flag, strLogFile
-        //????
+        //flag
         //set run argument
         strRunProg[iMsgVer] = strRunFile;
         strRunArg[iMsgVer] = strArg;
@@ -126,19 +126,19 @@ int CTestMng::StartTest(int iMsgVer, string strProcFile, string strRunFile, stri
 
         if(iMsgVer == MSGVER_PORT_TEST)
         {
-            sprintf(szLogFile, "%s/%03d/%02d/port.txt", SYS_WORK_PATH, iCell, iPort+1);
+            sprintf(szLogFile, "%s/%02d/port.txt", SYS_WORK_PATH, iPort+1);
             sprintf(szTargetPath, "%s/%03d/%02d", SYS_SHA_TESTER_PATH, iCell, iPort+1);
-            mngLog.AddLogFileList(szLogFile, szTargetPath);
         }
         else
         {
-            sprintf(szLogFile, "%s/exec/log-%d-%d.txt", SYS_WORK_PATH, iCell, iPort+1);
-            sprintf(szTargetPath, "%s/exec", SYS_SHA_EXEC_PATH);
-            mngLog.AddLogFileList(szLogFile, szTargetPath);
+            sprintf(szLogFile, "%s/exec/log_v%d_%d.txt", SYS_WORK_PATH, iMsgVer, iPort+1);
+            sprintf(szTargetPath, "%s/%03d/exec", SYS_SHA_TESTER_PATH, iCell);
         }
 
+        mngLog.AddLogFileList(szLogFile, szTargetPath);
+        strLogFile[iMsgVer] = szLogFile;
 
-		//compile script
+        //compile script
         unlink(strRunFile.c_str());
 
         stringstream ss;
@@ -217,8 +217,6 @@ int CTestMng::StopTest(int iMsgVer)
 
         if(idThread[iMsgVer] > 0)
 			return -1;
-
-        mngLog.DelLogFileList("abc");
 	}
 
 	return 0;

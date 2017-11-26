@@ -188,7 +188,7 @@ int CTestFunc::test_shmem()
     int idDpsShmemLock = CreateSem(KEY_DPS_SHARE_LOCK);
 
     LockSem(idDpsShmemLock);
-    statDps[PORT1].bDpsOcp = true;
+    SET_BIT(statDps[PORT1].iBitStatus, BIT_OCP);
     SetShmem(idDpsShmem, &statDps[PORT1], sizeof(statDps[PORT1]));
     UnlockSem(idDpsShmemLock);
 

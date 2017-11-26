@@ -149,8 +149,8 @@ int CSocketServer::ListenSocket()
 
 int CSocketServer::AcceptClient()
 {
-	//if(bAccept)
-	//	return 0;
+    if(bAccept)
+        return 0;
 
 	socklen_t iClientAddrSize = sizeof( tClientAddr );
 	iClientSocket = accept( iServerSocket , (struct sockaddr *)&tClientAddr, &iClientAddrSize );
@@ -168,7 +168,7 @@ int CSocketServer::AcceptClient()
 	}
 
 	int flag =	fcntl(iClientSocket, F_GETFL, 0);
-	fcntl(iClientSocket, F_SETFL, flag | O_NONBLOCK);
+    fcntl(iClientSocket, F_SETFL, flag | O_NONBLOCK);
 
 	return 0;
 }
@@ -241,7 +241,7 @@ static void *SocketCheckThread( void *arg )
 	memset(m_tPollEvent, 0, sizeof(m_tPollEvent));
 
 	m_tPollEvent[0].fd        = pthis->iServerSocket;
-	m_tPollEvent[0].events    = POLLIN;
+    m_tPollEvent[0].events    = POLLIN;
 	m_tPollEvent[0].revents   = 0;
 	m_tPollEvent[1].fd = -1;
 
@@ -256,7 +256,7 @@ static void *SocketCheckThread( void *arg )
 
 				if(pthis->AcceptClient() < 0)
 				{
-					printf( "accept() Error!!! errno=%d\n", errno );
+                    //printf( "accept() Error!!! errno=%d\n", errno );
 					pthis->CloseClientSocket();
 
 					m_tPollEvent[1].fd = -1;
@@ -265,10 +265,10 @@ static void *SocketCheckThread( void *arg )
 				}
 				else
 				{
-                    printf( "accept() done\n" );
+                    //printf( "accept() done\n" );
 
                     m_tPollEvent[1].fd = pthis->iClientSocket;
-					m_tPollEvent[1].events = POLLIN;
+                    m_tPollEvent[1].events = POLLIN;
 					m_tPollEvent[1].revents = 0; 
 				}
 
@@ -284,9 +284,12 @@ static void *SocketCheckThread( void *arg )
 				memset( cRecvBuf , 0 , sizeof( cRecvBuf ) );
 
 				int iCnt = pthis->Recv(cRecvBuf, sizeof(cRecvBuf));
-				if( iCnt <= 0 )
+                if( iCnt <= 0 )
 				{
-					printf( "socket recv() Error! errno=%d\n" , errno );
+                    if(errno == EAGAIN || errno == EWOULDBLOCK)
+                        continue;
+
+                    //printf( "socket recv() Error! errno=%d\n" , errno );
 					pthis->CloseClientSocket();
 
 					m_tPollEvent[1].fd = -1;
@@ -295,12 +298,11 @@ static void *SocketCheckThread( void *arg )
 					continue;
 				}
 
-				strBuf.append(cRecvBuf, (strlen(cRecvBuf) > (size_t)iCnt)? iCnt : strlen(cRecvBuf));
+                strBuf.append(cRecvBuf, (strlen(cRecvBuf) > (size_t)iCnt)? iCnt : strlen(cRecvBuf));
 
                 while(iCnt--)
                 {
                     string strPacketData;
-
                     int ret = pthis->StripMark(strBuf, strPacketData);
                     if(ret > 0)
                     {
