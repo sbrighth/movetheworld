@@ -119,7 +119,6 @@ int CTestMng::StartTest(int iMsgVer, string strProcFile, string strRunFile, stri
         strRunProg[iMsgVer] = strRunFile;
         strRunArg[iMsgVer] = strArg;
 
-
         //set log file
         char szLogFile[256];
         char szTargetPath[256];
