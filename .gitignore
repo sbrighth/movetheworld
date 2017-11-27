@@ -15,6 +15,7 @@ RemoteSystemsTempFiles/
 *.o
 *~
 *.so
+*.so.*
 *.swp
 .*.swp
 
