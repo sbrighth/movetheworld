@@ -80,6 +80,7 @@ static int ProcMsg(MsgHdr hdr, char *msg_str)
             char szScriptName[PATHNAME_SIZE] = {0,};
             if( SearchFile(g_szTesterPortPath[iPortIdx], msg_str, szScriptName) < 0 )
             {
+                printf(">> script = %s\n", szScriptName);
                 printf(">> port%d script is not exist!!\n", port);
                 SendMsg(g_idMsgq, version, cell, port, MSG_DONE,	0, "");
                 SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,	0, "SCRIPT NOT EXIST");
@@ -107,6 +108,7 @@ static int ProcMsg(MsgHdr hdr, char *msg_str)
             }
             else
             {
+                printf(">> script = %s\n", szScriptName);
                 printf(">> '%s' file is not eixst\n", TEST_SCRIPT_RUN_EXT);
                 SendMsg(g_idMsgq, version, cell, port, MSG_DONE,	0, "");
                 SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,	0, "EXT NOT EXIST");

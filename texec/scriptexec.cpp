@@ -27,7 +27,7 @@ char szProgName[] = "texec";
 char szProgVersion[] = "0.0.1";
 
 using namespace std;
-enum mode{mode_none=0, mode_run, mode_stop, mode_list};
+enum mode{mode_none=0, mode_run, mode_stop, mode_list, mode_update};
 
 void help()
 {
@@ -38,7 +38,8 @@ void help()
     printf("\n");
     printf(" -r: run script\n");
 //    printf(" -s: stop specific job\n");
-//    printf(" -l: list job\n");
+    printf(" -l: list script\n");
+    printf(" -u: update script\n");
     printf("\n");
 }
 
@@ -129,7 +130,7 @@ int main(int argc, char **argv)
 
     //compile script
     ss.str("");
-    ss << SYS_WORK_PATH << "/" << strScriptOnlyName << " ";
+    ss << SYS_WORK_PATH << "/exec/" << strScriptOnlyName << " ";
     string strRunFile = ss.str();
     unlink(strRunFile.c_str());
 
@@ -142,6 +143,7 @@ int main(int argc, char **argv)
     ss << COMPILE_PROG << " "
        << COMPILE_INCPATH << " "
        << strScriptProcFile << " "
+       << " -include sctbasic.h "
        << "-o " << strRunFile << " "
        << COMPILE_LIBPATH << " "
        << COMPILE_LIB << " "
@@ -268,6 +270,10 @@ int CheckArg(int argc, char **argv, stringstream &ssArg)
     {
         //texec -l
         iMode = mode_list;
+    }
+    else if(strMode == "-u")
+    {
+        iMode = mode_update;
     }
     else
     {

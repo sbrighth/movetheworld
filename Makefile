@@ -10,6 +10,8 @@ clean:
 		$(MAKE) clean -C $$dir; \
 	done
 
+	rm -f output/bin/* output/lib/* output/include/*
+
 copy:
 	mkdir -p /tmp/exicon
 	cp -rf output/* /tmp/exicon/

@@ -236,9 +236,6 @@ int CreateTestFolders()
     CreateFolder(szMakePath);
 
     //for share folder
-    sprintf(szMakePath, "%s/exec", SYS_SHA_TESTER_PATH);
-    CreateFolder(szMakePath);
-
     g_szTesterPath = new char[PATHNAME_SIZE];
     sprintf(g_szTesterPath, "%s/%03d", SYS_SHA_TESTER_PATH, g_idTpc);
 
@@ -247,6 +244,9 @@ int CreateTestFolders()
         g_szTesterPortPath[iPortIdx] = new char[PATHNAME_SIZE];
         sprintf(g_szTesterPortPath[iPortIdx], "%s/%02d", g_szTesterPath, iPortIdx+1);
         CreateFolder(g_szTesterPortPath[iPortIdx]);
+
+        sprintf(szMakePath, "%s/exec", g_szTesterPath);
+        CreateFolder(szMakePath);
     }
 
     //for work folder

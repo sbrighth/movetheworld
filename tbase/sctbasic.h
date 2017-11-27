@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <errno.h>
 #include "def.h"
 
 #define STRINGIFY(x)     #x
@@ -35,7 +36,8 @@ int TEST_FLAG=0;
 #endif
 
 #ifndef LOG_FILE
-#define LOG_FILE    SYS_WORK_PATH"/exec/defaultlog.txt"
+///#define LOG_FILE    SYS_WORK_PATH"/exec/noname_log.txt"
+#define LOG_FILE    "/tmp/123.txt"
 #endif
 
 int idTestMsgq;
@@ -57,11 +59,18 @@ int	Print(const char *fmt, ...)
     sprintf(report, "%s", szLogFile);
 
     FILE* fp;
+    printf(">> report = %s\n", report);
     fp = fopen( report, "a" );
     if( fp )
     {
+        printf(">> report file open!\n");
         fwrite( buf, strlen(buf), 1, fp );
         fclose( fp );
+    }
+    else
+    {
+        printf(">> errno = %d\n", errno);
+        printf(">> report file open fail !\n");
     }
 
     return 0;
