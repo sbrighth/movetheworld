@@ -154,6 +154,16 @@ static int ProcMsg(MsgHdr hdr, char *msg_str)
             SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,	0, "ABORT FAIL");
         }
     }
+    else if(msg_no == MSG_INIT)
+    {
+        SendMsg(g_idMsgq, version, cell, port, MSG_INITACK, 0,  szProgVersion);
+        SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,   0,  "MSG_INIT");
+        SendMsg(g_idMsgq, version, cell, port, MSG_TEXT2,   0,  "");
+        SendMsg(g_idMsgq, version, cell, port, MSG_TEXT3,   0,  "");
+        SendMsg(g_idMsgq, version, cell, port, MSG_TEXT4,   0,  "");
+
+        g_pTestMng[iPortIdx]->InitTest(version);
+    }
     /*
     else if(msg_no == MSG_INIT)
     {
@@ -187,10 +197,6 @@ static int ProcMsg(MsgHdr hdr, char *msg_str)
         case SC_FILE_OTHER_ERR:
             break;
         }
-    }
-    else if(msg_no == MSG_INITACK)
-    {
-        // do nothing
     }
     */
     return 0;
@@ -363,6 +369,16 @@ static int ProcSock(MsgHdr hdr, char *msg_str)
                 SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,	0, "ABORT FAIL");
             }
         }
+    }
+    else if(msg_no == MSG_INIT)
+    {
+        SendMsg(g_idMsgq, version, cell, port, MSG_INITACK, 0,  szProgVersion);
+        SendMsg(g_idMsgq, version, cell, port, MSG_TEXT1,   0,  "MSG_INIT");
+        SendMsg(g_idMsgq, version, cell, port, MSG_TEXT2,   0,  "");
+        SendMsg(g_idMsgq, version, cell, port, MSG_TEXT3,   0,  "");
+        SendMsg(g_idMsgq, version, cell, port, MSG_TEXT4,   0,  "");
+
+        g_pTestMng[iPortIdx]->InitTest(version);
     }
 
     return 0;

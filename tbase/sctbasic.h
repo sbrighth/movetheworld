@@ -36,12 +36,18 @@ int TEST_FLAG=0;
 #endif
 
 #ifndef LOG_FILE
-///#define LOG_FILE    SYS_WORK_PATH"/exec/noname_log.txt"
-#define LOG_FILE    "/tmp/123.txt"
+char szLogFile[256] = SYS_WORK_PATH"/log_noname.txt";
+#else
+char szLogFile[256] = ARG_TO_STRING(LOG_FILE);
 #endif
 
 int idTestMsgq;
-char szLogFile[256] = ARG_TO_STRING(LOG_FILE);
+
+int SetLogName(char *name)
+{
+    snprintf(szLogFile, sizeof(szLogFile)-1, "%s/%s", SYS_WORK_PATH, name);
+    return 0;
+}
 
 int	Print(const char *fmt, ...)
 {
@@ -59,18 +65,11 @@ int	Print(const char *fmt, ...)
     sprintf(report, "%s", szLogFile);
 
     FILE* fp;
-    printf(">> report = %s\n", report);
     fp = fopen( report, "a" );
     if( fp )
     {
-        printf(">> report file open!\n");
         fwrite( buf, strlen(buf), 1, fp );
         fclose( fp );
-    }
-    else
-    {
-        printf(">> errno = %d\n", errno);
-        printf(">> report file open fail !\n");
     }
 
     return 0;

@@ -30,25 +30,25 @@
 //path
 #define SYS_PATH				"/tmp/exicon"
 
-#define SYS_BIN_PATH			SYS_PATH "/bin"
-#define SYS_DATA_PATH 			SYS_PATH "/data"
-#define SYS_LIB_PATH			SYS_PATH "/lib"
-#define SYS_INC_PATH			SYS_PATH "/include"
-#define SYS_LOG_PATH			SYS_PATH "/log"
-#define SYS_EXEC_PATH			SYS_PATH "/exec"
-#define SYS_SCRIPT_PATH			SYS_PATH "/script"
-#define SYS_SHA_PATH			SYS_PATH "/share"
-#define SYS_SHE_PATH			SYS_PATH "/shell"
-#define SYS_WORK_PATH			SYS_PATH "/work"
-#define SYS_UPDATE_PATH			SYS_PATH "/update"
+#define SYS_BIN_PATH			SYS_PATH"/bin"
+#define SYS_DATA_PATH 			SYS_PATH"/data"
+#define SYS_LIB_PATH			SYS_PATH"/lib"
+#define SYS_INC_PATH			SYS_PATH"/include"
+#define SYS_LOG_PATH			SYS_PATH"/log"
+#define SYS_EXEC_PATH			SYS_PATH"/exec"
+#define SYS_SCRIPT_PATH			SYS_PATH"/script"
+#define SYS_SHA_PATH			SYS_PATH"/share"
+#define SYS_SHE_PATH			SYS_PATH"/shell"
+#define SYS_WORK_PATH			SYS_PATH"/work"
+#define SYS_UPDATE_PATH			SYS_PATH"/update"
 
-#define SYS_SHA_EXEC_PATH       SYS_SHA_PATH "/exec"
-#define SYS_SHA_TESTER_PATH     SYS_SHA_PATH "/tester"
+#define SYS_SHA_EXEC_PATH       SYS_SHA_PATH"/exec"
+#define SYS_SHA_TESTER_PATH     SYS_SHA_PATH"/tester"
 
 //info file name
-#define FILE_TPC_ID             SYS_DATA_PATH "/tpc_id.txt"
-#define FILE_BD_CONNECT         SYS_DATA_PATH "/bd_connect.txt"
-#define FILE_VERSION            SYS_DATA_PATH "/version.txt"
+#define FILE_TPC_ID             SYS_DATA_PATH"/tpc_id.txt"
+#define FILE_BD_CONNECT         SYS_DATA_PATH"/bd_connect.txt"
+#define FILE_VERSION            SYS_DATA_PATH"/version.txt"
 
 //log name
 #define TEST_LOG_NAME			"port"

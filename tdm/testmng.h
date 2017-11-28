@@ -25,6 +25,7 @@ public:
 public:
     int             StartTest(int iMsgVer, string strProcFile, string strRunFile, string strArg);
     int				StopTest(int iMsgVer);
+    int             InitTest(int iMsgVer);
     int				IsTestOn(int iMsgVer);
 	int				CheckScriptExt(string strFileName, string strCheckExt);
     int             StrToArgv(string strArgs, vector<char*> &argv);

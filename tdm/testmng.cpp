@@ -17,8 +17,8 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <errno.h>
-#include "def.h"
 #include "testmng.h"
+#include "base.h"
 
 
 CTestMng::CTestMng(int iCell, int iPort):iCell(iCell),iPort(iPort)
@@ -134,6 +134,7 @@ int CTestMng::StartTest(int iMsgVer, string strProcFile, string strRunFile, stri
             sprintf(szTargetPath, "%s/%03d/exec", SYS_SHA_TESTER_PATH, iCell);
         }
 
+        RemoveFile(szLogFile);
         mngLog.AddLogFileList(szLogFile, szTargetPath);
         strLogFile[iMsgVer] = szLogFile;
 
@@ -219,6 +220,24 @@ int CTestMng::StopTest(int iMsgVer)
 	}
 
 	return 0;
+}
+
+int CTestMng::InitTest(int iMsgVer)
+{
+    //if(iMsgVer < MSGVER_NONE || iMsgVer > MSGVER_PORT_TEST)
+    if(iMsgVer != MSGVER_PORT_TEST)
+        return 0;
+
+    if(idThread[iMsgVer] != 0)
+    {
+        return -1;
+    }
+
+    char cmd[256];
+    sprintf(cmd, "rm -rf %s/%02d/*", SYS_WORK_PATH, iPort+1);
+    system(cmd);
+
+    return 0;
 }
 
 int CTestMng::IsTestOn(int iMsgVer)
