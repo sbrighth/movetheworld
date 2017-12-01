@@ -28,7 +28,8 @@
 #define int64	long long
 
 //path
-#define SYS_PATH				"/tmp/exicon"
+//#define SYS_PATH				"/exicon"
+#define SYS_PATH				"/exicon"
 
 #define SYS_BIN_PATH			SYS_PATH"/bin"
 #define SYS_DATA_PATH 			SYS_PATH"/data"
@@ -62,7 +63,7 @@
 #define	TEST_SCRIPT_RUN_EXT		"c"
 
 //compile option
-#define COMPILE_PROG			"/usr/bin/gcc"	//"tcc"
+#define COMPILE_PROG			"/usr/bin/g++" //gcc"	//"tcc"
 #define COMPILE_INCPATH			"-I"SYS_INC_PATH
 #define COMPILE_LIBPATH			"-L"SYS_LIB_PATH
 #define COMPILE_LIB				"-ltbase -ltnet -lpthread"
@@ -78,7 +79,10 @@
 #define KEY_DPS_SHARE			0x1000
 
 //socket
-#define PORT_TDM				5000
+#define SERVER_IP				"192.168.100.250"
+#define SERVER_PORT				3132
+#define LOCAL_IP				"127.0.0.1"
+#define LOCAL_PORT				5000
 #define SOCKET_START_MARK		"<"
 #define SOCKET_END_MARK			">"
 #define SOCKET_SPLIT_MARK       ","
