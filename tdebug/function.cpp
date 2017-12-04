@@ -181,17 +181,31 @@ int CTestFunc::test_shmem()
     printf(">> read data = %s\n", buf);
     */
 
+    char sData[4] = {0, };
+    printf("iStatus :");
+    cin >> sData;
+
     DpsStatus statDps[PORT_CNT];
     memset(statDps, 0, sizeof(statDps));
 
     int idDpsShmem = CreateShmem(KEY_DPS_SHARE, sizeof(statDps));
     int idDpsShmemLock = CreateSem(KEY_DPS_SHARE_LOCK);
 
+    statDps[PORT1].iStatus =  atoi(sData);
+    printf(">> set strData[PORT1].iStatus = 0x%x\n\n", statDps[PORT1].iStatus);
+
     LockSem(idDpsShmemLock);
-    SET_BIT(statDps[PORT1].iBitStatus, BIT_OCP);
-    SetShmem(idDpsShmem, &statDps[PORT1], sizeof(statDps[PORT1]));
+    SetShmem(idDpsShmem, &statDps, sizeof(statDps));
+    UnlockSem(idDpsShmemLock);
+/*
+    memset(statDps, 0, sizeof(statDps));
+
+    LockSem(idDpsShmemLock);
+    GetShmem(idDpsShmem, &statDps, sizeof(statDps));
     UnlockSem(idDpsShmemLock);
 
+    printf(">> get strData[PORT1].iStatus = 0x%x\n\n", statDps[PORT1].iStatus);
+*/
     //RemoveShmem(id_shmem);
     return EXIT_SUCCESS;
 }

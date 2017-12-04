@@ -8,6 +8,8 @@
 #include <stdarg.h>
 #include <errno.h>
 #include "def.h"
+#include "base.h"
+#include "msgsend.h"
 
 #define STRINGIFY(x)     #x
 #define ARG_TO_STRING(x) STRINGIFY(x)
@@ -75,7 +77,7 @@ int	Print(const char *fmt, ...)
     return 0;
 }
 
-void TEST_INIT(argc, argv)
+void TEST_INIT()
 {
     idTestMsgq = CreateMsgq(KEY_TEST_MSGQ);
 }

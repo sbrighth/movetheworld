@@ -8,8 +8,8 @@
 #ifndef STATUS_H_
 #define STATUS_H_
 
+#include <string>
 #include "def.h"
-#include "string"
 #include "testmng.h"
 
 using namespace std;
@@ -21,8 +21,8 @@ public:
 
     int CheckAll();
     int CheckOs();
+    int CheckDps();
     int CheckTest(int port);
-    int CheckDps(int port);
     int GetStatusFromPipe(const char *szCmd, char *sBuf, int iBufSize);
     int GetStatusFromFile(const char *szCmd, char *sBuf, int iBufSize);
 

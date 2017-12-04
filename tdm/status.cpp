@@ -38,10 +38,10 @@ CStatus::~CStatus() {
 int CStatus::CheckAll()
 {
     CheckOs();
+    CheckDps();
 
     for(int iPortIdx=0; iPortIdx<PORT_CNT; iPortIdx++)
     {
-        CheckDps(iPortIdx);
         CheckTest(iPortIdx);
     }
 
@@ -126,20 +126,19 @@ int CStatus::CheckTest(int port)
     return 0;
 }
 
-int CStatus::CheckDps(int port)
+int CStatus::CheckDps()
 {
     //get status from share memory where dps check script save status
     LockSem(idDpsShmemLock);
-    GetShmem(idDpsShmem, &statDps[port], sizeof(statDps[port]));
+    GetShmem(idDpsShmem, &statDps, sizeof(statDps));
     UnlockSem(idDpsShmemLock);
-/*
-    cout << "<PORT" << port+1 << ">" << endl;
-    cout << "DPS5V set/get voltage = " << statDps[port].sDpsSetVoltage[DPS_CH1] << " / " << statDps[port].sDpsGetVoltage[DPS_CH1] << endl;
-    cout << "DPS12V set/get voltage = " << statDps[port].sDpsSetVoltage[DPS_CH2] << " / " << statDps[port].sDpsGetVoltage[DPS_CH2] << endl;
-    cout << "DPS power = " << statDps[port].bDpsPower << endl;
-    cout << "DPS OCP = " << statDps[port].bDpsOcp << endl;
-    cout << "DPS OVP = " << statDps[port].bDpsOvp << endl << endl;
-*/
+
+    cout << endl;
+    cout << "------------------------------------------------" << endl;
+    cout << "P1 DPS5V  get voltage = " << statDps[PORT1].dVoltage[DPS_CH1] << " / " << statDps[PORT1].dVoltage[DPS_CH1] << endl;
+    cout << "P2 DPS12V get voltage = " << statDps[PORT2].dVoltage[DPS_CH2] << " / " << statDps[PORT2].dVoltage[DPS_CH2] << endl;
+    cout << "------------------------------------------------" << endl;
+
     return 0;
 }
 

@@ -62,10 +62,10 @@
 #define	TEST_SCRIPT_RUN_EXT		"c"
 
 //compile option
-#define COMPILE_PROG			"/usr/bin/gcc"	//"tcc"
+#define COMPILE_PROG			"/usr/bin/g++"	//"tcc"
 #define COMPILE_INCPATH			"-I"SYS_INC_PATH
 #define COMPILE_LIBPATH			"-L"SYS_LIB_PATH
-#define COMPILE_LIB				"-ltbase -ltnet -lpthread"
+#define COMPILE_LIB				"-ltbase -ltnet -lpthread -lDuoBdLib"
 
 //msgq
 #define KEY_TEST_MSGQ			0x1000
@@ -303,6 +303,7 @@ typedef struct tOsStatus
 {
     char    sTime[32];
     char    sCpuUsage[32];
+    char    sCpuTemp[32];
     char    sMemUsage[32];
     char    sDiskUsage[32];
     int     iBitStatus;
@@ -317,10 +318,11 @@ typedef struct tTestStatus
 //monitor dps status
 typedef struct tDpsStatus
 {
-    float   sDpsSetVoltage[DPS_CH_CNT];
-    float   sDpsGetVoltage[DPS_CH_CNT];
-    float   sDpsCurrent[DPS_CH_CNT];
-    int     iBitStatus;         //power, ocp, ovp
+    double   dSetVoltage[DPS_CH_CNT];
+    double   dVoltage[DPS_CH_CNT];
+    double   dCurrent[DPS_CH_CNT];
+    double   dPower[DPS_CH_CNT];
+    int     iStatus;
 }__attribute__ ((packed)) DpsStatus;
 
 //monitor perf status

@@ -50,14 +50,12 @@ int main(int argc, char *argv[])
 	while( g_condTestDm )
 	{
 		//this is for monitoring job
-        //msleep(100);
-
-        //g_pStatusMon->CheckAll();
+        g_pStatusMon->CheckAll();
 
         for(int iPortIdx=PORT_MIN; iPortIdx<PORT_MAX; iPortIdx++)
             g_pTestMng[iPortIdx]->mngLog.CopyLogFile();
 
-        sleep(1);
+        sleep(3);
 	}
 
     DeleteResource();
