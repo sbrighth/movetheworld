@@ -22,6 +22,9 @@
 #include <queue>
 #include "base.h"
 
+#include <iostream>
+using namespace std;
+
 CSocketClient::CSocketClient(int iCell, char *szServerAddr, int iServerPort) {
 	// TODO Auto-generated constructor stub
 
@@ -412,7 +415,15 @@ int CSocketClient::DataSplit(string strData, SockPack &sockData)
         sockData.pstring = new char[MSG_STRING_LENGTH];
         memset(sockData.pstring, 0, MSG_STRING_LENGTH);
     }
-
+/*
+    cout << "version = " << sockData.hdr.version << endl;
+    cout << "cell = " << sockData.hdr.cell<< endl;
+    cout << "port = " << sockData.hdr.port<< endl;
+    cout << "msg_no = " << sockData.hdr.msg_no<< endl;
+    cout << "packet = " << sockData.hdr.packet<< endl;
+    cout << "flag = " << sockData.hdr.flag << endl;
+    cout << "pstring = " << sockData.pstring<< endl;
+*/
     return 0;
 }
 

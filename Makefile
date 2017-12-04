@@ -13,7 +13,7 @@ clean:
 	rm -f output/bin/* output/lib/* output/include/*
 
 copy:
-	mkdir -p /tmp/exicon
-	cp -rf output/* /tmp/exicon/
+	mkdir -p /exicon
+	cp -rf output/* /exicon/
 
 .PONY: all clean copy

@@ -27,7 +27,8 @@ char szProgVersion[] = "0.0.11";
 int main(int argc, char *argv[])
 {
 	//running check
-	if(CheckProgRunning() > 2)
+	int cnt = CheckProgRunning();
+	if(cnt > 1)
 	{
         printf("%s is runinning\n", szProgName);
 		return -1;
@@ -76,17 +77,16 @@ void InitResource()
     cout << "strTestMsgRecvFrom : " << szTestMsgRecvFrom << endl;
 
     //MsgqThread
-    g_idMsgq = KEY_TEST_MSGQ;
-    g_pTestMsgq = new CMsgqThread(g_idMsgq, szTestMsgSendTo, szTestMsgRecvFrom);
+    g_pTestMsgq = new CMsgqThread(KEY_TEST_MSGQ, szTestMsgSendTo, szTestMsgRecvFrom);
     g_pTestMsgq->StartThread(ProcRecvMsg);
+    g_idTestMsgq = g_pTestMsgq->idMsgq;
 
     //Socket Server
-    g_pSocketServer = new CSocketServer((char *)"127.0.0.1", PORT_TDM);
+    g_pSocketServer = new CSocketServer((char *)LOCAL_IP, LOCAL_PORT);
     g_pSocketServer->StartThread(&ProcRecvSock);
 
     //Socket Client
-    //g_pSocketClient  = new CSocketClient(g_idTpc, (char *)"127.0.0.1", PORT_TDM);
-    g_pSocketClient  = new CSocketClient(g_idTpc, (char *)"192.168.10.68", 3132);
+    g_pSocketClient  = new CSocketClient(g_idTpc, (char *)SERVER_IP, SERVER_PORT);
     g_pSocketClient->StartThread(&ProcRecvSock);
 
     //TestMng
@@ -147,7 +147,7 @@ int CheckProgRunning()
 	char cmd[32] = {0,};
 	char buf[32] = {0,};
 
-    sprintf(cmd, "ps -a | grep %s | wc -l", szProgName);
+    sprintf(cmd, "ps -e | grep %s | wc -l", szProgName);
 	file = popen(cmd, "r");
 	if(file == NULL)
 		return -1;
@@ -280,17 +280,17 @@ int NotifyProgReady()
     if(g_pTestMsgq == NULL)
         return -1;
 
-    if(g_pTestMsgq->idMsgq < 0)
+    if(g_idTestMsgq < 0)
         return -2;
 
     for(int idx=0; idx<PORT_CNT; idx++)
     {
-        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_INIT,	0, szProgVersion);
-        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_INITCOLOR,0, "");
-        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT1, 	0, "EMPTY");
-        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT2, 	0, "");
-        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT3, 	0, szProgVersion);
-        SendMsg(g_pTestMsgq->idMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT4, 	0, "");
+        SendMsg(g_idTestMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_INIT,	0, szProgVersion);
+        SendMsg(g_idTestMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_INITCOLOR,0, "");
+        SendMsg(g_idTestMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT1, 	0, "EMPTY");
+        SendMsg(g_idTestMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT2, 	0, "");
+        SendMsg(g_idTestMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT3, 	0, szProgVersion);
+        SendMsg(g_idTestMsgq, MSGVER_PORT_TEST, g_idTpc, idx+1, MSG_TEXT4, 	0, "");
     }
 
     return 0;

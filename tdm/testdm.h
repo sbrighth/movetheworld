@@ -36,7 +36,7 @@ char    *g_szWorkPortPath[PORT_CNT];
 int		g_condTestDm;
 int		g_idTpc;
 int		g_idResShare;
-int     g_idMsgq;
+int     g_idTestMsgq;
 
 CMsgqThread     *g_pTestMsgq = NULL;
 CSocketServer   *g_pSocketServer = NULL;

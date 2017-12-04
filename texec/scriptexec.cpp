@@ -205,7 +205,7 @@ int ProcExec(int iMode, string strArg)
         idTpc = 200;
     }
 
-    CSocketClient *g_pSocketClient  = new CSocketClient(idTpc, (char *)"127.0.0.1", PORT_TDM);
+    CSocketClient *g_pSocketClient  = new CSocketClient(idTpc, (char *)LOCAL_IP, LOCAL_PORT);
 
     if(g_pSocketClient->CreateSocket() < 0)
     {

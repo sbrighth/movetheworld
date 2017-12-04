@@ -358,7 +358,7 @@ int CTestFunc::test_msg_out()
 int CTestFunc::test_socket_server()
 {
     /*
-    CSocketServer *sock = new CSocketServer((char*)"127.0.0.1", PORT_TDM);
+    CSocketServer *sock = new CSocketServer((char*)LOCAL_IP, LOCAL_PORT);
 
     sock->StartThread();
 
@@ -456,7 +456,7 @@ int CTestFunc::test_socket_client()
         idTpc = 200;
     }
 
-    CSocketClient *g_pSocketClient  = new CSocketClient(idTpc, (char *)"127.0.0.1", PORT_TDM);
+    CSocketClient *g_pSocketClient  = new CSocketClient(idTpc, (char *)LOCAL_IP, LOCAL_PORT);
 
     if(g_pSocketClient->CreateSocket() < 0)
     {

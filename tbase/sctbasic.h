@@ -126,7 +126,7 @@ int SEND_TEXT4(char *string)
     }
 }
 
-int MSG_STEP(int cur, int max)
+int TEST_STEP(int cur, int max)
 {
     char string[20];
     sprintf(string, "%d/%d", cur, max);
