@@ -322,11 +322,12 @@ typedef struct tTestStatus
 //monitor dps status
 typedef struct tDpsStatus
 {
-    double   dSetVoltage[DPS_CH_CNT];
-    double   dVoltage[DPS_CH_CNT];
-    double   dCurrent[DPS_CH_CNT];
-    double   dPower[DPS_CH_CNT];
+    double  dSetVoltage[DPS_CH_CNT];
+    double  dVoltage[DPS_CH_CNT];
+    double  dCurrent[DPS_CH_CNT];
+    double  dPower[DPS_CH_CNT];
     int     iStatus;
+    int     iConnect;
 }__attribute__ ((packed)) DpsStatus;
 
 //monitor perf status

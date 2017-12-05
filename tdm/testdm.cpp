@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 	if(cnt > 1)
 	{
         printf("%s is runinning\n", szProgName);
-		return -1;
+        return -1;
     }
 	else
 	{
@@ -50,9 +50,6 @@ int main(int argc, char *argv[])
     g_condTestDm = 1;
 	while( g_condTestDm )
 	{
-		//this is for monitoring job
-        g_pStatusMon->CheckAll();
-
         for(int iPortIdx=PORT_MIN; iPortIdx<PORT_MAX; iPortIdx++)
             g_pTestMng[iPortIdx]->mngLog.CopyLogFile();
 
@@ -97,6 +94,7 @@ void InitResource()
 
     //Status
     g_pStatusMon = new CStatus(g_pTestMng);
+    g_pStatusMon->StartThread();
 }
 
 
@@ -104,6 +102,7 @@ void DeleteResource()
 {
     if(g_pStatusMon != NULL)
     {
+        g_pStatusMon->StopThread();
         delete g_pStatusMon;
     }
 

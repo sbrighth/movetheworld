@@ -11,6 +11,7 @@
 #include <string>
 #include "def.h"
 #include "testmng.h"
+#include "pthread.h"
 
 using namespace std;
 
@@ -19,12 +20,18 @@ public:
     CStatus(CTestMng *mng[]);
 	virtual ~CStatus();
 
-    int CheckAll();
     int CheckOs();
-    int CheckDps();
     int CheckTest(int port);
     int GetStatusFromPipe(const char *szCmd, char *sBuf, int iBufSize);
     int GetStatusFromFile(const char *szCmd, char *sBuf, int iBufSize);
+
+    void StartThread();
+    void StopThread();
+    int SetMonitorDuration(int iSec);
+
+    void StartDpsThread();
+    void StopDpsThread();
+    int SetUpdateDpsDuration(int iMs);
 
 public:
     OsStatus    statOs;
@@ -34,8 +41,15 @@ public:
 
     CTestMng *pTestMng[PORT_CNT];
     string  strJson;
-    int idDpsShmem;
-    int idDpsShmemLock;
+
+    pthread_mutex_t mutexDpsSync;
+    pthread_t idMonitorThread;
+    pthread_t idDpsThread;
+    int condMonitorThread;
+    int condDpsThread;
+
+    int iMonitorDurationSec;
+    int iUpdateDpsDurationMs;
 };
 
 #endif /* STATUS_H_ */

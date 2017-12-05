@@ -1,7 +1,7 @@
 CC		 	= gcc
 CXX		 	= g++
 CXXFLAGS 	= -O2 -g -Wall -fmessage-length=0 -Wno-unused-result -I$(INCPATH)
-LDFLAGS  	= -L$(LIBPATH) -ltbase -ltnet -lpthread
+LDFLAGS  	= -L$(LIBPATH) -ltbase -ltnet -lpthread -lDuoBdLib
 
 BINPATH		= ../output/bin
 INCPATH		= ../output/include
