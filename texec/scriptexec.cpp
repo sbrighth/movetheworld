@@ -17,7 +17,9 @@
 #include <sstream>
 #include "def.h"
 #include "base.h"
-#include "socketclient.h"
+//#include "socketclient.h"
+
+using namespace std;
 
 int CheckArg(int argc, char **argv, stringstream &ssArg);
 int CheckScriptExt(string strFileName, string strCheckExt);
@@ -190,7 +192,7 @@ int CheckArg(int argc, char **argv, stringstream &ssArg)
 
     return iMode;
 }
-
+/*
 int ProcExec(int iMode, string strArg)
 {
     int idTpc;
@@ -257,7 +259,7 @@ int ProcExec(int iMode, string strArg)
 
     return 0;
 }
-
+*/
 int DoModeRun(stringstream &ssArg)
 {
 

@@ -9,54 +9,30 @@
 #define SOCKETCLIENT_H_
 
 #include <netinet/in.h>
-#include <string>
-#include <poll.h>
-#include <queue>
-#include "def.h"
-
-using namespace std;
 
 class CSocketClient {
 public:
-    CSocketClient(int iCell, char *szServerAddr, int iServerPort);
-	virtual ~CSocketClient();
+    CSocketClient(char *szServerAddr, int iServerPort);
+    virtual ~CSocketClient();
 
 public:
-    int             InitSockData();
 	int				IsConnected();
 	int				CreateSocket();
 	int				ConnectServer();
 	void			CloseSocket();
 	int				Recv(char *buf, int size);
 	int				Send(char *buf, int size);
-    void			StartThread(void (*SetFunc)(SockPack sockData));
-	void			StopThread();
-	int				SendCheckDummy();
-    int				StripMark(string strBuf, string &strData);
-    int				DataSplit(string strData, SockPack &sockData);
 
 public:
-	int				iCell;
-    void			(*ProcFunc)(SockPack sockData);
-
-    bool            bUseThread;
-    int				condCheckThread;
-    int             condProcThread;
-    int             iConnecTimeout;
-    pthread_t		idCheckThread;
-    pthread_t       idProcThread;
-
+    bool            bReqStop;
 	bool			bConnect;
+    int             iConnectTimeout;
 	int				iServerSocket;
 	sockaddr_in		tServerAddr;
 	int				iClientSocket;
 	sockaddr_in		tClientAddr;
-
 	char			szServerSocketAddr[16];
 	int				iServerSocketPort;  
-
-    queue<SockPack> qRecv;
-    queue<SockPack> qSend;
 };
 
 #endif /* SOCKETCLIENT_H_ */

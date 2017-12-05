@@ -37,7 +37,37 @@ void *MonitorThread(void *arg)
         }
 
         pthread_mutex_lock(&pthis->mutexDpsSync);
+
         //socket
+        if(pthis->CreateSocket() < 0)
+        {
+            pthis->CloseSocket();
+            sleep(1);
+            continue;
+        }
+
+        if(pthis->ConnectServer() < 0)
+        {
+            //printf( "ConnectServer() Error!!! errno=%d\n", errno );
+            pthis->CloseSocket();
+            strBuf.erase();
+            sleep(1);
+            continue;
+        }
+
+
+        char cSendBuf[32] = {0,};
+        sprintf(cSendBuf, "%s%d,%d,%d,%d,%d,%d,%s%s", SOCKET_START_MARK, 0, iCell, 0, 0, 0, 0, "", SOCKET_END_MARK );
+
+        int iSendCnt = Send(cSendBuf, strlen(cSendBuf));
+        if(iSendCnt < (ssize_t)strlen(cSendBuf))
+        {
+            //printf("connection error!!\n");
+            bConnect = false;
+            return -1;
+        }
+        //
+
         pthread_mutex_unlock(&pthis->mutexDpsSync);
 
         sleep(pthis->iMonitorDurationSec);
@@ -106,7 +136,9 @@ void *DpsThread(void *arg)
     pthread_exit((void *)0);
 }
 
-CStatus::CStatus(CTestMng *mng[]) {
+CStatus::CStatus(CTestMng *mng[], char *szServerAddr, int iServerPort)
+    :CSocketClient(szServerAddr, iServerPort)
+{
 	// TODO Auto-generated constructor stub
     memset(&statOs, 0, sizeof(statOs));
     memset(&statDps, 0, sizeof(statDps));

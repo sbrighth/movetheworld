@@ -9,3 +9,9 @@ callback.cpp
 callback.h
 log.h
 log.cpp
+network/msgsocketclient.h
+network/msgsocketclient.cpp
+network/msgsocketserver.h
+network/msgsocketserver.cpp
+network/statsocketclient.h
+network/statsocketclient.cpp

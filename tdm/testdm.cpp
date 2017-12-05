@@ -79,12 +79,12 @@ void InitResource()
     g_idTestMsgq = g_pTestMsgq->idMsgq;
 
     //Socket Server
-    g_pSocketServer = new CSocketServer((char *)LOCAL_IP, LOCAL_PORT);
-    g_pSocketServer->StartThread(&ProcRecvSock);
+    g_pMsgSocketServer = new CMsgSocketServer((char *)LOCAL_IP, LOCAL_PORT);
+    g_pMsgSocketServer->StartThread(&ProcRecvSock);
 
-    //Socket Client
-    g_pSocketClient  = new CSocketClient(g_idTpc, (char *)SERVER_IP, SERVER_PORT);
-    g_pSocketClient->StartThread(&ProcRecvSock);
+    //Msg Socket Client
+    g_pMsgSocketClient  = new CMsgSocketClient(g_idTpc, (char *)SERVER_IP, SERVER_PORT);
+    g_pMsgSocketClient->StartThread(&ProcRecvSock);
 
     //TestMng
     for(int idx=0; idx<PORT_CNT; idx++)
@@ -94,7 +94,7 @@ void InitResource()
 
     //Status
     g_pStatusMon = new CStatus(g_pTestMng);
-    g_pStatusMon->StartThread();
+    //g_pStatusMon->StartThread();
 }
 
 
@@ -112,10 +112,16 @@ void DeleteResource()
         delete g_pTestMsgq;
     }
 
-    if(g_pSocketClient != NULL)
+    if(g_pMsgSocketServer != NULL)
     {
-        g_pSocketClient->StopThread();
-        delete g_pSocketClient;
+        g_pMsgSocketServer->StopThread();
+        delete g_pMsgSocketServer;
+    }
+
+    if(g_pMsgSocketClient != NULL)
+    {
+        g_pMsgSocketClient->StopThread();
+        delete g_pMsgSocketClient;
     }
 
     for(int idx=0; idx<PORT_CNT; idx++)

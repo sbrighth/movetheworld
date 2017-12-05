@@ -1,5 +1,5 @@
 MAJOR		= 1
-MINOR		= 0
+MINOR		= 1
 
 CC			= gcc
 CXX			= g++

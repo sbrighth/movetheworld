@@ -13,10 +13,10 @@
 #include "msgqthread.h"
 #include "msgsend.h"
 #include "testmng.h"
-#include "socketserver.h"
-#include "socketclient.h"
 #include "status.h"
 #include "callback.h"
+#include "network/msgsocketserver.h"
+#include "network/msgsocketclient.h"
 
 void    InitResource();
 void    DeleteResource();
@@ -38,10 +38,10 @@ int		g_idTpc;
 int		g_idResShare;
 int     g_idTestMsgq;
 
-CMsgqThread     *g_pTestMsgq = NULL;
-CSocketServer   *g_pSocketServer = NULL;
-CSocketClient   *g_pSocketClient = NULL;
-CTestMng        *g_pTestMng[PORT_CNT];
-CStatus         *g_pStatusMon = NULL;
+CMsgqThread         *g_pTestMsgq = NULL;
+CMsgSocketServer    *g_pMsgSocketServer = NULL;
+CMsgSocketClient    *g_pMsgSocketClient = NULL;
+CTestMng            *g_pTestMng[PORT_CNT];
+CStatus             *g_pStatusMon = NULL;
 
 #endif /* TESTDM_H_ */
