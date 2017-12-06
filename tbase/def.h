@@ -81,6 +81,7 @@
 //socket
 #define SERVER_IP				"192.168.100.250"
 #define SERVER_PORT				3132
+#define SERVER_STAT_PORT    	3133
 #define LOCAL_IP				"127.0.0.1"
 #define LOCAL_PORT				5000
 #define SOCKET_START_MARK		"<"
@@ -335,6 +336,13 @@ typedef struct tPerfStatus
 {
     char sWrite[32];
     char sRead[32];
-}PerfStatus;
+}__attribute__ ((packed)) PerfStatus;
+
+typedef struct tStatData
+{
+    OsStatus    statOS;
+    TestStatus  statTest[PORT_CNT];
+    DpsStatus   statDps[PORT_CNT];
+}__attribute__ ((packed)) StatData;
 
 #endif /* DEF_H_ */

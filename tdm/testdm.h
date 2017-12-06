@@ -16,6 +16,7 @@
 #include "status.h"
 #include "callback.h"
 #include "msgsocket.h"
+#include "statsocket.h"
 
 void    InitResource();
 void    DeleteResource();
@@ -40,6 +41,7 @@ int     g_idTestMsgq;
 CMsgqThread         *g_pTestMsgq = NULL;
 CMsgSocket          *g_pMsgSocketServer = NULL;
 CMsgSocket          *g_pMsgSocketClient = NULL;
+CStatSocket         *g_pStatSocket = NULL;
 CTestMng            *g_pTestMng[PORT_CNT];
 CStatus             *g_pStatusMon = NULL;
 

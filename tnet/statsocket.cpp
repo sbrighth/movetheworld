@@ -11,9 +11,10 @@
 #include "base.h"
 #include "statsocket.h"
 
-CStatSocket::CStatSocket(har *szServerAddr, int iServerPort)
+CStatSocket::CStatSocket(char *szServerAddr, int iServerPort)
     : CSocketClient(szServerAddr, iServerPort)
 {
+
 }
 
 CStatSocket::~CStatSocket() {
@@ -22,24 +23,28 @@ CStatSocket::~CStatSocket() {
     StopThread();
 }
 
-int CStatSocket::InitSockData()
+int CStatSocket::SendData(StatData statData)
+{
+    qSend.push(statData);
+
+    printf(">> StatSocket SendData\n");
+    printf(">> queue cnt = %zu\n", qSend.size());
+    //consider queue count limit...
+    return 0;
+}
+
+int CStatSocket::InitData()
 {
     while(!qRecv.empty())
     {
-        SockPack sockData = qRecv.front();
+        qRecv.front();
         qRecv.pop();
-
-        if(sockData.pstring)
-            delete sockData.pstring;
     }
 
     while(!qSend.empty())
     {
-        SockPack sockData = qSend.front();
+        qSend.front();
         qSend.pop();
-
-        if(sockData.pstring)
-            delete sockData.pstring;
     }
 
     return 0;
@@ -48,7 +53,7 @@ int CStatSocket::InitSockData()
 static void *SocketSendThread( void *arg )
 {
     CStatSocket *pthis = (CStatSocket *)arg;
-    string strBuf;;
+    char cSendBuf[sizeof(StatData)+1] = {0,};
 
     pthis->condSendThread = ON;
     while( pthis->condSendThread == ON )                // Socket check Loop
@@ -56,7 +61,6 @@ static void *SocketSendThread( void *arg )
         if(pthis->CreateSocket() < 0)
         {
             pthis->CloseSocket();
-            strBuf.erase();
             sleep(1);
             continue;
         }
@@ -65,20 +69,26 @@ static void *SocketSendThread( void *arg )
         {
             //printf( "ConnectServer() Error!!! errno=%d\n", errno );
             pthis->CloseSocket();
-            strBuf.erase();
             sleep(1);
             continue;
         }
 
-        char cSendBuf[32] = {0,};
-        sprintf(cSendBuf, "%s%d,%d,%d,%d,%d,%d,%s%s", SOCKET_START_MARK, 0, iCell, 0, 0, 0, 0, "", SOCKET_END_MARK );
-
-        int iSendCnt = pthis->Send(cSendBuf, strlen(cSendBuf));
-        if(iSendCnt < (ssize_t)strlen(cSendBuf))
+        if(pthis->qRecv.size() > 0)
         {
-            //printf("connection error!!\n");
-            pthis->bConnect = false;
-            return -1;
+            StatData statData = pthis->qRecv.front();
+            pthis->qRecv.pop();
+            memcpy(cSendBuf, &statData, sizeof(statData));
+
+            int iSendCnt = pthis->Send(cSendBuf, sizeof(cSendBuf));
+            if(iSendCnt < (ssize_t)strlen(cSendBuf))
+            {
+                //printf("connection error!!\n");
+                pthis->bConnect = false;
+            }
+        }
+        else
+        {
+            msleep(100);
         }
     } // End of while( idSendThread )
 
@@ -86,34 +96,9 @@ static void *SocketSendThread( void *arg )
     return (void*)0;
 }
 
-static void *SocketProcThread( void *arg )
-{
-    CMsgSocket *pthis = (CMsgSocket *)arg;
-
-    pthis->condProcThread = ON;
-    while( pthis->condProcThread == ON )                // Socket process Loop
-    {
-        if(pthis->qRecv.size() > 0)
-        {
-            SockPack sockData = pthis->qRecv.front();
-            pthis->qRecv.pop();
-            pthis->ProcFunc(sockData);
-
-            if(sockData.pstring)
-                delete [] sockData.pstring;
-        }
-        else
-        {
-            msleep(100);
-        }
-    }
-
-    return (void*)0;
-}
-
 void CStatSocket::StartThread()
 {
-    InitSockData();
+    InitData();
 
     if(idSendThread == 0)
         pthread_create(&idSendThread, NULL, &SocketSendThread, (void*)this);
@@ -129,5 +114,5 @@ void CStatSocket::StopThread()
         idSendThread = 0;
     }
 
-    InitSockData();
+    InitData();
 }

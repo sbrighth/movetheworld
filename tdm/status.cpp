@@ -13,6 +13,7 @@
 #include "iostream"
 #include "base.h"
 #include "DuoBdLib.h"
+#include "statsocket.h"
 
 #define DEF_MON_DURATION_SEC    1
 #define MIN_MON_DURATION_SEC    1
@@ -21,6 +22,8 @@
 #define DEF_UPDPS_DURATION_MS   500
 #define MIN_UPDPS_DURATION_MS   500
 #define MAX_UPDPS_DURATION_MS   900
+
+extern CStatSocket *g_pStatSocket;
 
 CStatus::CStatus(CTestMng *mng[])
 {
@@ -190,6 +193,11 @@ void *MonitorThread(void *arg)
         pthread_mutex_lock(&pthis->mutexDpsSync);
 
         //socket
+        StatData statData;
+        statData.statOS = pthis->statOs;
+        memcpy(statData.statTest, pthis->statTest, sizeof(pthis->statTest));
+        memcpy(statData.statDps, pthis->statDps, sizeof(pthis->statDps));
+        g_pStatSocket->SendData(statData);
 
         pthread_mutex_unlock(&pthis->mutexDpsSync);
 

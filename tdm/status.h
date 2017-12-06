@@ -12,6 +12,7 @@
 #include "def.h"
 #include "testmng.h"
 #include "pthread.h"
+#include "statsocket.h"
 
 using namespace std;
 

@@ -86,6 +86,10 @@ void InitResource()
     g_pMsgSocketClient  = new CMsgSocket(g_idTpc, (char *)SERVER_IP, SERVER_PORT, false);
     g_pMsgSocketClient->StartThread(&ProcRecvSock);
 
+    //Status Socket Client
+    g_pStatSocket  = new CStatSocket((char *)SERVER_IP, SERVER_STAT_PORT);
+    g_pStatSocket->StartThread();
+
     //TestMng
     for(int idx=0; idx<PORT_CNT; idx++)
     {
@@ -94,7 +98,7 @@ void InitResource()
 
     //Status
     g_pStatusMon = new CStatus(g_pTestMng);
-    //g_pStatusMon->StartThread();
+    g_pStatusMon->StartThread();
 }
 
 
@@ -110,6 +114,12 @@ void DeleteResource()
     {
         g_pTestMsgq->StopThread();
         delete g_pTestMsgq;
+    }
+
+    if(g_pStatSocket != NULL)
+    {
+        g_pStatSocket->StopThread();
+        delete g_pStatSocket;
     }
 
     if(g_pMsgSocketServer != NULL)
