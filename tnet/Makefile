@@ -9,7 +9,7 @@ LDFLAGS		= -shared -Wl,-soname,$(TARGET_SO) -L$(LIBPATH) -ltbase
 INCPATH		= ../output/include
 LIBPATH		= ../output/lib
 
-OBJS		= msgbox.o msgqthread.o msgsend.o socketserver.o socketclient.o
+OBJS		= msgbox.o msgqthread.o msgsend.o msgsocket.o socketserver.o socketclient.o statsocket.o
 TARGET_LINK	= libtnet.so
 TARGET_SO	= $(TARGET_LINK).$(MAJOR)
 TARGET_REAL	= $(TARGET_LINK).$(MAJOR).$(MINOR)

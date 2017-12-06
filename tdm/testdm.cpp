@@ -79,11 +79,11 @@ void InitResource()
     g_idTestMsgq = g_pTestMsgq->idMsgq;
 
     //Socket Server
-    g_pMsgSocketServer = new CMsgSocketServer((char *)LOCAL_IP, LOCAL_PORT);
+    g_pMsgSocketServer = new CMsgSocket(g_idTpc, (char *)LOCAL_IP, LOCAL_PORT, true);
     g_pMsgSocketServer->StartThread(&ProcRecvSock);
 
     //Msg Socket Client
-    g_pMsgSocketClient  = new CMsgSocketClient(g_idTpc, (char *)SERVER_IP, SERVER_PORT);
+    g_pMsgSocketClient  = new CMsgSocket(g_idTpc, (char *)SERVER_IP, SERVER_PORT, false);
     g_pMsgSocketClient->StartThread(&ProcRecvSock);
 
     //TestMng

@@ -8,8 +8,7 @@ INCPATH		= ../output/include
 LIBPATH		= ../output/lib
 
 TARGET		= tdm
-OBJS		= log.o testdm.o testmng.o status.o callback.o\
-                network/msgsocketclient.o network/msgsocketserver.o
+OBJS		= log.o testdm.o testmng.o status.o callback.o
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) -o $@ -c $< 

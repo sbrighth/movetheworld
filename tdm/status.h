@@ -12,13 +12,12 @@
 #include "def.h"
 #include "testmng.h"
 #include "pthread.h"
-#include "socketclient.h"
 
 using namespace std;
 
-class CStatus : public CSocketClient{
+class CStatus {
 public:
-    CStatus(CTestMng *mng[], char *szServerAddr, int iServerPort);
+    CStatus(CTestMng *mng[]);
 	virtual ~CStatus();
 
     int CheckOs();

@@ -9,3 +9,7 @@ socketclient.cpp
 socketclient.h
 socketserver.cpp
 socketserver.h
+msgsocket.h
+msgsocket.cpp
+statsocket.h
+statsocket.cpp

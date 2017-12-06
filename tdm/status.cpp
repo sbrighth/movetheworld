@@ -22,122 +22,7 @@
 #define MIN_UPDPS_DURATION_MS   500
 #define MAX_UPDPS_DURATION_MS   900
 
-void *MonitorThread(void *arg)
-{
-    CStatus *pthis = (CStatus *)arg;
-
-    pthis->condMonitorThread = 1;
-    while(pthis->condMonitorThread == 1)
-    {
-        pthis->CheckOs();
-
-        for(int iPortIdx=0; iPortIdx<PORT_CNT; iPortIdx++)
-        {
-            pthis->CheckTest(iPortIdx);
-        }
-
-        pthread_mutex_lock(&pthis->mutexDpsSync);
-
-        //socket
-        if(pthis->CreateSocket() < 0)
-        {
-            pthis->CloseSocket();
-            sleep(1);
-            continue;
-        }
-
-        if(pthis->ConnectServer() < 0)
-        {
-            //printf( "ConnectServer() Error!!! errno=%d\n", errno );
-            pthis->CloseSocket();
-            strBuf.erase();
-            sleep(1);
-            continue;
-        }
-
-
-        char cSendBuf[32] = {0,};
-        sprintf(cSendBuf, "%s%d,%d,%d,%d,%d,%d,%s%s", SOCKET_START_MARK, 0, iCell, 0, 0, 0, 0, "", SOCKET_END_MARK );
-
-        int iSendCnt = Send(cSendBuf, strlen(cSendBuf));
-        if(iSendCnt < (ssize_t)strlen(cSendBuf))
-        {
-            //printf("connection error!!\n");
-            bConnect = false;
-            return -1;
-        }
-        //
-
-        pthread_mutex_unlock(&pthis->mutexDpsSync);
-
-        sleep(pthis->iMonitorDurationSec);
-    }
-
-    pthread_exit((void *)0);
-}
-
-void *DpsThread(void *arg)
-{
-    CStatus     *pthis = (CStatus *)arg;
-    DpsStatus   statDpsPort;
-    bool        bConnectDps[PORT_CNT];
-    memset(bConnectDps, true, sizeof(bConnectDps));
-
-    OpenPort(BOTH_PORT, MCU_IF_BAUD_DEF);
-
-    pthis->condDpsThread = 1;
-    while(pthis->condDpsThread == 1)
-    {
-        int iConnectCnt = 0;
-
-        for(int iPortIdx=0; iPortIdx<PORT_CNT; iPortIdx++)
-        {
-            if(bConnectDps[iPortIdx] == false)
-                continue;
-
-            if(IsConnected(iPortIdx) == false)
-            {
-                bConnectDps[iPortIdx] = false;
-
-                pthread_mutex_lock(&pthis->mutexDpsSync);
-                pthis->statDps[iPortIdx].iConnect = 0;
-                pthread_mutex_unlock(&pthis->mutexDpsSync);
-
-                continue;
-            }
-            else
-            {
-                iConnectCnt++;
-            }
-
-            memset(&statDpsPort, 0, sizeof(DpsStatus));
-
-            for(int iChIdx=0; iChIdx<DPS_CH_CNT; iChIdx++)
-            {
-                GetVolt(iPortIdx, iChIdx, &statDpsPort.dVoltage[iChIdx]);
-                GetCurrent(iPortIdx, iChIdx, &statDpsPort.dCurrent[iChIdx]);
-            }
-
-            pthread_mutex_lock(&pthis->mutexDpsSync);
-            pthis->statDps[iPortIdx].iConnect = 1;
-            pthis->statDps[iPortIdx] = statDpsPort;
-            pthread_mutex_unlock(&pthis->mutexDpsSync);
-        }
-
-        if(iConnectCnt == 0)
-        {
-            pthis->condDpsThread = 0;
-            break;
-        }
-
-        msleep(pthis->iUpdateDpsDurationMs);
-    }
-
-    pthread_exit((void *)0);
-}
-
-CStatus::CStatus(CTestMng *mng[], char *szServerAddr, int iServerPort)
-    :CSocketClient(szServerAddr, iServerPort)
+CStatus::CStatus(CTestMng *mng[])
 {
 	// TODO Auto-generated constructor stub
     memset(&statOs, 0, sizeof(statOs));
@@ -286,6 +171,92 @@ int CStatus::GetStatusFromFile(const char *szCmd, char *sBuf, int iBufSize)
         sBuf[size-1] = '\0';
 
     return 0;
+}
+
+void *MonitorThread(void *arg)
+{
+    CStatus *pthis = (CStatus *)arg;
+
+    pthis->condMonitorThread = 1;
+    while(pthis->condMonitorThread == 1)
+    {
+        pthis->CheckOs();
+
+        for(int iPortIdx=0; iPortIdx<PORT_CNT; iPortIdx++)
+        {
+            pthis->CheckTest(iPortIdx);
+        }
+
+        pthread_mutex_lock(&pthis->mutexDpsSync);
+
+        //socket
+
+        pthread_mutex_unlock(&pthis->mutexDpsSync);
+
+        sleep(pthis->iMonitorDurationSec);
+    }
+
+    pthread_exit((void *)0);
+}
+
+void *DpsThread(void *arg)
+{
+    CStatus     *pthis = (CStatus *)arg;
+    DpsStatus   statDpsPort;
+    bool        bConnectDps[PORT_CNT];
+    memset(bConnectDps, true, sizeof(bConnectDps));
+
+    OpenPort(BOTH_PORT, MCU_IF_BAUD_DEF);
+
+    pthis->condDpsThread = 1;
+    while(pthis->condDpsThread == 1)
+    {
+        int iConnectCnt = 0;
+
+        for(int iPortIdx=0; iPortIdx<PORT_CNT; iPortIdx++)
+        {
+            if(bConnectDps[iPortIdx] == false)
+                continue;
+
+            if(IsConnected(iPortIdx) == false)
+            {
+                bConnectDps[iPortIdx] = false;
+
+                pthread_mutex_lock(&pthis->mutexDpsSync);
+                pthis->statDps[iPortIdx].iConnect = 0;
+                pthread_mutex_unlock(&pthis->mutexDpsSync);
+
+                continue;
+            }
+            else
+            {
+                iConnectCnt++;
+            }
+
+            memset(&statDpsPort, 0, sizeof(DpsStatus));
+
+            for(int iChIdx=0; iChIdx<DPS_CH_CNT; iChIdx++)
+            {
+                GetVolt(iPortIdx, iChIdx, &statDpsPort.dVoltage[iChIdx]);
+                GetCurrent(iPortIdx, iChIdx, &statDpsPort.dCurrent[iChIdx]);
+            }
+
+            pthread_mutex_lock(&pthis->mutexDpsSync);
+            pthis->statDps[iPortIdx].iConnect = 1;
+            pthis->statDps[iPortIdx] = statDpsPort;
+            pthread_mutex_unlock(&pthis->mutexDpsSync);
+        }
+
+        if(iConnectCnt == 0)
+        {
+            pthis->condDpsThread = 0;
+            break;
+        }
+
+        msleep(pthis->iUpdateDpsDurationMs);
+    }
+
+    pthread_exit((void *)0);
 }
 
 void CStatus::StartThread()

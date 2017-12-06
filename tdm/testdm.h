@@ -15,8 +15,7 @@
 #include "testmng.h"
 #include "status.h"
 #include "callback.h"
-#include "network/msgsocketserver.h"
-#include "network/msgsocketclient.h"
+#include "msgsocket.h"
 
 void    InitResource();
 void    DeleteResource();
@@ -39,8 +38,8 @@ int		g_idResShare;
 int     g_idTestMsgq;
 
 CMsgqThread         *g_pTestMsgq = NULL;
-CMsgSocketServer    *g_pMsgSocketServer = NULL;
-CMsgSocketClient    *g_pMsgSocketClient = NULL;
+CMsgSocket          *g_pMsgSocketServer = NULL;
+CMsgSocket          *g_pMsgSocketClient = NULL;
 CTestMng            *g_pTestMng[PORT_CNT];
 CStatus             *g_pStatusMon = NULL;
 
